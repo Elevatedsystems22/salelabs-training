@@ -1424,6 +1424,7 @@ function loadVoiceModel() {
 }
 function voiceStatusText() {
   if (!SITE_MODE) return "";
+  if (hasNaturalVoices()) return "Natural voices ready (built into this browser).";
   return VOICE.status === "ready" ? "Realistic voices ready." : VOICE.status === "loading" ? `Loading realistic voices… ${VOICE.pct}% (one-time download)` : VOICE.status === "failed" ? "Realistic voices couldn't load on this computer, so the family will use your browser's basic voices." + (VOICE.err ? " (" + VOICE.err + ")" : "") : "";
 }
 function voiceStatusRender() { document.querySelectorAll("[data-voicestatus]").forEach(el => { el.textContent = voiceStatusText(); el.hidden = !el.textContent; }); }
@@ -2275,14 +2276,18 @@ const synth = (typeof window !== "undefined" && window.speechSynthesis) ? window
 let browserVoices = [];
 function loadVoices() { if (!synth) return; try { browserVoices = synth.getVoices().filter(v => /^en/i.test(v.lang)); } catch (e) { browserVoices = []; } }
 if (synth) { loadVoices(); try { synth.onvoiceschanged = loadVoices; } catch (e) {} }
+/* Free human-sounding voices some browsers include: Microsoft Edge's "Online (Natural)" voices, Safari/Mac "Premium"/"Enhanced" voices. */
+const NATURAL_VOICE = /\(Natural\)|Natural|Neural|Premium|Enhanced/i;
+function hasNaturalVoices() { if (!browserVoices.length) loadVoices(); return browserVoices.filter(v => NATURAL_VOICE.test(v.name) && /^en-US/i.test(v.lang)).length >= 2; }
 function pickVoice(name, taken) {
   if (!browserVoices.length) loadVoices();
-  const fem = /samantha|victoria|karen|moira|tessa|zira|aria|jenny|female|susan|allison|ava|serena|fiona|nicky|joanna|salli|google us english$/i;
-  const mal = /alex|daniel|fred|david|mark|guy|male|tom|aaron|evan|nathan|ryan|matthew|joey|reed/i;
+  const fem = /samantha|victoria|karen|moira|tessa|zira|aria|jenny|female|susan|allison|ava|serena|fiona|nicky|joanna|salli|michelle|emma|ana\b|sara|nancy|jane|google us english$/i;
+  const mal = /alex|daniel|fred|david|mark|guy|male|tom|aaron|evan|nathan|ryan|matthew|joey|reed|christopher|eric|roger|steffan|andrew|brian|davis|tony|jason/i;
   const want = FEMALE[name] ? fem : mal;
   const pool = browserVoices.filter(v => want.test(v.name) && !(FEMALE[name] ? mal.test(v.name) && !fem.test(v.name) : fem.test(v.name)));
   const us = pool.filter(v => /en-US/i.test(v.lang));
-  const free = (us.length ? us : pool).filter(v => !taken.includes(v.name));
+  const nat = v => NATURAL_VOICE.test(v.name);
+  const free = (us.length ? us : pool).filter(v => !taken.includes(v.name)).sort((a, b) => nat(b) - nat(a));
   return free[0] || us[0] || pool[0] || browserVoices.find(v => /en-US/i.test(v.lang)) || browserVoices[0] || null;
 }
 
@@ -2430,7 +2435,8 @@ function playNext() {
   rp.capLine = l; updateCaptions();
   const done = () => { if (!rp || rp.capLine !== l) return; playNext(); };
   const useSynth = rp.sound && synth && (dictApi || !ttsApi);
-  if (rp.sound && SITE_MODE && VOICE.tts && !(rp.video && VID.people[l.speaker])) {
+  const natV = rp.voiceMap[l.speaker] && NATURAL_VOICE.test(rp.voiceMap[l.speaker].name);
+  if (rp.sound && SITE_MODE && VOICE.tts && !natV && !(rp.video && VID.people[l.speaker])) {
     rp.familySpeaking = true; setSpeaking(l.speaker);
     prepLine(l); playKokoro(l, done);
   } else if (rp.video && VID.people[l.speaker]) {
