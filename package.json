@@ -1,0 +1,6 @@
+{
+  "name": "salelabs-training",
+  "private": true,
+  "type": "module",
+  "description": "Virtual Presentation Academy: course, presentation tool and server functions"
+}
