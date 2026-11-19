@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation tool · Virtual Presentation Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Scoped styles to avoid conflicts with website builder */
+        .globe-life-presentation {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .globe-life-presentation * {
+            box-sizing: border-box;
+        }
+
+        .globe-life-presentation .toggle-btn {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #0047AB, #003580);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.3);
+            margin: 20px auto;
+            display: block;
+        }
+
+        .globe-life-presentation .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 71, 171, 0.4);
+        }
+
+        .globe-life-presentation .toggle-btn.active {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Main Presentation Container */
+        .globe-life-presentation .presentation-container {
+            display: none;
+            background: white;
+            margin: 20px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            height: 85vh;
+            max-width: 1600px;
+            width: 95%;
+        }
+
+        .globe-life-presentation .presentation-layout {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Enhanced Navigation Panel */
+        .globe-life-presentation .nav-panel {
+            width: 240px;
+            min-width: 240px;
+            background: linear-gradient(180deg, #f8faff 0%, #e6f0ff 100%);
+            border-right: 1px solid #e1e8ed;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .globe-life-presentation .nav-header {
+            padding: 20px 15px 15px;
+            background: linear-gradient(45deg, #0047AB, #003580);
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .globe-life-presentation .nav-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0;
+            color: white;
+        }
+
+        .globe-life-presentation .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .globe-life-presentation .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .globe-life-presentation .nav-content {
+            padding: 10px 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .globe-life-presentation .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .globe-life-presentation .nav-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0047AB;
+            padding: 0 15px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e1e8ed;
+            margin-bottom: 10px;
+        }
+
+        .globe-life-presentation .nav-item {
+            display: block;
+            padding: 10px 18px;
+            color: #4a5568;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            position: relative;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .globe-life-presentation .nav-item:hover {
+            background: rgba(0, 71, 171, 0.1);
+            color: #0047AB;
+            border-left-color: #0047AB;
+            transform: translateX(3px);
+        }
+
+        .globe-life-presentation .nav-item.active {
+            background: linear-gradient(90deg, rgba(0, 71, 171, 0.15), rgba(0, 71, 171, 0.05));
+            color: #0047AB;
+            border-left-color: #0047AB;
+            font-weight: 700;
+            transform: translateX(3px);
+        }
+
+        .globe-life-presentation .nav-item.active::before {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: #0047AB;
+            border-radius: 50%;
+        }
+
+        .globe-life-presentation .nav-sub-item {
+            padding-left: 30px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Content Panel */
+        .globe-life-presentation .content-panel {
+            flex: 1;
+            background: white;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .globe-life-presentation .content-wrapper {
+            padding: 30px 45px 80px;
+            overflow-y: auto;
+            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Tips Panel */
+        .globe-life-presentation .tips-panel {
+            width: 260px;
+            min-width: 260px;
+            background: linear-gradient(180deg, #f0f8ff 0%, #e6f3ff 100%);
+            border-left: 1px solid #e1e8ed;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .globe-life-presentation .tips-header {
+            padding: 20px 15px 15px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .globe-life-presentation .tips-header h3 {
+            font-size: 13px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .globe-life-presentation .tips-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .globe-life-presentation .tip-card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #28a745;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .globe-life-presentation .tip-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .globe-life-presentation .tip-card h4 {
+            color: #28a745;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .globe-life-presentation .tip-card p {
+            color: #4a5568;
+            line-height: 1.5;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        /* Navigation Buttons */
+        .globe-life-presentation .nav-buttons {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .globe-life-presentation .nav-btn {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #0047AB, #003580);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 71, 171, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .globe-life-presentation .nav-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.4);
+        }
+
+        .globe-life-presentation .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .globe-life-presentation .nav-btn.next-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        .globe-life-presentation .nav-btn.next-btn:hover:not(:disabled) {
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Content Styling */
+        .globe-life-presentation h1 {
+            color: #0047AB;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #e1e8ed;
+            position: relative;
+            line-height: 1.3;
+        }
+
+        .globe-life-presentation h1::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(45deg, #0047AB, #003580);
+        }
+
+        .globe-life-presentation h2 {
+            color: #0047AB;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #f8faff, #e6f0ff);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0 15px;
+            border-left: 4px solid #0047AB;
+            line-height: 1.4;
+        }
+
+        .globe-life-presentation h3 {
+            color: #0047AB;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+            line-height: 1.4;
+        }
+
+        .globe-life-presentation p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 15px;
+        }
+
+        .globe-life-presentation .script-block {
+            background: linear-gradient(135deg, #f8faff 0%, #e6f0ff 100%);
+            padding: 25px 30px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border-left: 4px solid #0047AB;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .globe-life-presentation .script-block p {
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .globe-life-presentation .script-block ol, .globe-life-presentation .script-block ul {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .globe-life-presentation .script-block li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        .globe-life-presentation .instruction {
+            font-style: italic;
+            color: #28a745;
+            font-weight: 600;
+            background: rgba(40, 167, 69, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: block;
+            margin: 8px 0;
+            border-left: 3px solid #28a745;
+            font-size: 13px;
+        }
+
+        /* Enhanced Client Notes */
+        .globe-life-presentation .notes-container {
+            background: linear-gradient(135deg, #fff8f0 0%, #f0f8ff 100%);
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .globe-life-presentation .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .globe-life-presentation .notes-title {
+            color: #0047AB;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .globe-life-presentation .toggle-notes-btn {
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .globe-life-presentation .toggle-notes-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .globe-life-presentation .form-section {
+            margin-bottom: 12px;
+        }
+
+        .globe-life-presentation .form-label {
+            display: block;
+            font-weight: 700;
+            color: #0047AB;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .globe-life-presentation .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .globe-life-presentation .form-input:focus {
+            outline: none;
+            border-color: #0047AB;
+            box-shadow: 0 0 0 2px rgba(0, 71, 171, 0.1);
+        }
+
+        .globe-life-presentation textarea.form-input {
+            height: 60px;
+            resize: vertical;
+        }
+
+        .globe-life-presentation .save-btn {
+            background: linear-gradient(45deg, #0047AB, #003580);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 8px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .globe-life-presentation .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 71, 171, 0.3);
+        }
+
+        /* Option Buttons */
+        .globe-life-presentation .option-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .globe-life-presentation .option-btn {
+            background: linear-gradient(45deg, #0047AB, #003580);
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 71, 171, 0.3);
+        }
+
+        .globe-life-presentation .option-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 71, 171, 0.4);
+        }
+
+        .globe-life-presentation .option-btn.selected {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .globe-life-presentation .option-btn.not-selected {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .globe-life-presentation .option-confirmation {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: 600;
+            color: #155724;
+            font-size: 14px;
+        }
+
+        /* Selection Grid Styling */
+        .globe-life-presentation .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .globe-life-presentation .selection-card {
+            background: linear-gradient(135deg, #f8faff 0%, #e6f0ff 100%);
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .globe-life-presentation .selection-card:hover {
+            border-color: #0047AB;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 71, 171, 0.15);
+        }
+
+        .globe-life-presentation .selection-card.selected {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
+        }
+
+        .globe-life-presentation .selection-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #28a745;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .globe-life-presentation .selection-card h3 {
+            color: #0047AB;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .globe-life-presentation .selection-card.selected h3 {
+            color: #28a745;
+        }
+
+        .globe-life-presentation .selection-card p {
+            color: #4a5568;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .globe-life-presentation .selection-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Image Styling */
+        .globe-life-presentation .slide-image {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .globe-life-presentation .slide-image img {
+            max-width: 300px;
+            max-height: 180px;
+            width: auto;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .globe-life-presentation .slide-image img:hover {
+            transform: scale(1.02);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1700px) {
+            .globe-life-presentation .presentation-container {
+                width: 95%;
+                max-width: 1500px;
+            }
+        }
+        
+        @media (max-width: 1400px) {
+            .globe-life-presentation .presentation-container {
+                width: 95%;
+                max-width: 1300px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .globe-life-presentation .tips-panel {
+                display: none;
+            }
+            
+            .globe-life-presentation .presentation-container {
+                width: 90%;
+                max-width: 1100px;
+            }
+            
+            .globe-life-presentation .content-wrapper {
+                padding: 30px 35px 80px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .globe-life-presentation .presentation-container {
+                margin: 10px;
+                border-radius: 15px;
+                width: calc(100vw - 20px);
+                max-width: none;
+            }
+            
+            .globe-life-presentation .presentation-layout {
+                flex-direction: column;
+                height: auto;
+                min-height: 60vh;
+            }
+            
+            .globe-life-presentation .nav-panel {
+                width: 100%;
+                min-width: auto;
+                height: 120px;
+            }
+            
+            .globe-life-presentation .nav-content {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px 0;
+            }
+            
+            .globe-life-presentation .nav-section {
+                flex-shrink: 0;
+                margin-right: 20px;
+            }
+            
+            .globe-life-presentation .content-wrapper {
+                padding: 20px;
+                max-width: none;
+            }
+
+            .globe-life-presentation .selection-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .globe-life-presentation .option-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .globe-life-presentation .slide-content {
+            animation: slideIn 0.5s ease;
+        }
+
+        /* Scrollbar Styling - scoped to presentation container */
+        .globe-life-presentation .nav-content::-webkit-scrollbar,
+        .globe-life-presentation .content-wrapper::-webkit-scrollbar,
+        .globe-life-presentation .tips-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .globe-life-presentation .nav-content::-webkit-scrollbar-track,
+        .globe-life-presentation .content-wrapper::-webkit-scrollbar-track,
+        .globe-life-presentation .tips-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .globe-life-presentation .nav-content::-webkit-scrollbar-thumb,
+        .globe-life-presentation .content-wrapper::-webkit-scrollbar-thumb,
+        .globe-life-presentation .tips-content::-webkit-scrollbar-thumb {
+            background: #0047AB;
+            border-radius: 4px;
+        }
+
+        .globe-life-presentation .nav-content::-webkit-scrollbar-thumb:hover,
+        .globe-life-presentation .content-wrapper::-webkit-scrollbar-thumb:hover,
+        .globe-life-presentation .tips-content::-webkit-scrollbar-thumb:hover {
+            background: #003580;
+        }
+            /* ---------- v2 additions ---------- */
+        body { margin: 0; background: #f4f7fb; }
+        .globe-life-presentation .glp-topbar { display: flex; justify-content: center; }
+        .globe-life-presentation .content-panel { position: relative; }
+        .globe-life-presentation .glp-formatbar { display: none; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 45px 0; flex-wrap: wrap; }
+        .globe-life-presentation .glp-pill { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
+        .globe-life-presentation .glp-pill.tele { background: #fff3e0; color: #b25d00; }
+        .globe-life-presentation .glp-pill.zoom { background: #e6f0ff; color: #0047AB; }
+        .globe-life-presentation .glp-small { background: #fff; border: 1px solid #cdd8e6; color: #0047AB; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .globe-life-presentation .glp-small:hover { background: #eef4ff; }
+        .globe-life-presentation .glp-session { font-size: 12px; opacity: .9; margin-top: 6px; }
+        .globe-life-presentation .glp-navfoot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #e1e8ed; background: #f8faff; }
+        .globe-life-presentation .nav-item.lead-pick { color: #0047AB; font-weight: 700; }
+        .globe-life-presentation .nav-item.lead-pick::after { content: " ✓"; color: #28a745; }
+        .globe-life-presentation .ph { color: #0047AB; font-weight: 600; background: rgba(0,71,171,.07); border-radius: 4px; padding: 0 3px; }
+        .globe-life-presentation .ph.filled { background: rgba(40,167,69,.12); color: #146c2e; }
+        .globe-life-presentation .glp-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+        .globe-life-presentation select.form-input { background: #fff; }
+        .globe-life-presentation .glp-callout { background: #fffbe6; border: 1px solid #f1d78a; border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.5; margin: 16px 0; }
+        .globe-life-presentation .glp-callout a { color: #0047AB; font-weight: 700; }
+        .globe-life-presentation .slide-image { position: relative; }
+        .globe-life-presentation .slide-image img { max-width: 100%; max-height: 260px; }
+        .globe-life-presentation .slide-image .img-label { display: block; font-size: 12px; color: #5a6880; margin-top: 6px; }
+        .globe-life-presentation .slide-image.ref img { max-height: 140px; opacity: .85; filter: saturate(.7); }
+        .globe-life-presentation .glp-timer { background: #fff3e0; color: #8a4a00; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 12px; }
+        .globe-life-presentation .glp-timer.ok { background: #e6f6ea; color: #146c2e; }
+        .globe-life-presentation .glp-saved { font-size: 12px; color: #5a6880; margin: 4px 0 0; }
+        .globe-life-presentation .glp-why { background: #f0f8f2; border: 1px solid #cfe9d6; border-radius: 12px; padding: 14px; margin: 14px 0; display: flex; flex-direction: column; gap: 8px; }
+        .globe-life-presentation .glp-chk { display: flex; gap: 8px; align-items: center; font-weight: 700; font-size: 14px; color: #146c2e; }
+        .globe-life-presentation .glp-whys { background: #f0f8f2; border-left: 4px solid #28a745; border-radius: 0 12px 12px 0; padding: 12px 16px; margin: 14px 0; }
+        .globe-life-presentation .glp-whys h3 { margin: 0 0 8px; color: #146c2e; font-size: 16px; }
+        .globe-life-presentation .glp-whys p { margin: 0 0 6px; font-size: 14px; }
+        .globe-life-presentation .glp-noteref { margin-bottom: 8px; padding: 10px 12px; background: #f8f9fa; border-left: 3px solid #0047AB; border-radius: 5px; font-size: 14px; }
+        .globe-life-presentation .glp-empty { font-style: italic; color: #666; padding: 16px; text-align: center; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; font-size: 14px; }
+        .globe-life-presentation .presentation-container { position: relative; }
+        .globe-life-presentation .glp-objections-btn { position: absolute; right: 18px; bottom: 18px; z-index: 20; background: linear-gradient(45deg, #dc3545, #c82333); color: #fff; border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 700; font-size: 14px; box-shadow: 0 6px 18px rgba(220,53,69,.35); cursor: pointer; }
+        .globe-life-presentation .glp-overlay { position: absolute; inset: 0; background: rgba(15,25,45,.45); z-index: 30; display: flex; justify-content: flex-end; }
+        .globe-life-presentation .glp-overlay[hidden] { display: none; }
+        .globe-life-presentation .glp-overlay-card { background: #fff; width: min(620px, 100%); height: 100%; overflow-y: auto; padding: 18px 22px; box-shadow: -10px 0 30px rgba(0,0,0,.2); }
+        .globe-life-presentation .glp-overlay-card.narrow { width: min(420px, 100%); }
+        .globe-life-presentation .glp-overlay-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .globe-life-presentation .glp-overlay-head h2 { margin: 0; padding: 0; background: none; border: 0; font-size: 20px; }
+        .globe-life-presentation .glp-reb { border: 1px solid #e1e8ed; border-radius: 10px; margin-bottom: 10px; padding: 0 12px; }
+        .globe-life-presentation .glp-reb summary { cursor: pointer; padding: 12px 0; font-weight: 700; color: #0047AB; }
+        .globe-life-presentation .glp-reb .script-block { margin: 0 0 12px; padding: 16px 18px; }
+        .globe-life-presentation .glp-new { background: #fff3e0; color: #b25d00; font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+        .globe-life-presentation .glp-tip { font-size: 14px; background: #f8faff; border-radius: 10px; padding: 10px 12px; }
+        .globe-life-presentation .glp-recent { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: #f8faff; border: 1px solid #e1e8ed; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+        .globe-life-presentation .glp-recent span { font-size: 12px; color: #5a6880; }
+        .globe-life-presentation .glp-keys { text-align: center; font-size: 12px; color: #6c7a8c; margin: -8px 0 16px; }
+        .glp-flash { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #1f2a3a; color: #fff; padding: 10px 18px; border-radius: 999px; font-family: 'Segoe UI', sans-serif; font-size: 14px; opacity: 0; transition: all .25s; pointer-events: none; z-index: 100; }
+        .glp-flash.show { opacity: 1; transform: translateX(-50%); }
+        body.client-mode { background: #0f1a2e; }
+        .glp-client[hidden] { display: none; }
+        .glp-client { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #0f1a2e; }
+        .glp-client-stage { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .glp-client-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .glp-client-idle { color: #fff; text-align: center; font-family: 'Segoe UI', sans-serif; font-size: 22px; opacity: .9; }
+        .glp-client-logo { font-size: 54px; font-weight: 800; letter-spacing: -.01em; }
+        @media (max-width: 768px) { .globe-life-presentation .glp-form-grid { grid-template-columns: 1fr; } }
+        /* ---------- Call Mode ---------- */
+        body.cm-on { overflow: hidden; }
+        .cm[hidden] { display: none !important; }
+        .cm { position: fixed; inset: 0; z-index: 60; background: #f3f6fa; display: flex; flex-direction: column; color: #14213d; }
+        .cm kbd { font: 600 11px/1 ui-monospace, Menlo, monospace; background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12); border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; margin-left: 4px; color: inherit; }
+        .cm-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; background: #fff; border-bottom: 1px solid #e3e9f2; flex-wrap: wrap; }
+        .cm-where { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+        .cm-sec { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b4fb3; }
+        .cm-where b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cm-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .cm-tools button { background: #fff; border: 1px solid #d5deea; border-radius: 999px; padding: 6px 11px; font-size: 13px; font-weight: 600; color: #1f3556; cursor: pointer; }
+        .cm-tools button:hover { background: #eef4ff; }
+        .cm-tools button[hidden] { display: none; }
+        .cm-size { display: inline-flex; gap: 2px; }
+        .cm-size button { padding: 6px 9px; }
+        .cm-clock { font: 600 13px/1 ui-monospace, Menlo, monospace; color: #8a4a00; background: #fff3e0; border-radius: 999px; padding: 7px 10px; }
+        .cm-clock:empty { display: none; }
+        .cm-clock.ok { color: #146c2e; background: #e6f6ea; }
+        .cm-prog { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: transparent; }
+        .cm-prog-fill { height: 100%; background: linear-gradient(90deg, #0b4fb3, #3b82f6); width: 0; transition: width .3s; }
+        .cm-stage { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 28px max(24px, calc((100vw - 900px) / 2)); }
+        .cm-prev, .cm-nextline { font-size: calc(var(--cm-size) * .55); line-height: 1.45; color: #9aa6b8; max-height: 4.4em; overflow: hidden; }
+        .cm-prev { -webkit-mask-image: linear-gradient(to top, #000 60%, transparent); mask-image: linear-gradient(to top, #000 60%, transparent); display: flex; flex-direction: column; justify-content: flex-end; }
+        .cm-nextline { -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent); mask-image: linear-gradient(to bottom, #000 50%, transparent); }
+        .cm-prev p, .cm-nextline p, .cm-now p { margin: 0; }
+        .cm-start, .cm-upnext { font-size: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #9aa6b8; mask-image: none; -webkit-mask-image: none; }
+        .cm-label { align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b4fb3; background: #e6f0ff; border-radius: 999px; padding: 5px 12px; margin-bottom: -6px; }
+        .cm-now { font-size: var(--cm-size); line-height: 1.4; font-weight: 500; color: #0f1d36; border-left: 4px solid #0b4fb3; padding-left: 20px; }
+        .cm-now ol, .cm-now ul { font-size: .82em; margin: 10px 0 0; padding-left: 1.3em; }
+        .cm-now li { margin-bottom: 4px; }
+        .cm-now .ph { color: #0b4fb3; font-weight: 600; background: rgba(0,71,171,.08); border-radius: 4px; padding: 0 4px; }
+        .cm-now .ph.filled { background: rgba(40,167,69,.12); color: #146c2e; }
+        .cm-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cm-chip { font-size: 14px; font-weight: 600; color: #146c2e; background: #e9f6ec; border: 1px solid #cfe9d6; border-radius: 999px; padding: 6px 12px; line-height: 1.35; }
+        .cm-why { display: flex; flex-direction: column; gap: 8px; background: #f0f8f2; border: 1px solid #cfe9d6; border-radius: 12px; padding: 12px 14px; max-width: 640px; }
+        .cm-why .form-input, .dial-fields .form-input { width: 100%; padding: 10px 12px; border: 1px solid #cdd8e6; border-radius: 8px; font-size: 15px; font-family: inherit; }
+        .cm-why .form-label { font-weight: 700; font-size: 13px; color: #146c2e; }
+        .cm-slidebtn { align-self: flex-start; background: #fff; border: 1px dashed #b9c7da; color: #1f3556; border-radius: 10px; padding: 8px 12px; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .cm-slidebtn small { color: #8090a6; font-weight: 500; margin-left: 4px; }
+        .cm-slideimg { max-width: min(520px, 100%); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+        .cm-sharing { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5a6880; }
+        .cm-sharing img { height: 54px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+        .cm-ref { background: #f0f8f2; border-left: 4px solid #28a745; border-radius: 0 10px 10px 0; padding: 8px 14px; font-size: 14px; }
+        .cm-ref summary { cursor: pointer; font-weight: 700; color: #146c2e; }
+        .cm-ref h3 { display: none; }
+        .cm-ref p { margin: 6px 0; }
+        .cm-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; background: #fff; border-top: 1px solid #e3e9f2; }
+        .cm-foot button { border: 1px solid #d5deea; background: #fff; border-radius: 12px; padding: 12px 18px; font-size: 15px; font-weight: 700; color: #1f3556; cursor: pointer; }
+        .cm-foot .cm-next-btn { background: #0b4fb3; border-color: #0b4fb3; color: #fff; min-width: 150px; }
+        .cm-foot .cm-next-btn kbd { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); }
+        .cm-dots { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .cm-dots span { width: 8px; height: 8px; border-radius: 50%; background: #d5deea; }
+        .cm-dots span.done { background: #8fb0e0; }
+        .cm-dots span.on { background: #0b4fb3; transform: scale(1.3); }
+        .cm-dots em { font-style: normal; font-size: 12px; color: #8090a6; margin-left: 8px; }
+        .cm-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: #fff; box-shadow: -12px 0 30px rgba(15,25,45,.18); display: flex; flex-direction: column; z-index: 2; }
+        .cm-drawer[hidden] { display: none; }
+        .cm-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e3e9f2; }
+        .cm-drawer-head h3 { margin: 0; font-size: 17px; }
+        .cm-drawer-head button { border: 1px solid #d5deea; background: #fff; border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+        .cm-drawer-body { padding: 14px 18px; overflow-y: auto; font-size: 15px; line-height: 1.5; }
+        .cm-drawer-body textarea.form-input { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px solid #cdd8e6; border-radius: 8px; font-family: inherit; font-size: 14px; margin-bottom: 10px; }
+        .cm-drawer-body .form-label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+        .cm-drawer-body h4 { margin: 14px 0 6px; color: #0b4fb3; }
+        .cm-drawer-body ul { padding-left: 1.2em; margin: 0; }
+        .cm-drawer-body li { margin-bottom: 6px; }
+        .cm-ask { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; max-width: 760px; }
+        .cm-ask button { text-align: left; background: #fff; border: 2px solid #c9d7ec; border-radius: 12px; padding: 14px 16px; font-size: 16px; font-weight: 700; color: #0f1d36; cursor: pointer; }
+        .cm-ask button:hover { border-color: #0b4fb3; background: #f3f7ff; }
+        .cm-ask.big button { background: #0b4fb3; color: #fff; border-color: #0b4fb3; text-align: center; }
+        .cm-ask.big button.alt { background: #fff; color: #0b4fb3; }
+        .dial-objhint { font-size: 13px; color: #8090a6; }
+        .dial-setup { background: #fff; border: 1px solid #e3e9f2; border-radius: 16px; padding: 22px 24px; box-shadow: 0 6px 24px rgba(15,25,45,.06); }
+        .dial-setup h2 { margin: 0 0 14px; font-size: 22px; color: #0f1d36; background: none; border: 0; padding: 0; }
+        .dial-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .dial-k { width: 120px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5a6880; }
+        .dial-pill { background: #fff; border: 1px solid #cdd8e6; border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 14px; color: #1f3556; cursor: pointer; }
+        .dial-pill.on { background: #0b4fb3; border-color: #0b4fb3; color: #fff; }
+        .dial-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 14px; margin: 16px 0 6px; }
+        .dial-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #5a6880; }
+        .dial-about { font-size: 14px; color: #5a6880; margin: 12px 0 4px; }
+        .dial-keys { font-size: 13px; color: #8090a6; margin: 8px 0 0; }
+        .globe-life-presentation .glp-topbar { gap: 10px; }
+        .globe-life-presentation .dial-btn { background: #fff; color: #0b4fb3; border: 2px solid #0b4fb3; }
+        .globe-life-presentation .dial-callout .glp-small { margin: 0 2px; }
+        @media (max-width: 640px) { .cm-prev, .cm-nextline { display: none; } .dial-k { width: 100%; } }
+        body.cm-on .nav-buttons, body.cm-on .glp-keys, body.cm-on .glp-flash:not(.show) { display: none !important; }
+        .glp-flash { z-index: 200; }
+        /* Hosted on Netlify: keep controls clear of the "Powered by Netlify" badge in the bottom-right corner. */
+        html.nb-safe .cm-foot { padding-bottom: 62px; }
+        html.nb-safe .globe-life-presentation .glp-objections-btn { bottom: 70px; }
+        html.nb-safe .globe-life-presentation .nav-buttons { margin-bottom: 56px; }
+        html.nb-safe .globe-life-presentation .glp-overlay-card { padding-bottom: 70px; }
+        html.nb-safe .cm-drawer-body { padding-bottom: 70px; }
+
+/* ===== Academy look (matches the Virtual Presentation Academy) ===== */
+:root { --ink: #0f1b2d; --muted: #4f5d73; --line: #dde3ec; --bg: #f3f6fa; --sky: #eef5fd; --sky-line: #d3e3f5; --accent: #0b4fb3; --accent-soft: #eaf1fc; --good: #217a3b; --good-soft: #e7f4ea; --warn: #8f5200; --warn-soft: #fff4e5; --bad: #a3261b; }
+html, body { margin: 0; background: var(--bg); }
+.globe-life-presentation { font-family: "Inter", "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+#glp { min-height: 100vh; }
+
+/* Top bar */
+.globe-life-presentation .glp-topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; background: #fff; border-bottom: 1px solid var(--line); }
+.globe-life-presentation .glp-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
+.globe-life-presentation .glp-brand img { width: 30px; height: 30px; flex: none; }
+.globe-life-presentation .glp-brand b { display: block; font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.globe-life-presentation .glp-brand span { display: block; font-size: 12px; color: var(--muted); }
+.globe-life-presentation .toggle-btn, .globe-life-presentation .toggle-btn.dial-btn { margin: 0; display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; min-height: 40px; font: inherit; font-size: 14px; font-weight: 700; border-radius: 999px; box-shadow: none; transform: none; background: var(--accent); color: #fff; border: 1.5px solid var(--accent); }
+.globe-life-presentation .toggle-btn:hover { transform: none; box-shadow: none; background: #083a85; border-color: #083a85; }
+.globe-life-presentation .toggle-btn.active { background: #fff; color: var(--ink); border-color: var(--line); box-shadow: none; }
+.globe-life-presentation .toggle-btn.active:hover { background: var(--bg); }
+.globe-life-presentation .toggle-btn.dial-btn { background: #fff; color: var(--accent); border-color: var(--accent); }
+.globe-life-presentation .toggle-btn.dial-btn:hover { background: var(--accent-soft); }
+html.framed .globe-life-presentation .glp-brand { visibility: hidden; }
+
+/* Landing (before starting) */
+.glp-landing { max-width: 920px; margin: 0 auto; padding: 48px 24px; }
+.glp-landing .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--good); }
+.glp-landing h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; color: var(--ink); font-weight: 800; }
+.glp-landing h1::after { display: none; }
+.glp-landing .lead { font-size: 17px; line-height: 1.6; color: var(--muted); margin: 0 0 28px; max-width: 640px; }
+.glp-landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.glp-choice { text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; transition: border-color .15s, box-shadow .15s; }
+.glp-choice:hover { border-color: var(--accent); box-shadow: 0 6px 20px rgba(15,27,45,.08); }
+.glp-choice .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--accent-soft); }
+.glp-choice.call .ic { background: var(--good-soft); }
+.glp-choice b { font-size: 19px; color: var(--ink); }
+.glp-choice span { font-size: 15px; line-height: 1.5; color: var(--muted); }
+.glp-choice .go { margin-top: 6px; font-weight: 700; color: var(--accent); font-size: 15px; }
+.glp-landing .glp-keys { text-align: left; margin: 22px 0 0; }
+
+/* Main layout fills the screen */
+.globe-life-presentation .presentation-container { margin: 0; width: 100%; max-width: none; height: calc(100vh - 60px - 68px); border-radius: 0; box-shadow: none; background: #fff; position: relative; }
+html.framed .globe-life-presentation .presentation-container { height: calc(100vh - 60px - 68px); }
+
+/* Left navigation (Sky) */
+.globe-life-presentation .nav-panel { width: 250px; min-width: 250px; background: var(--sky); border-right: 1px solid var(--sky-line); }
+.globe-life-presentation .nav-header { background: var(--sky); color: var(--ink); text-align: left; padding: 18px 16px 14px; border-bottom: 1px solid var(--sky-line); }
+.globe-life-presentation .nav-header h3 { color: var(--ink); font-size: 14px; }
+.globe-life-presentation .glp-session { color: var(--muted); opacity: 1; }
+.globe-life-presentation .progress-bar { background: var(--sky-line); height: 6px; border-radius: 3px; }
+.globe-life-presentation .progress-fill { background: var(--good); border-radius: 3px; }
+.globe-life-presentation .nav-section-title { color: var(--muted); border-bottom: 0; font-size: 11.5px; letter-spacing: .07em; padding: 6px 16px 4px; margin-bottom: 2px; }
+.globe-life-presentation .nav-item { margin: 1px 10px; padding: 9px 12px; border-left: 0; border-radius: 8px; color: #3f5470; font-size: 13.5px; }
+.globe-life-presentation .nav-item:hover { background: #e0ecfa; color: var(--ink); border-left: 0; }
+.globe-life-presentation .nav-item.active { background: #fff; color: var(--accent); border-left: 0; box-shadow: 0 0 0 1px var(--sky-line); font-weight: 700; }
+.globe-life-presentation .nav-item.active::before { display: none; }
+.globe-life-presentation .nav-item.lead-pick { color: var(--accent); }
+.globe-life-presentation .nav-item.lead-pick::after { color: var(--good); }
+.globe-life-presentation .glp-navfoot { background: var(--sky); border-top: 1px solid var(--sky-line); }
+
+/* Content */
+.globe-life-presentation .content-panel { background: #fff; }
+.globe-life-presentation .content-panel h1 { color: var(--ink); font-size: 28px; font-weight: 800; }
+.globe-life-presentation .content-panel h1::after { background: var(--accent); height: 3px; width: 48px; border-radius: 2px; }
+.globe-life-presentation .content-panel h2 { background: var(--sky); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; color: var(--ink); font-size: 18px; }
+.globe-life-presentation .content-panel h3 { color: var(--ink); }
+.globe-life-presentation .content-panel p { color: #2f3c51; }
+.globe-life-presentation .script-block { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 12px 12px 0; box-shadow: none; }
+.globe-life-presentation .script-block p, .globe-life-presentation .script-block li { color: var(--ink); }
+.globe-life-presentation .instruction { background: var(--warn-soft); border-left: 3px solid var(--warn); color: #5c3b00; border-radius: 0 10px 10px 0; }
+.globe-life-presentation .ph { color: var(--accent); background: rgba(11,79,179,.08); }
+.globe-life-presentation .glp-callout { background: var(--warn-soft); border-color: #f3d19e; }
+.globe-life-presentation .glp-whys { background: var(--good-soft); border-left-color: var(--good); }
+.globe-life-presentation .glp-pill.zoom { background: var(--accent-soft); color: var(--accent); }
+.globe-life-presentation .glp-pill.tele { background: var(--warn-soft); color: var(--warn); }
+
+/* Choice cards and buttons */
+.globe-life-presentation .selection-card { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: none; }
+.globe-life-presentation .selection-card:hover { border-color: var(--accent); transform: none; box-shadow: 0 6px 18px rgba(15,27,45,.06); }
+.globe-life-presentation .selection-card.selected { background: var(--accent-soft); border-color: var(--accent); }
+.globe-life-presentation .selection-card.selected::after { background: var(--accent); }
+.globe-life-presentation .selection-card h3, .globe-life-presentation .selection-card.selected h3 { color: var(--ink); }
+.globe-life-presentation .selection-card p { color: var(--muted); }
+.globe-life-presentation .option-btn { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+.globe-life-presentation .option-btn:hover { background: var(--accent-soft); transform: none; }
+.globe-life-presentation .option-btn.selected { background: var(--accent); color: #fff; }
+.globe-life-presentation .option-confirmation { background: var(--good-soft); border-color: var(--good); color: #14532d; }
+.globe-life-presentation .save-btn, .globe-life-presentation .toggle-notes-btn { background: var(--accent); box-shadow: none; }
+.globe-life-presentation .glp-small { color: var(--accent); border-color: #c9d6ea; font-weight: 700; }
+.globe-life-presentation .glp-small:hover { background: var(--accent-soft); }
+.globe-life-presentation .form-input { border: 2px solid var(--line); border-radius: 10px; font: inherit; color: var(--ink); }
+.globe-life-presentation .form-input:focus { border-color: var(--accent); box-shadow: none; }
+.globe-life-presentation .form-label { color: var(--ink); }
+
+/* Tips */
+.globe-life-presentation .tips-panel { background: var(--bg); border-left: 1px solid var(--line); }
+.globe-life-presentation .tips-header { background: var(--bg); color: var(--muted); text-align: left; padding: 18px 16px 6px; }
+.globe-life-presentation .tips-header h3 { color: var(--muted); font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
+.globe-life-presentation .tip-card { background: #fff; border: 1px solid var(--line); border-left: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+.globe-life-presentation .tip-card:hover { transform: none; box-shadow: none; }
+.globe-life-presentation .tip-card h4 { color: var(--ink); }
+.globe-life-presentation .tip-card p { color: var(--muted); }
+.globe-life-presentation .glp-objections-btn { background: #fff; color: var(--bad); border: 1.5px solid #e9b4ae; box-shadow: 0 4px 14px rgba(15,27,45,.1); font-weight: 700; }
+.globe-life-presentation .glp-objections-btn:hover { background: #fdecea; }
+.globe-life-presentation .glp-reb summary { color: var(--accent); }
+.globe-life-presentation .glp-overlay-card { border-radius: 14px; }
+
+/* Bottom bar */
+.globe-life-presentation .nav-buttons { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: 68px; margin: 0; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #fff; border-top: 1px solid var(--line); box-shadow: none; }
+.globe-life-presentation .nav-btn { background: #fff; color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px; box-shadow: none; font: inherit; font-weight: 700; padding: 11px 22px; transform: none; }
+.globe-life-presentation .nav-btn:hover:not(:disabled) { background: var(--bg); transform: none; box-shadow: none; }
+.globe-life-presentation .nav-btn.next-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+.globe-life-presentation .nav-btn.next-btn:hover:not(:disabled) { background: #083a85; }
+.globe-life-presentation .nav-btn:disabled { opacity: .45; }
+.globe-life-presentation .glp-keys { display: none !important; }
+.glp-landing .glp-keys { display: block !important; color: var(--muted); }
+
+/* Make the call screen */
+.cm, .cm button, .cm input, .cm select, .cm textarea { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+.glp-landing h1 { border: 0; padding: 0; }
+.globe-life-presentation .glp-brand { order: -2; }
+.globe-life-presentation .toggle-btn.dial-btn { order: -1; }
+.globe-life-presentation .nav-sub-item { color: #3f5470; padding-left: 22px; opacity: 1; font-size: 13px; }
+.globe-life-presentation .glp-new { color: #8f5200; background: #fff4e5; }
+html.framed .globe-life-presentation .glp-brand { display: none; }
+html.framed .globe-life-presentation .glp-topbar { justify-content: flex-end; height: 56px; }
+html.framed .globe-life-presentation .presentation-container { height: calc(100vh - 56px - 68px); }
+@media (max-width: 1200px) { .globe-life-presentation .presentation-container { width: 100%; max-width: none; } }
+@media (max-width: 900px) {
+  .globe-life-presentation .presentation-container { margin: 0; width: 100%; border-radius: 0; }
+  .globe-life-presentation .presentation-layout { flex-direction: column; height: 100%; min-height: 0; }
+  .globe-life-presentation .nav-panel { width: 100%; min-width: 0; height: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--sky-line); }
+  .globe-life-presentation .nav-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+  .globe-life-presentation .nav-header h3 { display: none; }
+  .globe-life-presentation .glp-session { margin: 0; white-space: nowrap; }
+  .globe-life-presentation .progress-bar { margin: 0; flex: 1; }
+  .globe-life-presentation .nav-content { display: flex; overflow-x: auto; padding: 8px 6px; gap: 0; }
+  .globe-life-presentation .nav-section { display: flex; flex-shrink: 0; margin: 0; }
+  .globe-life-presentation .nav-section-title { display: none; }
+  .globe-life-presentation .nav-item { white-space: nowrap; margin: 0 2px; padding-left: 12px; }
+  .globe-life-presentation .glp-navfoot { display: none; }
+  .globe-life-presentation .content-panel { flex: 1; min-height: 0; overflow: auto; }
+  .globe-life-presentation .content-wrapper { padding: 20px 18px 80px; }
+  .globe-life-presentation .toggle-btn { padding: 8px 14px; font-size: 13px; }
+}
+@media (max-width: 600px) {
+  .globe-life-presentation .glp-brand div { display: none; }
+  .globe-life-presentation .glp-topbar { padding: 0 12px; gap: 8px; }
+  .globe-life-presentation .toggle-btn { white-space: nowrap; }
+  .glp-landing h1 { font-size: 27px; }
+}
+
+    </style>
+</head>
+<body>
+    <div class="globe-life-presentation" id="glp">
+        <!-- Start Button -->
+        <div class="glp-topbar">
+            <div class="glp-brand"><img src="globe.png" alt=""><div><b>Presentation tool</b><span>Virtual Presentation Academy</span></div></div>
+            <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
+        </div>
+
+        <!-- Landing: shown until a presentation starts -->
+        <section class="glp-landing" id="glpLanding">
+            <div class="eyebrow">Ready when you are</div>
+            <h1>What are you doing next?</h1>
+            <p class="lead">Use this on every real call. It walks you through the script step by step, fills in your client's names, and keeps rebuttals one tap away.</p>
+            <div class="glp-landing-grid">
+                <button class="glp-choice call" type="button" id="landingDial"><span class="ic" aria-hidden="true">📞</span><b>Make the call</b><span>You haven't reached them yet. Get the opening for their lead type, the rebuttals, and book the appointment or start now.</span><span class="go">Start dialing →</span></button>
+                <button class="glp-choice" type="button" id="landingStart"><span class="ic" aria-hidden="true">🖥️</span><b>Start the presentation</b><span>They're ready. Present by phone or on Zoom, with the client slides on their screen and your script on yours.</span><span class="go">Start presenting →</span></button>
+            </div>
+            <p class="glp-keys">Tip: during the presentation, use the ← and → arrow keys to move between steps.</p>
+        </section>
+
+        <!-- Main Presentation Container -->
+        <div id="presentationContainer" class="presentation-container">
+            <div class="presentation-layout">
+                <div class="nav-panel">
+                    <div class="nav-header">
+                        <h3>Presentation Navigation</h3>
+                        <div class="glp-session" id="sessionLine">New client</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    </div>
+                    <div class="nav-content" id="navigationContent"></div>
+                    <div class="glp-navfoot">
+                        <button class="glp-small" id="newClientBtn" type="button">＋ New client</button>
+                        <button class="glp-small" id="recentBtn" type="button">Recent</button>
+                    </div>
+                </div>
+                <div class="content-panel">
+                    <div class="glp-formatbar" id="formatBar"></div>
+                    <div class="content-wrapper">
+                        <div id="slideContent" class="slide-content"></div>
+                    </div>
+                </div>
+                <div class="tips-panel">
+                    <div class="tips-header"><h3>📋 Section Tips</h3></div>
+                    <div class="tips-content" id="tipsContent"></div>
+                </div>
+            </div>
+            <button class="glp-objections-btn" id="objectionsBtn" type="button">🛡️ Objections</button>
+            <div class="glp-overlay" id="objectionsPanel" hidden>
+                <div class="glp-overlay-card">
+                    <div class="glp-overlay-head"><h2>Objections & Rebuttals</h2><button class="glp-small" id="closeObjections" type="button">Close ✕</button></div>
+                    <div id="objectionsBody"></div>
+                </div>
+            </div>
+            <div class="glp-overlay" id="recentPanel" hidden>
+                <div class="glp-overlay-card narrow">
+                    <div class="glp-overlay-head"><h2>Recent clients</h2><button class="glp-small" id="closeRecent" type="button">Close ✕</button></div>
+                    <div id="recentBody"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="nav-buttons" id="navButtons" style="display: none;">
+            <button class="nav-btn" id="prevBtn" type="button">← Previous</button>
+            <button class="nav-btn next-btn" id="nextBtn" type="button">Next →</button>
+        </div>
+        <p class="glp-keys" id="keysHint" style="display:none">Tip: use the ← and → arrow keys to move between steps.</p>
+    </div>
+
+    <!-- Client screen (Zoom): only the slide, nothing else -->
+    <div class="glp-client" id="clientScreen" hidden>
+        <div class="glp-client-stage" id="clientStage"></div>
+    </div>
+
+    <script>
+/* =====================================================================
+   Globe Life Presentation Tool, v2
+   Two formats: Telesales (no screen shared) and Zoom (screen shared).
+   ===================================================================== */
+const IMG_MODE = "imgur"; // "local" inside the academy, "imgur" on the agency site
+/* Updated 2026 slides are not on Imgur: keep them in a "slides" folder next to this file. */
+const NEW_IMGS = ["mtb2026", "sports2026", "ad2026", "needs2026", "health2026"];
+/* PASTE YOUR IMAGE LINKS HERE: upload the 5 new 2026 slides to your website's media library and paste each link between the quotes. */
+const NEW_IMG_URLS = {
+    mtb2026: "",    // Make Tomorrow Better
+    sports2026: "", // Sports Partnerships
+    ad2026: "",     // Accidental Death
+    needs2026: "",  // Needs Survey
+    health2026: ""  // General Health Questions
+};
+function imgSrc(id) {
+    if (IMG_MODE === "local") return "slides/" + id + ".png";
+    if (NEW_IMGS.includes(id)) return NEW_IMG_URLS[id] || "slides/" + id + ".png";
+    return "https://i.imgur.com/" + id + ".jpg";
+}
+/* eApp screenshots: the agent shares the eApp for these steps, so the client screen never shows them. */
+const EAPP_IMGS = ["needs2026", "health2026", "mldYt4w", "a3c6Qwa", "aKCux6w", "E0IdCoH", "RkKSjKZ", "PbQ6KSq", "a4blatc", "RkpxWqz"];
+
+/* ---------- session (one client at a time; practice calls use their own) ---------- */
+const MODE = /:practice/.test(location.hash) ? "practice" : "live";
+const SESSION_KEY = MODE === "practice" ? "glp_session_practice" : "glp_session_v2";
+const RECENT_KEY = "glp_recent_v2";
+function blankSession() {
+    return { format: null, type: null, leadType: null, agent: lsGet("glp_agent") || "", client: "", spouse: "", kids: "", time: "", referrer: "", referrerRel: "",
+        notes: { family: "", occupation: "", recreation: "", commonalities: "", additional: "" }, whys: {}, yes: {}, rapportStart: null, current: 0, savedAt: null };
+}
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let S = (() => { try { const x = JSON.parse(lsGet(SESSION_KEY) || "null"); return x ? Object.assign(blankSession(), x) : blankSession(); } catch (e) { return blankSession(); } })();
+function saveSession() { S.savedAt = new Date().toISOString(); lsSet(SESSION_KEY, JSON.stringify(S)); if (S.agent) lsSet("glp_agent", S.agent); broadcast(); }
+let channel = null; try { channel = new BroadcastChannel("glp_client_" + MODE); } catch (e) {}
+function broadcast() { const msg = { current: currentSlideIndex, format: S.format }; lsSet("glp_current_" + MODE, JSON.stringify(msg)); if (channel) try { channel.postMessage(msg); } catch (e) {} }
+
+/* ---------- names and placeholders ---------- */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function nm(key) {
+    const v = {
+        client: S.client, spouse: S.spouse, agent: S.agent, time: S.time, referrer: S.referrer, referrerRel: S.referrerRel,
+        clients: S.client && S.spouse ? S.client + " and " + S.spouse : S.client,
+        kids: S.kids, leadType: S.leadType
+    }[key];
+    const fallback = { client: "(client)", spouse: "(spouse)", agent: "(agent)", time: "(time)", referrer: "(referrer's name)", referrerRel: "(friend/family member)", clients: "(client[s])", kids: "(children's names)", leadType: "(lead type)" }[key];
+    return v ? `<span class="ph filled">${esc(v)}</span>` : `<span class="ph">${fallback}</span>`;
+}
+const hasSpouse = () => !!S.spouse; const hasKids = () => !!S.kids;
+const tele = () => S.format === "tele";
+function cue(zoomText, teleText) { return `<p class="instruction">${tele() ? (teleText || zoomText) : zoomText}</p>`; }
+function line(zoomText, teleText) { return tele() && teleText != null ? teleText : zoomText; }
+function img(id, alt) {
+    const isEapp = EAPP_IMGS.includes(id);
+    const label = tele() ? "For your reference only. The client can't see this, so describe it." : isEapp ? "Share your eApp screen for this step." : "Share this slide on your client screen.";
+    return `<div class="slide-image ${tele() ? "ref" : ""}"><img src="${imgSrc(id)}" alt="${esc(alt)}"><span class="img-label">${label}</span></div>`;
+}
+function why(key, label) {
+    return `<div class="glp-why"><label class="glp-chk"><input type="checkbox" data-yes="${key}" ${S.yes[key] ? "checked" : ""}> Got the verbal yes</label>
+        <label class="form-label" for="why_${key}">Why is ${label} important to them? (their words)</label>
+        <input type="text" class="form-input" id="why_${key}" data-why="${key}" value="${esc(S.whys[key] || "")}" placeholder="e.g. “I don’t want my wife to have to sell the house.”"></div>`;
+}
+const LEAD_TYPES = { referral: "ADP Referral", globe: "Pre-Submit", lapsed: "Globe Lapsed", pos: "Policy Owner", renewal: "No-Cost Renewal" };
+const LEAD_SLIDE = { pos: 3, globe: 4, lapsed: 5, referral: 6, renewal: 7 };
+
+/* ---------- slides ---------- */
+const slides = [
+    { id: 0, title: "Presentation Setup", section: "Setup", content: () => `
+        <h1>🎯 Presentation Setup</h1>
+        <p>Set up the call. The script fills in names and switches its instructions to match your format.</p>
+        <div class="glp-callout dial-callout"><b>Haven't reached them yet?</b> Start with <button type="button" class="glp-small" data-act="dial">📞 Make the call</button>. It walks you through the first call for your lead type, the rebuttals, and booking the appointment or starting right now.</div>
+        <h2>Step 1: Presentation format</h2>
+        <div class="selection-grid">
+            <div class="selection-card ${S.format === "tele" ? "selected" : ""}" data-set="format" data-val="tele" role="button" tabindex="0"><div class="selection-icon">📞</div><h3>Telesales</h3><p>Phone only. No screen is shared, so you describe everything out loud.</p></div>
+            <div class="selection-card ${S.format === "zoom" ? "selected" : ""}" data-set="format" data-val="zoom" role="button" tabindex="0"><div class="selection-icon">📹</div><h3>Zoom</h3><p>Get the client on Zoom and share your screen.</p></div>
+        </div>
+        <h2>Step 2: Presentation type</h2>
+        <div class="selection-grid">
+            <div class="selection-card ${S.type === "appointment" ? "selected" : ""}" data-set="type" data-val="appointment" role="button" tabindex="0"><div class="selection-icon">🗓️</div><h3>Appointment</h3><p>Scheduled meeting with the client</p></div>
+            <div class="selection-card ${S.type === "now" ? "selected" : ""}" data-set="type" data-val="now" role="button" tabindex="0"><div class="selection-icon">⚡</div><h3>Now Presentation</h3><p>Immediate presentation opportunity</p></div>
+        </div>
+        <h2>Step 3: Lead type & names</h2>
+        <div class="glp-form-grid">
+            <div class="form-section"><label class="form-label" for="f_lead">Lead type</label><select id="f_lead" class="form-input" data-field="leadType"><option value="">Choose…</option>${Object.entries(LEAD_TYPES).map(([k, v]) => `<option value="${k}" ${S.leadType === k ? "selected" : ""}>${v}</option>`).join("")}</select></div>
+            <div class="form-section"><label class="form-label" for="f_agent">Your name</label><input id="f_agent" class="form-input" data-field="agent" value="${esc(S.agent)}" placeholder="e.g. Jordan"></div>
+            <div class="form-section"><label class="form-label" for="f_client">Client first name</label><input id="f_client" class="form-input" data-field="client" value="${esc(S.client)}" placeholder="e.g. Tasha"></div>
+            <div class="form-section"><label class="form-label" for="f_spouse">Spouse first name (optional)</label><input id="f_spouse" class="form-input" data-field="spouse" value="${esc(S.spouse)}" placeholder="e.g. Marcus"></div>
+            <div class="form-section"><label class="form-label" for="f_kids">Children's names (optional)</label><input id="f_kids" class="form-input" data-field="kids" value="${esc(S.kids)}" placeholder="e.g. Jaylen and Maya"></div>
+            <div class="form-section"><label class="form-label" for="f_time">Appointment time</label><input id="f_time" class="form-input" data-field="time" value="${esc(S.time)}" placeholder="e.g. 6:30"></div>
+            ${S.leadType === "referral" ? `<div class="form-section"><label class="form-label" for="f_ref">Referred by</label><input id="f_ref" class="form-input" data-field="referrer" value="${esc(S.referrer)}" placeholder="e.g. Keisha Moore"></div>
+            <div class="form-section"><label class="form-label" for="f_refrel">Referrer is their…</label><input id="f_refrel" class="form-input" data-field="referrerRel" value="${esc(S.referrerRel)}" placeholder="e.g. coworker"></div>` : ""}
+        </div>
+        <div id="selectionConfirmation" class="option-confirmation" ${S.format && S.type && S.leadType ? "" : 'style="display:none"'}><strong>✅ Ready.</strong> ${S.format && S.type && S.leadType ? `${S.format === "tele" ? "Telesales" : "Zoom"} · ${S.type === "appointment" ? "Appointment" : "Now Presentation"} · ${LEAD_TYPES[S.leadType]}` : ""}</div>
+        ${S.format === "zoom" ? `<div class="glp-callout"><b>Before you share:</b> open the <a href="presentation.html#client${MODE === "practice" ? ":practice" : ""}" target="_blank" rel="noopener">client screen</a> in its own window and share <i>that</i> window on Zoom. It shows only the slide, so the client never sees your script, notes or rebuttals.</div>` : ""}` },
+    { id: 1, title: "General Introduction", section: "Foundation", content: () => {
+        const lt = S.leadType ? LEAD_TYPES[S.leadType] : null; const ltName = lt ? `<span class="ph filled">${esc(lt)}</span>` : nm("leadType");
+        let body;
+        if (S.type === "now") body = tele()
+            ? `<h3>📞 Now Presentation (Telesales)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")}. I have a few minutes available right now and wanted to reach out about ${ltName}. Do you have about 15 to 20 minutes to go over this information with me right now over the phone?"</p><p><strong>If they say yes:</strong></p><p>"Perfect! I'll walk you through everything as we go. Are you in a quiet place where you can focus for a few minutes?"</p>${cue("", "*Build rapport with the F.O.R.M. method*")}<p><strong>If they say no:</strong></p><p>"No problem at all. When would be a better time for you? I can schedule a proper appointment that works with your schedule."</p>`
+            : `<h3>🎯 Now Presentation (Zoom)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")}. I have a few minutes available right now and wanted to reach out about ${ltName}. Do you have about 15 to 20 minutes to go over this information with me right now on a quick video call?"</p><p><strong>If they say yes:</strong></p><p>"Great! I'm sending you a Zoom link so I can show you the information as we go. It'll just take a second."</p><p class="instruction">*Send the Zoom link, confirm their video and sound are connected, then hang up the phone*</p><p class="instruction">*Build rapport with the F.O.R.M. method before you share your screen*</p><p><strong>If they say no:</strong></p><p>"No problem at all. When would be a better time for you? I can schedule a proper appointment that works with your schedule."</p>`;
+        else if (S.type === "appointment") body = tele()
+            ? `<h3>📞 Appointment (Telesales)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")} calling for our ${nm("time")} appointment to go over ${ltName}. Are you in a good place to talk for about 15 to 20 minutes?"</p><p><strong>Once they confirm they're ready:</strong></p><p>"Perfect! I'll walk you through everything as we go. Stop me anytime you have a question."</p><p class="instruction">*Build rapport with the F.O.R.M. method*</p>`
+            : `<h3>📹 Appointment (Zoom)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")} reaching out to you for our ${nm("time")} appointment to go over ${ltName}. I just sent over the link for our Zoom meeting. Let me know when you've received it."</p><p><strong>Once they confirm they've received it:</strong></p><p>"Go ahead and click that link to join the call. It should allow you to join the meeting from your browser."</p><p class="instruction">*Confirm their video and sound are connected, then hang up the phone*</p><p class="instruction">*Build rapport with the F.O.R.M. method before you share your screen*</p>`;
+        else body = `<p><em>Complete the Presentation Setup first to see your script.</em></p>`;
+        return `<h1>📞 Step 1: General Introduction</h1><div class="script-block">${body}</div>`;
+    } },
+    { id: 2, title: "Rapport Building", section: "Foundation", content: () => `
+        <h1>🤝 Step 2: Rapport Building</h1>
+        <div class="glp-timer" id="rapportTimer"></div>
+        <div class="notes-container">
+            <h3 class="notes-title">📝 F.O.R.M. Client Notes ${S.client ? "· " + esc(S.client) + (S.spouse ? " & " + esc(S.spouse) : "") : ""}</h3>
+            ${[["family", "👨‍👩‍👧‍👦 Family", "Family, location, who lives nearby (future referrals)"], ["occupation", "💼 Occupation", "Work, how long, what they do"], ["recreation", "🎯 Recreation", "Hobbies and interests"], ["commonalities", "🤝 Me (Commonalities)", "What you have in common"], ["additional", "📋 Additional Notes", "Anything else important"]].map(([k, l, ph]) => `<div class="form-section"><label class="form-label" for="n_${k}">${l}</label><textarea id="n_${k}" class="form-input" data-note="${k}" placeholder="${ph}">${esc(S.notes[k] || "")}</textarea></div>`).join("")}
+            <p class="glp-saved">Notes save automatically as you type.</p>
+        </div>
+        <h2>🎯 Building Trust Through F.O.R.M.</h2>
+        <div class="script-block">
+            <p><strong>40% of the presentation is rapport-building.</strong> Don't start closing right away. Go slow.</p>
+            <p>${tele() ? "Spend the first 8 to 10 minutes building rapport <strong>before</strong> you start the presentation. On the phone, your voice does all the work: smile while you talk, and react to what they say." : "Spend the first 8 to 10 minutes building rapport <strong>before</strong> you start screen sharing."}</p>
+            <p>The client must buy you first, the company second, and then the products. It cannot go in any other order.</p>
+        </div>
+        <h3>💡 The F.O.R.M. Method</h3>
+        <p><strong>👨‍👩‍👧‍👦 Family:</strong> So, are you from this area? Does your family live nearby? What family do you have in this area?</p><p class="instruction">These are potential referral sources to collect later.</p>
+        <p><strong>💼 Occupation:</strong> How long have you been at your job? What exactly do you do there?</p><p class="instruction">People like to talk about their work. Show genuine interest.</p>
+        <p><strong>🎯 Recreation:</strong> What do you do for fun?</p><p class="instruction">Discover hobbies for common ground and referral sources.</p>
+        <p><strong>🤝 Me:</strong> Share commonalities like living in the same area, knowing the same people, or similar hobbies.</p><p class="instruction">Don't dominate the conversation. Share briefly, then hand it back.</p>
+        <div class="script-block"><p><strong>⚠️ Remember:</strong> Don't make it an interrogation. Follow F.O.R.M. naturally.</p></div>` },
+    { id: 3, title: "Policy Owner", section: "Lead Types", content: () => `
+        <h1>🛡️ Step 3: Policy Owner Lead</h1><div class="script-block">
+        <p>"Well, ${nm("clients")}, I reached out to you so I can service your policy and make sure you're all up to date. Do you remember how your policy works?"</p><p class="instruction">*Wait for an answer*</p>
+        <p>"To keep in touch with our policyholders regularly, the company asked that I reach out to you to set up this meeting. During this meeting, I'm going to do three simple things:</p>
+        <ol><li>Thank you for being a policyholder with our company by renewing your no-cost benefits.</li><li>Do a new needs analysis to make sure your current coverage is still adequate.</li><li>Review your existing coverage and what it provides for you and your family. If you're like most of our clients, you probably don't remember all your policy details.</li></ol>
+        <p>To renew your no-cost benefits, I need to verify the information I have on file."</p>
+        ${cue("*Screenshare & verify information on the Customer & State Entry Page & set lead type to Policy Owner Service*", "*Read their information back to verify it against the Customer & State Entry Page & set lead type to Policy Owner Service*")}</div>` },
+    { id: 4, title: "Pre-Submit", section: "Lead Types", content: () => `
+        <h1>🔍 Step 3: Pre-Submit Lead</h1><div class="script-block">
+        <p>"Well, ${nm("clients")}, I'm speaking with you today in response to your request for more information about life insurance. I've been asked to meet with you to answer any questions you have. We have a simple 2-step process:</p>
+        <ol><li>We'll set up the no-cost benefits you are entitled to by simply inquiring with our company.</li><li>We'll go through a needs analysis to see exactly what you qualify for and what you need to protect your family best.</li></ol>
+        <p>To get started, I need some basic information."</p>
+        ${cue("*Screenshare & verify information on the Customer & State Entry Page & set lead type to Globe*", "*Read their information back to verify it against the Customer & State Entry Page & set lead type to Globe*")}</div>` },
+    { id: 5, title: "Globe Lapsed", section: "Lead Types", content: () => `
+        <h1>⏰ Step 3: Globe Lapsed Lead</h1><div class="script-block">
+        <p>"Well, ${nm("clients")}, I'm speaking with you today because I noticed your Globe Life policy has lapsed. Our records show that you were previously interested in having life insurance coverage. Today, I'd like to:</p>
+        <ol><li>Understand what led to your policy lapsing</li><li>See if we can find a solution that better fits your current situation</li><li>Review what benefits you're eligible for now</li></ol>
+        <p>To get started, I need to verify some information with you."</p>
+        <p class="instruction">*Listen closely to why it lapsed. It tells you which objection is coming at the close.*</p>
+        ${cue("*Screenshare & verify information on the Customer & State Entry Page & set lead type to Globe Lapsed*", "*Read their information back to verify it against the Customer & State Entry Page & set lead type to Globe Lapsed*")}</div>` },
+    { id: 6, title: "ADP Referral", section: "Lead Types", content: () => `
+        <h1>👥 Step 3: ADP Referral Lead</h1><div class="script-block">
+        <p>"Well, ${nm("clients")}, I'm speaking with you today because your ${nm("referrerRel")}, ${nm("referrer")}, thought it would be beneficial for us to talk. They recently met with me regarding their insurance needs and mentioned you might appreciate similar information. Our meeting today is simple:</p>
+        <ol><li>I'd like to set up the no-cost benefits you're entitled to as a referral from one of our valued clients</li><li>Go through a brief needs analysis to see what solutions might work best for your unique situation</li></ol>
+        <p>To get started, I just need to verify some basic information."</p>
+        ${cue("*Screenshare & verify information on the Customer & State Entry Page & set lead type to Referral*", "*Read their information back to verify it against the Customer & State Entry Page & set lead type to Referral*")}</div>` },
+    { id: 7, title: "No-Cost Renewal", section: "Lead Types", content: () => `
+        <h1>🔄 Step 3: No-Cost Renewal Lead</h1><div class="script-block">
+        <p>"Well, ${nm("clients")}, I'm reaching out today because you're eligible for our no-cost benefits renewal. As a valued contact in our system, you qualify for certain complimentary benefits. During our meeting today, I'll:</p>
+        <ol><li>Review the no-cost benefits you're eligible for</li><li>Update your information in our system</li><li>Answer any questions you might have about additional coverage options</li></ol>
+        <p>Let me first verify the information we have on file."</p>
+        ${cue("*Screenshare & verify information on the Customer & State Entry Page & set lead type to No-Cost Renewal*", "*Read their information back to verify it against the Customer & State Entry Page & set lead type to No-Cost Renewal*")}</div>` },
+    { id: 8, title: "Company Introduction", section: "Presentation", content: () => `
+        <h1>🏢 Step 4: Company Introduction</h1>${img("1Ync7mS", "Welcome to Globe Life Liberty National Division")}
+        <div class="script-block"><p>"The name of our company is Globe Life Liberty National Division. We've been committed to protecting American families where we live and serve for over 120 years. Due to our unique one-on-one service, the Globe Life companies combined have more policyholders than any other life insurance company in the country. With more than 129,000 claims fulfilled every year, we're proud to help lessen the financial strain on the worst day in a family's life."</p></div>` },
+    { id: 9, title: "Make Tomorrow Better", section: "Presentation", content: () => `
+        <h1>🌟 Step 5: Make Tomorrow Better</h1>${img("mtb2026", "Make Tomorrow Better")}
+        <div class="script-block"><p>"As we grow, so do our efforts to give back to the communities we protect. Through our Make Tomorrow Better program, we donate millions of dollars and spend countless hours helping those in need. We're looking forward to helping you Make Tomorrow Better."</p></div>` },
+    { id: 10, title: "Sports Partnerships", section: "Presentation", content: () => `
+        <h1>🏆 Step 6: Sports Partnerships</h1>${img("sports2026", "Globe Life Sports Partnerships")}
+        <div class="script-block"><p>"Now, ${nm("client")}, are you a sports fan?"</p><p class="instruction">*Wait for an answer*</p>
+        <p>"After checking out our background, financial strength and mission, we're very proud to say that we're the official life insurance of the Texas Rangers, the Dallas Cowboys and the Los Angeles Lakers, and a proud partner of the Atlanta Braves."</p></div>` },
+    { id: 11, title: "Accidental Death Policy", section: "Presentation", content: () => `
+        <h1>⚡ Step 7: Accidental Death Policy</h1>${img("ad2026", "Accidental Death Policy")}
+        <div class="script-block"><p>"${nm("client")}, the purpose of our meeting today is to set up your no-cost Accidental Death Policy. Accidents are the leading cause of death among those 1 to 44 years old, and the third leading cause overall. They can happen to anyone, unexpectedly. This benefit will cover you${hasSpouse() ? ` and ${nm("spouse")}` : ""} with $3,000${hasKids() ? `, and each of your children with $1,000` : ""}. It's designed to provide an immediate payout to your family if an unexpected death occurs. I'm sure you can see how valuable that would be, right?"</p><p class="instruction">*Wait for an answer*</p></div>` },
+    { id: 12, title: "Referral Collection", section: "Presentation", content: () => `
+        <h1>👥 Step 8: Referral Collection</h1>${img("aKCux6w", "Add Leads screen")}
+        <div class="script-block"><p>"${nm("client")}, the company is now allowing you to gift this same no-cost benefit to people in your circle who you think can use it the most. Most of my clients give this to a minimum of 10 people. Let's start with your beneficiary. In the event of your unexpected death, who would handle your final expenses?"</p>
+        ${cue("*Enter each name on the Add Leads screen. Use your F.O.R.M. notes below.*", "*Enter each name on the Add Leads screen as they talk. Use your F.O.R.M. notes below.*")}<p>"Who's next?"</p></div>
+        <div class="notes-container"><h3 class="notes-title">📋 From your F.O.R.M. notes</h3>${notesReference()}</div>` },
+    { id: 13, title: "Word of Thanks", section: "Presentation", content: () => `
+        <h1>🙏 Step 9: A Word of Thanks</h1>${img("vb8IWWD", "A Word of Thanks")}
+        <div class="script-block"><p>"What I have next is a brief thank you letter explaining the purpose of our meeting today outside of our no-cost benefits."</p>
+        ${tele() ? `<p class="instruction">*On the phone this is the only way they hear the letter. Read it slowly.*</p>` : ""}
+        <p>"We'd like to thank you for listening to the agent who is speaking with you today. We are a trusted name in insurance. The Globe Life companies issue more life insurance policies and have more policyholders than any other life insurance company in the country. Our benefits are not in competition with any benefits you may already have and are meant to work in conjunction with any benefits through your employer, or other coverage you have in place. Please listen to the agent speaking with you. If we can help you with any of your needs, please take advantage of this coverage today."</p>
+        <p>"In other words, after I've answered any questions you may have, I expect a simple 'yes' or 'no'. We anticipate these benefits will make sense to you, so go ahead and take advantage of them today. Any questions so far?"</p>
+        <p class="instruction">*Get a verbal confirmation that they understand*</p></div>` },
+    { id: 14, title: "Insurance Types", section: "Presentation", content: () => `
+        <h1>📊 Step 10: Which Type of Life Insurance Is Right for You?</h1>${img("VRyZV9z", "Types of Life Insurance")}
+        <div class="script-block"><p>"${nm("client")}, every person I meet with has different needs regarding insuring themselves and their families. Since every situation is unique, I will briefly explain the 2 kinds of life insurance. That way, you can make the best decision for those you would be leaving behind."</p></div>` },
+    { id: 15, title: "Term & Whole Life", section: "Presentation", content: () => `
+        <h1>📈 Step 11: Term & Whole Life Comparison ("Hill Slide")</h1>${img("kfqHNqL", "Term and Whole Life Comparison")}
+        ${tele() ? `<p class="instruction">*They can't see the hill, so paint it: "Picture life like a hill. As you go up, you add a spouse, a home, kids. That's when you need the most protection. As you come down the other side, the house gets paid off and the kids grow up."*</p>` : ""}
+        <div class="script-block"><p>"Generally speaking, life insurance is offered in whole life or term life policies.</p>
+        <p>Simply put, whole life insurance covers you from the time the policy begins through the end of your life. Once in force, the coverage will never decrease, and premiums will never increase. This makes the coverage best suited for needs that will never change, such as end-of-life expenses.</p>
+        <p>Term life, on the other hand, covers a specific length of time, or term. It's typically used for temporary needs, such as replacing income, covering the mortgage, or paying for your children's education.</p>
+        <p>As life progresses and those obligations are taken care of, term life insurance is no longer needed. Then you can fall back on your whole life policy, which will cover any remaining needs for the rest of your life. Make sense?"</p></div>` },
+    { id: 16, title: "Needs Survey", section: "Assessment", content: () => `
+        <h1>📋 Step 12: Needs Survey</h1>${img("needs2026", "Needs Survey: Personal Information")}
+        <div class="script-block"><p>"Now that you have more information on the different types of life insurance, I'll ask you some questions to see exactly what you qualify for, and we'll go on from there."</p>
+        ${cue("*Complete the survey on the eApp through the medical questions*", "*Complete the survey on the eApp through the medical questions. Read each question out loud.*")}
+        <p class="instruction">*Ask about existing coverage now, so "I already have insurance" doesn't surprise you at the close.*</p></div>` },
+    { id: 17, title: "Medical Questions", section: "Assessment", content: () => `
+        <h1>🏥 Step 13: Medical Questions</h1>${img("health2026", "General Health Questions")}
+        <div class="script-block"><p>"The way you qualify for life insurance coverage is you must be in relatively good health. Some people who want coverage don't qualify medically, so I'll go ahead and ask you${hasSpouse() ? ` and ${nm("spouse")}` : ""} some questions about your family's health."</p>
+        <p class="instruction">*Ask every question. Never guess, skip, or promise approval.*</p></div>` },
+    { id: 18, title: "Final Expense", section: "Benefits", content: () => `
+        <h1>⚰️ Step 14: Final Expense Protection</h1>${img("zH21odE", "Final Expense")}
+        <h2>Introduce and Explain the Benefit</h2>
+        <div class="script-block"><p>"The first thing you qualify for is final expense protection. This benefit will provide the money needed to cover your final expenses.</p>
+        <p>Some things your loved ones may be asked to pay for include transportation, embalming or cremation, preparation of the body, the facility fee for viewing, the hearse, memorial materials, a metal casket, urn or vault, a cemetery plot, opening and closing of the grave, and a monument and marker.</p>
+        <p>Funeral and cemetery expenses can be up to $15,000 today, and cremation prices can range up to $10,000 depending on what services are selected. If you qualify, Social Security only pays a $255 death benefit.</p>
+        <p>Remember, just like other things, funerals are subject to inflation. In the next 20 years, final expenses are projected to cost up to $30,000."</p></div>` },
+    { id: 19, title: "Freedom of Choice", section: "Benefits", content: () => `
+        <h1>🗽 Step 15: Freedom of Choice</h1>${img("lFkhsjG", "Freedom of Choice Certificate")}
+        <div class="script-block"><p>"We also have what's called the Freedom of Choice Certificate to handle a massive burden for your family. Your beneficiary will take this to the funeral home instead of handing your policy to the funeral director.</p>
+        <p>What's great about the certificate is that it has no dollar amounts on it. ${nm("client")}, if the funeral director knew you had $30,000 of coverage, how much would they charge your beneficiary for all your final expenses?"</p><p class="instruction">*Wait for a response*</p>
+        <p>"Exactly! Since they won't know how much coverage you have, your beneficiary can negotiate and get the best deal possible. Any remaining benefit goes back to your loved ones."</p></div>` },
+    { id: 20, title: "Final Expense Recap", section: "Benefits", content: () => `
+        <h1>📊 Step 16: Final Expense Benefit Recap</h1>${img("E0IdCoH", "Final Expense recap")}
+        <div class="script-block"><p>"As you can see, you don't have any protection here / you only have <span class="ph">($X)</span> of coverage, so you'll need <span class="ph">(coverage needed)</span>, which is the amount we're providing you with. Make sense so far?"</p>
+        ${tele() ? `<p class="instruction">*On the phone, say the numbers slowly: what they have, what they need, and what you're providing.*</p>` : ""}
+        <h3>Tie Down</h3><p>"I'm sure you can see how important this benefit is when something happens to you, right?"</p><p class="instruction">*Get a verbal yes*</p><p>"Why is this benefit important to you?"</p></div>
+        ${why("fe", "Final Expense")}` },
+    { id: 21, title: "Income Protection", section: "Benefits", content: () => `
+        <h1>💰 Step 17: Income Protection & Recap</h1>${img("vHzprjc", "Income Protection")}
+        <h2>Introduce and Explain the Benefit</h2>
+        <div class="script-block"><p>"${line("Now, on your screen, you should see 'Income Protection.'", "Next, I want to talk about Income Protection.")}</p>
+        <p>In addition to providing the money needed for your final expenses, another major concern is how your family would continue to pay all the bills after your paycheck has stopped coming in.</p>
+        <p>${nm("client")}, most families can't afford to lose just one check, let alone the rest of their earnings forever! ${line("As the slide shows, we", "We")} recommend you have at least 1 to 2 years of your income protected for your family."</p></div>
+        <h2>Recap the Benefit</h2>${img("RkKSjKZ", "Income Protection recap")}
+        <div class="script-block"><p>"${nm("client")}, ${line("as you can see here, ", "")}we've provided 2 years of income protection for ${hasSpouse() ? "both of you" : "you"}. This would allow your family to maintain their quality of life in the event of your death. Does that make sense so far?"</p>
+        <h3>Tie Down</h3><p>"I'm sure you can see how vitally important this is when you die, right?"</p><p class="instruction">*Get a verbal yes*</p><p>"Why is this benefit important to you?"</p></div>
+        ${why("income", "Income Protection")}` },
+    { id: 22, title: "Mortgage Protection", section: "Benefits", content: () => `
+        <h1>🏠 Step 18: Mortgage Protection</h1>${img("WmP1yNu", "Mortgage Protection")}
+        <h2>Introduce and Explain the Benefit</h2>
+        <div class="script-block"><p>"Remember that there will be an adjustment period after the death of the breadwinner. But the most expensive bill, which is usually the mortgage, will still need to be paid.</p>
+        <p>${nm("client")}, the last thing we want is for your family to lose you and possibly their home in the same year. Stability will be essential at that time so they can rebuild their lives."</p>
+        <p class="instruction">*If they rent, talk about keeping a roof over the family instead.*</p></div>
+        <h2>Recap the Benefit</h2>${img("PbQ6KSq", "Mortgage Protection recap")}
+        <div class="script-block"><p>"${line("As you can see, we'll", "We'll")} provide <span class="ph">$(X)</span> of mortgage protection. This would pay off your home in the event of <span class="ph">(breadwinner's)</span> death. Does that make sense so far?"</p>
+        <h3>Tie Down</h3><p>"Once again, I'm sure you can see how important this protection is for your family, right?"</p><p class="instruction">*Get a verbal yes*</p><p>"Why is this benefit important to you?"</p></div>
+        ${why("mortgage", "Mortgage Protection")}` },
+    { id: 23, title: "College Education", section: "Benefits", content: () => `
+        <h1>🎓 Step 19: College Education</h1>${img("gGkFgwe", "College Education")}
+        <h2>Introduce and Explain the Benefit</h2>
+        <div class="script-block"><p>"${line("Okay, the next slide discusses the importance of your children's college education. Can you see that?", "Okay, next I want to talk about the importance of your children's college education.")}</p>
+        <p>Most children rely on their parents to attend college, whether they help financially or by simply co-signing student loans. A college education can affect future generations of your family. ${line("As the slide shows, the", "The")} current average cost of a 2 to 6 year college education is between $25,000 and $116,000."</p></div>
+        <h2>Recap the Benefit</h2>${img("a4blatc", "College Education recap")}
+        <div class="script-block"><p>"${line("You will see here that we've", "We've")} provided <span class="ph">$(amount)</span> of coverage for ${nm("kids")}."</p>
+        <h3>Tie Down</h3><p>"It probably goes without saying how important that is, right?"</p><p class="instruction">*Get a verbal yes*</p><p>"Why is this benefit important to you?"</p></div>
+        ${why("college", "College Education")}` },
+    { id: 24, title: "Final Recap & Close", section: "Closing", content: () => `
+        <h1>🎯 Step 20: Final Recap & Close</h1>${img("RkpxWqz", "Final Offer")}
+        ${whysSummary()}
+        <div class="script-block"><p>"To recap, your plan covers your final expenses, protects your income so your family can maintain their lifestyle, handles your mortgage, and safeguards your children's education. If everything makes sense, starting today, you will take a crucial step towards being fully protected. Since this plan is tailored to fit your current needs, the only question I have for you is this: which option works best for you?</p>
+        <p><strong>Option 1</strong>: has all the benefits with inflation built in for the cost of final expenses in the future</p><p><strong>OR</strong></p>
+        <p><strong>Option 2</strong>: has all the benefits and covers your final expenses at today's cost.</p>
+        <p><strong>Which option works best for you?"</strong></p>
+        ${tele() ? `<p class="instruction">*On the phone, say both monthly premiums clearly, then stop talking and wait for their answer.*</p>` : ""}
+        <p class="instruction">Once the client has given you an official answer, ask, "Why is this coverage important?"</p></div>
+        <div class="glp-callout"><b>Got an objection?</b> Press <b>🛡️ Objections</b> at the bottom-right of the screen. It works on every step.</div>` }
+];
+
+function notesReference() {
+    const rows = [["client", "👤 Client", S.client ? S.client + (S.spouse ? " & " + S.spouse : "") : ""], ["family", "👨‍👩‍👧‍👦 Family", S.notes.family], ["occupation", "💼 Occupation", S.notes.occupation], ["recreation", "🎯 Recreation", S.notes.recreation], ["commonalities", "🤝 Commonalities", S.notes.commonalities], ["additional", "📋 Additional", S.notes.additional]].filter(r => r[2] && r[2].trim());
+    if (!rows.length) return `<div class="glp-empty">💡 No notes yet. Take F.O.R.M. notes in Step 2: Rapport Building and they'll show up here.</div>`;
+    return rows.map(r => `<div class="glp-noteref"><strong>${r[1]}:</strong> ${esc(r[2])}</div>`).join("");
+}
+function whysSummary() {
+    const items = [["fe", "Final Expense"], ["income", "Income Protection"], ["mortgage", "Mortgage Protection"], ["college", "College Education"]].filter(([k]) => (S.whys[k] || "").trim());
+    if (!items.length) return "";
+    return `<div class="glp-whys"><h3>💬 In their own words</h3>${items.map(([k, l]) => `<p><strong>${l}:</strong> “${esc(S.whys[k])}”</p>`).join("")}<p class="instruction">*If they stall, bring these back: "You told me ___. That's exactly what this protects."*</p></div>`;
+}
+
+/* ---------- objections (available on every step) ---------- */
+function rebuttals() {
+    const sp = hasSpouse() ? nm("spouse") : "your spouse";
+    return [
+        { key: "already", title: "“I already have insurance.”", body: `"Yes, and the Needs Analysis has already taken that into consideration, and it has exposed the need for more coverage. What you currently have is good, but it's not enough to ensure your family is protected. It's better to find out that your protection is too little now than when it's too late, because you can do something about it now. The last thing you'd want is to leave your family open to severe financial strain when you're not around anymore to protect them. Your family will be protected with either option you pick, so which one works best?"` },
+        { key: "think", title: "“I need to think about it.”", body: `"I completely understand; this is a big decision for your family, and you must do it right. I help many families make this decision each day. Now, I have found that when someone needs to think about it, it usually comes down to one or two things: do they see the need for this? Which you already told me you did. Or can they afford this?</p><p>I don't pretend to know any family's financial situation, but what would make a bigger impact on your family on the day you die: having this monthly premium in the bank, or having all these needs taken care of? The good news is that there are two options, so if Option 1 is too much, you can always start with Option 2 and add later. The important thing is to get something started now.</p><p>Which option would be better for you to get started today?"` },
+        { key: "afford", title: "“I can't afford it.”", body: `"OK, I understand. Let me ask you: do you understand how important this is? So here's what we can do: adjust the Final Expense benefit to $15,000. That should help cover the cost of a funeral. Your income protection will remain the same, along with your mortgage coverage and the college education benefit. Let's recalculate and see where we're at. Does this make you feel better?"` },
+        { key: "email", title: "“Can you just email me something?”", fresh: true, body: `"I completely understand wanting to look it over. Earlier I mentioned that after I answered your questions, I'd expect a simple yes or no, and you said that was fair. Everything an email would show you is what we just went over together. What part would you want to look at again? Let's go over it right now."</p><p class="instruction">*Answer the question they name, then:*</p><p>"Your family's protected with either option, so which one works best to get started today?"` },
+        { key: "spouse", title: "“I need to talk to my spouse first.”", fresh: true, body: `"That makes sense; this affects you both. Let me ask: if ${sp} were here right now, what do you think their biggest question would be?"</p><p class="instruction">*Answer it, then:*</p><p>"Most spouses want to know two things: that the family's protected, and that it fits the budget. Option 2 does both. Can ${sp} hop on for a minute so I can answer any questions directly? If not, let's set a quick time today when you're both available."` },
+        { key: "bad", title: "“We had a policy before and it didn't work out.”", fresh: true, body: `"I appreciate you telling me that. What happened?"</p><p class="instruction">*Listen fully. Don't defend or interrupt.*</p><p>"That's exactly why I'm here today: to make sure your coverage fits where you are now, not where you were then. We built today's plan around your current needs and budget, and you have two options. Which one feels right for where you are now?"` },
+        { key: "busy", title: "“I'm busy right now.”", fresh: true, body: `"I understand, and I respect your time. We're close to done, and it's just a few more minutes to get your family protected. Do you have those few minutes now, or would later today or tomorrow be better so we can finish properly?"</p><p class="instruction">*If later: book a specific time before you hang up.*</p>` }
+    ];
+}
+function objectionsHTML() {
+    const items = [["fe", "Final Expense"], ["income", "Income Protection"], ["mortgage", "Mortgage Protection"], ["college", "College Education"]].filter(([k]) => (S.whys[k] || "").trim());
+    let h = items.length ? `<div class="glp-whys"><h3>💬 Use their own words</h3>${items.map(([k, l]) => `<p><strong>${l}:</strong> “${esc(S.whys[k])}”</p>`).join("")}</div>` : `<p class="glp-tip">Every rebuttal: <b>acknowledge</b> it, <b>reconnect</b> to the need they already admitted, <b>solve</b> the real concern, then <b>re-close with a choice</b>.</p>`;
+    h += `<div class="glp-rebuttals">${rebuttals().map(r => `<details class="glp-reb"><summary>${r.title}${r.fresh ? ' <span class="glp-new">New</span>' : ""}</summary><div class="script-block"><p>${r.body}</p></div></details>`).join("")}</div>`;
+    return h;
+}
+function renderObjections() { document.getElementById("objectionsBody").innerHTML = objectionsHTML(); }
+
+/* ---------- tips ---------- */
+const sectionTips = {
+    Setup: [["🎯 Preparation is key", "Pick the format, type and lead type, and add the names. The script fills them in for you."], ["📞 Telesales vs. Zoom", "On the phone, your words carry everything: describe, pause, check in. On Zoom, share only the client screen."]],
+    Foundation: [["🎯 First impressions matter", "40% of your success depends on the client buying YOU first, then the company, then the products."], ["📝 F.O.R.M.", "Family, Occupation, Recreation, Me. Every name you hear is a future referral."], ["⏰ Timing", "Spend 8 to 10 minutes on rapport. The timer turns green when you're there."]],
+    "Lead Types": [["🎯 Know your lead", "Policy owners need service, inquiries need information, lapsed leads need a solution that fits now."], ["📋 Verify information", "Always verify their information and set the correct lead type."]],
+    Presentation: [["🏢 Credibility", "120+ years, more policyholders than anyone, 129,000+ claims a year."], ["📞 Engagement check", "Zoom: “Can you see that on your screen?” Telesales: “Does that make sense?” every minute or so."]],
+    Assessment: [["📊 Thorough analysis", "The needs survey sets the coverage amounts and builds buy-in."], ["🏥 Health questions", "Ask sensitively but thoroughly. Never promise approval."]],
+    Benefits: [["💰 Make it real", "Use real costs and their real numbers."], ["🎯 Tie-downs", "After each benefit, get the yes, then ask why it matters. Type their answer in the box; it shows up at the close."]],
+    Closing: [["🎯 Assumptive close", "Two options, not yes or no: “Which option works best for you?”"], ["🛡️ Objections", "Press Objections on any step. Their own words are your best rebuttal."]]
+};
+
+/* ---------- app state + rendering ---------- */
+let currentSlideIndex = 0, isPresenting = false, rapportTick = null;
+let toggleBtn, presentationContainer, navigationContent, slideContent, prevBtn, nextBtn, navButtons, progressFill, tipsContent;
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (/^#client/.test(location.hash)) { startClientScreen(); return; }
+    toggleBtn = document.getElementById("togglePresentationBtn"); presentationContainer = document.getElementById("presentationContainer");
+    navigationContent = document.getElementById("navigationContent"); slideContent = document.getElementById("slideContent");
+    prevBtn = document.getElementById("prevBtn"); nextBtn = document.getElementById("nextBtn"); navButtons = document.getElementById("navButtons");
+    progressFill = document.getElementById("progressFill"); tipsContent = document.getElementById("tipsContent");
+    toggleBtn.addEventListener("click", togglePresentation);
+    prevBtn.addEventListener("click", () => navigateToSlide(prevTarget()));
+    nextBtn.addEventListener("click", handleNextClick);
+    document.getElementById("objectionsBtn").onclick = () => { renderObjections(); document.getElementById("objectionsPanel").hidden = false; };
+    document.getElementById("closeObjections").onclick = () => { document.getElementById("objectionsPanel").hidden = true; };
+    document.getElementById("newClientBtn").onclick = newClient;
+    document.getElementById("recentBtn").onclick = showRecent;
+    document.getElementById("closeRecent").onclick = () => { document.getElementById("recentPanel").hidden = true; };
+    slideContent.addEventListener("click", onSlideClick);
+    document.getElementById("formatBar").addEventListener("click", e => { if (e.target.closest("[data-act=callmode]")) setView("call"); });
+    slideContent.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.dataset.set) { e.preventDefault(); onSlideClick(e); } });
+    slideContent.addEventListener("input", onSlideInput);
+    slideContent.addEventListener("change", onSlideInput);
+    document.addEventListener("keydown", e => {
+        if (!isPresenting || cmActive() || /input|textarea|select/i.test(document.activeElement.tagName)) return;
+        if (e.key === "ArrowRight") { e.preventDefault(); handleNextClick(); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); navigateToSlide(prevTarget()); }
+        if (e.key === "Escape") document.querySelectorAll(".glp-overlay").forEach(o => o.hidden = true);
+    });
+    generateNavigation(); updateSessionLine(); updateTipsForSection("Setup");
+});
+
+function togglePresentation() {
+    isPresenting = !isPresenting;
+    presentationContainer.style.display = isPresenting ? "block" : "none";
+    navButtons.style.display = isPresenting ? "flex" : "none";
+    document.getElementById("keysHint").style.display = isPresenting ? "block" : "none";
+    toggleBtn.textContent = isPresenting ? "Exit Presentation" : "Start Presentation";
+    toggleBtn.classList.toggle("active", isPresenting);
+    if (isPresenting) setCurrentSlide(S.current || 0); else cmSync();
+}
+function generateNavigation() {
+    const sections = ["Setup", "Foundation", "Lead Types", "Presentation", "Assessment", "Benefits", "Closing"];
+    navigationContent.innerHTML = sections.map(sec => {
+        const items = slides.filter(s => s.section === sec);
+        return `<div class="nav-section"><div class="nav-section-title">${sec}</div>${items.map(s => `<div class="nav-item ${s.section === "Lead Types" ? "nav-sub-item" : ""} ${s.section === "Lead Types" && S.leadType && LEAD_SLIDE[S.leadType] === s.id ? "lead-pick" : ""}" data-slide="${s.id}" role="button" tabindex="0">${s.title}</div>`).join("")}</div>`;
+    }).join("");
+    navigationContent.querySelectorAll(".nav-item").forEach(n => { n.onclick = () => setCurrentSlide(+n.dataset.slide); n.onkeydown = e => { if (e.key === "Enter") setCurrentSlide(+n.dataset.slide); }; });
+}
+function setCurrentSlide(i) {
+    const slide = slides[i]; if (!slide) return;
+    currentSlideIndex = i; S.current = i;
+    if (!CM.atEnd) CM.beat = 0; CM.showSlide = false;
+    if (i === 2 && !S.rapportStart) S.rapportStart = Date.now();
+    renderSlide();
+    navigationContent.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", +n.dataset.slide === i));
+    progressFill.style.width = ((i + 1) / slides.length * 100) + "%";
+    updateTipsForSection(slide.section);
+    prevBtn.disabled = i === 0; nextBtn.disabled = i === slides.length - 1;
+    prevBtn.style.opacity = i === 0 ? "0.5" : "1"; nextBtn.style.opacity = i === slides.length - 1 ? "0.5" : "1";
+    saveSession();
+    document.querySelector(".content-wrapper").scrollTop = 0;
+}
+function renderSlide() {
+    const slide = slides[currentSlideIndex];
+    slideContent.innerHTML = slide.content();
+    setTimeout(cmSync, 0);
+    renderFormatBar();
+    clearInterval(rapportTick);
+    if (currentSlideIndex === 2) { const tick = () => { const el = document.getElementById("rapportTimer"); if (!el) return; const sec = Math.floor((Date.now() - S.rapportStart) / 1000); const ok = sec >= 480; el.className = "glp-timer " + (ok ? "ok" : ""); el.innerHTML = `⏱️ Rapport time <b>${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}</b> · ${ok ? "You've hit 8 minutes. Move on when it feels natural." : "Aim for 8 to 10 minutes before you start the presentation."}`; }; tick(); rapportTick = setInterval(tick, 1000); }
+}
+function renderFormatBar() {
+    const fb = document.getElementById("formatBar");
+    if (!S.format) { fb.innerHTML = ""; fb.style.display = "none"; return; }
+    fb.style.display = "flex";
+    fb.innerHTML = `<span class="glp-pill ${S.format}">${S.format === "tele" ? "📞 Telesales: describe it, the client can't see your screen" : "📹 Zoom: share the client screen only"}</span>${S.format === "zoom" ? `<a class="glp-small link" href="presentation.html#client${MODE === "practice" ? ":practice" : ""}" target="_blank" rel="noopener">Open client screen ↗</a>` : ""}${currentSlideIndex > 0 ? `<button type="button" class="glp-small cm-switch" data-act="callmode">📞 Switch to Call mode</button>` : ""}`;
+}
+function updateTipsForSection(sec) { if (!tipsContent || !sectionTips[sec]) return; tipsContent.innerHTML = sectionTips[sec].map(([t, c]) => `<div class="tip-card"><h4>${t}</h4><p>${c}</p></div>`).join(""); }
+function updateSessionLine() { const el = document.getElementById("sessionLine"); if (el) el.textContent = (MODE === "practice" ? "Practice · " : "") + (S.client ? S.client + (S.spouse ? " & " + S.spouse : "") : "New client") + (S.format ? " · " + (S.format === "tele" ? "Telesales" : "Zoom") : ""); }
+
+function handleNextClick() {
+    const i = currentSlideIndex;
+    if (i === 0) {
+        if (!S.format || !S.type || !S.leadType) { flash("Choose a format, a presentation type and a lead type first."); return; }
+        return navigateToSlide(1);
+    }
+    if (i === 2) return navigateToSlide(S.leadType ? LEAD_SLIDE[S.leadType] : 3);
+    if (i >= 3 && i <= 7) return navigateToSlide(8);
+    if (i < slides.length - 1) navigateToSlide(i + 1);
+}
+function prevTarget() { const i = currentSlideIndex; if (i === 8) return S.leadType ? LEAD_SLIDE[S.leadType] : 7; if (i >= 3 && i <= 7) return 2; return i - 1; }
+function navigateToSlide(i) { if (i >= 0 && i < slides.length) setCurrentSlide(i); }
+function flash(msg) { let f = document.getElementById("glpFlash"); if (!f) { f = document.createElement("div"); f.id = "glpFlash"; f.className = "glp-flash"; f.setAttribute("role", "status"); document.body.appendChild(f); } f.textContent = msg; f.classList.add("show"); clearTimeout(f._t); f._t = setTimeout(() => f.classList.remove("show"), 2600); }
+
+function onSlideClick(e) {
+    if (e.target.closest("[data-act=dial]")) { openDial(); return; }
+    const card = e.target.closest("[data-set]"); if (!card) return;
+    const k = card.dataset.set, v = card.dataset.val;
+    S[k] = S[k] === v ? null : v; saveSession(); renderSlide(); updateSessionLine();
+}
+function onSlideInput(e) {
+    const t = e.target;
+    if (t.dataset.field) { S[t.dataset.field] = t.value; saveSession(); updateSessionLine();
+        if (t.dataset.field === "leadType") { generateNavigation(); navigationContent.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", +n.dataset.slide === currentSlideIndex)); renderSlide(); }
+        return; }
+    if (t.dataset.note) { S.notes[t.dataset.note] = t.value; saveSession(); return; }
+    if (t.dataset.why) { S.whys[t.dataset.why] = t.value; saveSession(); return; }
+    if (t.dataset.yes) { S.yes[t.dataset.yes] = t.checked; saveSession(); return; }
+}
+
+/* ---------- clients ---------- */
+function newClient() {
+    if (S.client || Object.values(S.notes).some(Boolean)) {
+        if (!window.__glpConfirm) { window.__glpConfirm = true; flash("Press “New client” again to clear this client and start fresh."); setTimeout(() => window.__glpConfirm = false, 3000); return; }
+        window.__glpConfirm = false;
+        try { const r = JSON.parse(lsGet(RECENT_KEY) || "[]"); r.unshift(S); lsSet(RECENT_KEY, JSON.stringify(r.slice(0, 5))); } catch (e) {}
+    }
+    const agent = S.agent; S = blankSession(); S.agent = agent; saveSession(); updateSessionLine(); generateNavigation(); setCurrentSlide(0); flash("Started a new client.");
+}
+function showRecent() {
+    let r = []; try { r = JSON.parse(lsGet(RECENT_KEY) || "[]"); } catch (e) {}
+    document.getElementById("recentBody").innerHTML = r.length ? r.map((c, i) => `<button class="glp-recent" data-recent="${i}" type="button"><b>${esc(c.client || "Unnamed")}${c.spouse ? " & " + esc(c.spouse) : ""}</b><span>${c.leadType ? LEAD_TYPES[c.leadType] : ""}${c.savedAt ? " · " + new Date(c.savedAt).toLocaleString() : ""}</span></button>`).join("") : `<p class="glp-empty">No recent clients yet. When you press “New client,” the previous client is kept here (last 5).</p>`;
+    document.getElementById("recentBody").querySelectorAll("[data-recent]").forEach(b => b.onclick = () => {
+        const list = JSON.parse(lsGet(RECENT_KEY) || "[]"); const pick = list.splice(+b.dataset.recent, 1)[0];
+        if (S.client) list.unshift(S); lsSet(RECENT_KEY, JSON.stringify(list.slice(0, 5)));
+        S = Object.assign(blankSession(), pick); saveSession(); updateSessionLine(); generateNavigation(); setCurrentSlide(S.current || 0);
+        document.getElementById("recentPanel").hidden = true;
+    });
+    document.getElementById("recentPanel").hidden = false;
+}
+
+/* ---------- client screen (Zoom): share this window, it shows only the slide ---------- */
+function startClientScreen() {
+    document.getElementById("glp").style.display = "none";
+    const cs = document.getElementById("clientScreen"); cs.hidden = false; document.body.classList.add("client-mode");
+    const show = (msg) => {
+        let cur = msg && msg.current != null ? msg.current : null;
+        if (cur == null) { try { cur = JSON.parse(lsGet("glp_current_" + MODE) || "{}").current; } catch (e) {} }
+        const ids = { 8: "1Ync7mS", 9: "mtb2026", 10: "sports2026", 11: "ad2026", 13: "vb8IWWD", 14: "VRyZV9z", 15: "kfqHNqL", 18: "zH21odE", 19: "lFkhsjG", 21: "vHzprjc", 22: "WmP1yNu", 23: "gGkFgwe" };
+        const id = ids[cur];
+        document.getElementById("clientStage").innerHTML = id ? `<img src="${imgSrc(id)}" alt="">` : `<div class="glp-client-idle"><div class="glp-client-logo">Globe Life</div><div>Liberty National Division</div></div>`;
+    };
+    show();
+    window.addEventListener("storage", e => { if (e.key === "glp_current_" + MODE) show(); });
+    if (channel) channel.onmessage = e => show(e.data);
+}
+
+/* Academy hook: presentation.html#s<slide id>[:practice] opens straight to that step. */
+(function () {
+    function go() {
+        const m = (location.hash || "").match(/^#s(\d+)/);
+        if (!m || !toggleBtn) return;
+        if (MODE === "practice") { try { const x = JSON.parse(lsGet(SESSION_KEY) || "null"); if (x) S = Object.assign(blankSession(), x); } catch (e) {} generateNavigation(); updateSessionLine(); }
+        if (!isPresenting) togglePresentation();
+        setCurrentSlide(parseInt(m[1], 10));
+    }
+    window.addEventListener("hashchange", go);
+    document.addEventListener("DOMContentLoaded", () => setTimeout(go, 0));
+})();
+
+/* =====================================================================
+   MAKE THE CALL: first-contact dial scripts (from the Call Clinic).
+   Tokens: {client} {agent} {sponsor} {rel} {spouse}
+   A node has: say (array of lines), chips, ask (buttons) or next.
+   go targets starting with "@" are actions: @close (now or book), @book, @end.
+   ===================================================================== */
+const CHILD_AD = `This policy also provides $1,000 for each child as well.`;
+const FL_CHIP = `Florida: children are covered for $2,000 each.`;
+const BANK_Q = `Ok. Now to qualify for our programs and rates with us, you would need to bank locally with a traditional bank or credit union… Who do you bank with?`;
+const ADP_BANK = `Along with your free benefits today you also have the same opportunities that {sponsor} did because they banked locally. Do you also bank with a credit union or traditional bank in your area?`;
+const BANK_ASK = [{ label: "Has a local bank", go: "@close", set: { bank: true } }, { label: "No local bank", go: "@close", set: { bank: false } }];
+const MARRIED_ASK = (married, single) => [{ label: "Married", go: married, set: { married: true } }, { label: "Not married", go: single, set: { married: false } }];
+const SPOUSE_ASK = next => [{ label: "Spouse is home", go: next, set: { spouseHome: true } }, { label: "Spouse not home", go: next, set: { spouseHome: false } }];
+const KIDS_ASK = (yes, no) => [{ label: "Has kids under 18", go: yes, set: { kids: true } }, { label: "No kids", go: no, set: { kids: false } }];
+
+const DIAL_LEADS = {
+    adp: {
+        name: "ADP Referral", tool: "referral", versions: true,
+        about: "Someone they know (the sponsor) was presented to and gifted them a no-cost Accidental Death policy. You know who referred them, and often their spouse and kids.",
+        tips: [
+            "Tonality is everything. Be excited about what you're giving them: it's a transfer of belief.",
+            "Never ask “Is this…?” or “May I speak with…?” Use the assumption approach in your intro every time.",
+            "Use your referral notes: say the spouse's and kids' names. It keeps you in control and buys you air time.",
+            "Aged lead? Lean into the obvious: acknowledge right away that it was a while ago but still unclaimed. Old isn't dead.",
+            "When you book, ask about their evening routine. It builds rapport."
+        ],
+        benefits: ["$3,000 for the member", "$3,000 for the spouse", "$1,000 for each child under 18 ($2,000 in Florida)", "A free gift: no cost to them", "Only takes a few minutes to set up"],
+        nodes: {
+            intro_new: { say: [`Hey, {client}! My name is {agent}. I'm reaching out because {sponsor} gifted you a $3,000 no-cost insurance policy through my company, Globe Life. They took advantage of this free coverage and figured you would too. This is at no cost to you; it's simply a gift from {sponsor} to you.`, `It's just my job to set it up for you. Are you married?`],
+                chips: ["Excited voice. You're delivering a gift."], ask: MARRIED_ASK("married", "kids_single") },
+            intro_aged: { say: [`Hey {client}! My name is {agent}, and I'm getting back to you about that no-cost life insurance your {rel}, {sponsor}, gave you a while back. I'm showing you never claimed yours, and the company has me circling back to make sure it gets set up for you.`, `It's pretty simple to knock out. Are you married?`],
+                chips: ["Own that it was a while ago. Unclaimed is your reason to call."], ask: MARRIED_ASK("married", "kids_single") },
+            married: { say: [`Ok great! This will cover your spouse for $3,000 as well.`, `Is your spouse there with you now?`], ask: SPOUSE_ASK("kids") },
+            kids: { say: [`Perfect! Any kids under 18?`], ask: KIDS_ASK("kids_yes", "kids_no") },
+            kids_single: { say: [`Any kids under 18?`], ask: KIDS_ASK("kids_yes", "kids_no") },
+            kids_yes: { say: [`Ok perfect! ${CHILD_AD}`, ADP_BANK], chips: [FL_CHIP], ask: BANK_ASK },
+            kids_no: { say: [`Ok, no worries. This will just cover you for $3,000.`, ADP_BANK], ask: BANK_ASK }
+        },
+        rebuttals: {
+            new: [
+                ["“I'm not interested.”", `Totally get it. Just so you know, it's not something you're buying… I'm only reaching out because {sponsor} figured you'd want it too after they claimed theirs. My job is just to deliver it and show you how it works. After that, you decide if it's a fit… Is now a good time for a quick run-through, or is later better for you?`],
+                ["“I already have insurance.”", `Perfect, I assumed as much… I'm only calling you because {sponsor} asked me to make sure you got the no-cost benefit. It doesn't compete with or replace what you've got, and it doesn't take long to sign it over to you and explain how it works… Are you home now to knock this out?`],
+                ["“Not a good time.”", `Makes sense. That's why I'm calling: to get a good time to get this knocked out with you on behalf of your {rel}, {sponsor}. What time are you and your spouse home from work… later this evening or tomorrow?`, "Find out their after-work routine."],
+                ["“Wrong number.”", `Totally get it; this happens sometimes. An old friend or family member likely listed your number, maybe by mistake. Either way, the no-cost accidental death policy is tied to this number, so by default it's now yours to claim. It's quick, and we do it over the phone or by Zoom. Are you home now to knock yours out real fast?`],
+                ["“I don't know who that is.”", `Totally get it; this happens sometimes. Someone must have had this number down for someone else in their contacts and referred them to us to claim their no-cost insurance. Either way, the policy is tied to this number, so by default it's now yours to claim. It's quick and easy since we do this over the phone or on a quick Zoom. Are you home now to knock yours out real fast?`],
+                ["“Why is it free?”", `We get that a lot. It's free to YOU because {sponsor} gifted it to you by being a great client with us. Instead of paying millions of dollars on advertising, we invest in our communities through programs like this and empower others to pay it forward… Are you home now to knock yours out?`]
+            ],
+            aged: [
+                ["“Not interested.”", `I'm sorry, {client}, did you say that you weren't interested? I've never really had someone tell me they weren't interested in free benefits to protect their family. Are you sure?`, "Still not interested? “Who can you give it to so it doesn't go to waste?”"],
+                ["“I already have insurance.”", `That's great! This would be in addition to anything you already have in place. Like I said, it's simply a gift from {sponsor} to you, and I'm just calling to set everything up. It only takes a few minutes, so let's go ahead and knock it out now!`],
+                ["“Why is it free?”", `It's free to you because {sponsor} gifted it to you by being a great client with us. Instead of spending millions of dollars on advertising, we invest in products that help protect our communities. Giving our clients the ability to gift it away helps us insure and protect many other people.`],
+                ["“Wrong number.”", `Oh, I'm sorry! Well, I guess it's your lucky day! The policy is attached to this number, so for the inconvenience, I'll just give it to you. A free $3,000 life insurance policy sounds like a good deal for answering a number you didn't know, right?`, "Still no? “I just hate that it would go to waste… Who would you give it to instead?”"],
+                ["“Busy / at work.”", `I completely understand, so am I. I'll try to make this as fast as possible.`]
+            ]
+        }
+    },
+    presubmit: {
+        name: "Pre-Submit", tool: "globe", versions: true,
+        about: "They started an application or asked for information online but never finished. They already showed interest and you have their name, phone and address.",
+        tips: [
+            "CALL ASAP. The fresher the lead, the warmer it is.",
+            "Take control. Don't ask permission to proceed; assume you can and that they know why you're calling.",
+            "Verify their address right away. It kills skepticism and buys you air time.",
+            "Lead with the free benefits they're entitled to, then quotes. Set up the free benefits FIRST.",
+            "Aged lead? Lean into the obvious: yes, it's been a while; make it about the unclaimed free policy, not the sale."
+        ],
+        benefits: ["Free benefits for showing interest in the company", "Position it as congratulations on their application", "Free benefits first, then quotes"],
+        nodes: {
+            intro_new: { say: [`Hey {client}, this is {agent} calling from Globe Life about an application you started online with us. Has anyone reached out to set up your free benefits yet?`], ask: [{ label: "Yes, someone did", go: "howlong" }, { label: "No", go: "looking" }] },
+            intro_aged: { say: [`Hey {client}, my name is {agent}, and I'm getting back to you about that life insurance request with Globe Life that you sent in a while ago.`, `Did someone set up your free benefits? It says on my end that you never got them, and the company has me circling back to make sure it gets set up for you.`], ask: [{ label: "Yes, someone did", go: "howlong" }, { label: "No", go: "looking" }] },
+            howlong: { say: [`Ok great! How long ago was it?`], ask: [{ label: "Less than a year", go: "recent" }, { label: "More than a year", go: "overyear" }] },
+            recent: { say: [`Ok perfect. Did they take care of everything for you? Is there anything I can do while we're on the phone?`], ask: [{ label: "They want help", go: "married_q" }, { label: "All set", go: "@end" }] },
+            overyear: { say: [`Ok, well since it's been over a year, we need to renew your no-cost benefits and also make sure you don't have any gaps in your coverage.`, `Are you married?`], ask: MARRIED_ASK("spouse", "kids") },
+            looking: { say: [`Perfect. Now, were you looking for coverage on yourself, your family, or someone else?`, `Ok great! The company wanted me to reach out to congratulate you first! Because of your interest in our company or products, they are giving you some free benefits. After we set up your free benefits, we can also look into any additional information or coverage you need.`, `It only takes a few minutes to get everything set up. Are you married?`],
+                chips: ["Wait for their answer after the first line."], ask: MARRIED_ASK("spouse", "kids") },
+            married_q: { say: [`Are you married?`], ask: MARRIED_ASK("spouse", "kids") },
+            spouse: { say: [`Is your spouse there with you as well?`], ask: SPOUSE_ASK("kids") },
+            kids: { say: [`Any kids we need to include under the age of 18?`], ask: KIDS_ASK("bank", "bank") },
+            bank: { say: [BANK_Q], ask: BANK_ASK }
+        },
+        rebuttals: { all: [
+            ["“I don't know what you're talking about.”", `I can't tell you how many times I get this. That was your address, right? Ok, so you probably started this request at some point, either scrolling or just doing some research, and didn't give it a second thought… Either way, the only reason I'm reaching out is that you never claimed the no-cost insurance policy you're entitled to for simply showing interest in our company, and it's my job to set it up for you. It's pretty simple and we can knock this out really quick. Are you home now?`, "Verify the address first. It kills the skepticism."],
+            ["“I'm just looking for quotes.”", `Ok, so to get you what you're looking for, I'll need to get your no-cost insurance set up first, and then I can generate those quotes and see what you qualify for. That way, whether or not we can cover you or meet your budget, you didn't waste your time…. So, to get started, let's verify the spelling of your first name.`, "Verify the name on the lead."],
+            ["“I already got it taken care of.”", `Great! So which one of our no-cost insurance benefits did you get set up with us?`],
+            ["“I can't talk right now.”", `Makes sense. That's actually why I'm calling: to get a good time to get this knocked out with you. What time are you and your spouse home from work… later this evening or tomorrow?`, "Find out their after-work routine."]
+        ] }
+    },
+    lapsed: {
+        name: "Globe Lapsed", tool: "lapsed", versions: false,
+        about: "A former Globe Life policyholder whose policy lapsed. The company is giving them no-cost coverage for being a former policyholder.",
+        tips: [
+            "Clarify right away: you are NOT collecting premiums or a debt.",
+            "Focus on giving them “something” for now, from the company, at no cost.",
+            "Position it as a stopgap until they have permanent coverage.",
+            "Say “existing policyholder” to establish the relationship.",
+            "Before you dial: check the lapse date, verify the address and name spelling, and expect marital or kids changes."
+        ],
+        benefits: ["$3,000 for the member (accidental)", "$3,000 for the spouse (accidental)", "$1,000 for each child under 18 ($2,000 in Florida)", "No medical exam", "Coverage starts immediately"],
+        nodes: {
+            intro: { say: [`Hey {client}, my name is {agent}. I'm reaching out because you had some coverage with our parent company, Globe Life.`, `I'm not calling to collect any premiums or anything. In fact, I'm calling because the company is giving you some no-cost coverage for being a former policyholder. This will give you some protection until everything is situated.`, `Was the coverage too expensive, or did you happen to change banks?`],
+                ask: [{ label: "Too expensive", go: "r_expensive" }, { label: "Changed banks", go: "r_banks" }, { label: "Found cheaper insurance", go: "r_cheaper" }, { label: "Didn't have a policy", go: "r_nopolicy" }] },
+            r_expensive: { say: [`I completely understand. It can be pretty expensive, especially if you have too much or the wrong coverage. The good news is that the company is giving you some free benefits at no cost!`, `Are you married?`], chips: ["Note it: “too expensive” usually comes back at the close as “I can't afford it.”"], ask: MARRIED_ASK("spouse", "kids") },
+            r_banks: { say: [`I gotcha! That happens all the time. The good news is that the company is giving you some free benefits at no cost!`, `Are you married?`], ask: MARRIED_ASK("spouse", "kids") },
+            r_cheaper: { say: [`Well, that's good! The good news is that the company is giving you some free benefits at no cost that will be in addition to what you already have!`, `Are you married?`], ask: MARRIED_ASK("spouse", "kids") },
+            r_nopolicy: { say: [`We get that all the time. Usually what happens is you either had some through work and didn't realize it was with Globe Life, or it's been a little while and you just forgot. Either way, the good news is that the company is giving you some free benefits at no cost!`, `Are you married?`], ask: MARRIED_ASK("spouse", "kids") },
+            spouse: { say: [`Is your spouse there with you as well?`], ask: SPOUSE_ASK("kids") },
+            kids: { say: [`Any kids we need to include under the age of 18?`], ask: KIDS_ASK("bank", "bank") },
+            bank: { say: [BANK_Q], ask: BANK_ASK }
+        },
+        rebuttals: { all: [
+            ["“I'm not interested.”", `Like I said, I'm not calling for any reason other than to notify you of your lapsed coverage and set up the free benefits the company sent me to do. This will at least give you something until you can figure something else out. It's at no cost to you, and there's no obligation to purchase anything else. Would you at least like to have some basic protection in place while you decide what you want to do long term?`],
+            ["“I canceled it on purpose.”", `I completely understand that you made a deliberate decision, {client}, and I respect that. Since you were a policyholder with us, the company still wants to provide you with some basic protection at absolutely no cost. This is separate from your previous policy and requires no payment from you. Even if you don't want to continue with a paid policy, would you accept this complimentary coverage? It's already been approved for you.`],
+            ["“I found better coverage.”", `Congratulations on finding coverage that better suits your needs! Making sure your family is protected is what matters most. The free benefit I'm offering would supplement your current coverage. It specifically covers accidental death, which is a good complement to most standard life insurance policies. Since it's at no cost and only takes a few minutes to set up, would you like to add this extra layer of protection to what you already have?`],
+            ["“Is this a debt collector?”", `I want to be absolutely clear, {client}: this is NOT a debt collection call. You don't owe us anything. I'm calling from the benefits department at Globe Life. When policies lapse, we follow up to offer a complimentary accidental death policy as a courtesy to former policyholders. It's completely free, requires no payment information, and has no obligation attached. It's simply our way of providing some basic protection to families who had coverage with us in the past.`],
+            ["“I can't talk now.”", `I completely understand. Timing is everything, and I appreciate that you're busy right now. This only takes about 5 minutes to set up, but I'm happy to call back at a more convenient time. The important thing is making sure you don't miss out on these free benefits. What would be a better time for me to reach you? Evening? Weekend? I'll work around your schedule.`]
+        ] }
+    },
+    policy: {
+        name: "Policy Owner", tool: "pos", versions: false,
+        about: "A current Globe Life - Liberty National policyholder. You're calling to service the policy and renew the free benefits they get every year.",
+        tips: [
+            "Position the call as an important policy verification.",
+            "Stress that correct records mean a claim gets paid quickly to the right person.",
+            "Say “free benefits every year” and “entitled as a policyholder.”",
+            "Ask: when was the last review, any life changes, is the beneficiary current, any address changes?"
+        ],
+        benefits: ["Annual no-cost Accidental Death benefit renewal", "Free policy review and beneficiary update", "Coverage gap check"],
+        nodes: {
+            intro: { say: [`Hey {client}, this is {agent} with your insurance company, Globe Life - Liberty National.`, `I was calling to see when the last time was that you spoke with someone about your policies? We want to make sure that if a claim were made, everything on the account is correct and it's received quickly by the right person.`],
+                ask: [{ label: "Over a year", go: "overyear" }, { label: "Less than a year", go: "recent" }] },
+            overyear: { say: [`Ok, well I'm glad I called. As a policyholder, you're entitled to some free benefits every year. Since it's been over a year, we need to renew those free benefits along with checking over everything.`], chips: ["Verify their address and beneficiary on file."], ask: [{ label: "Continue", go: "@close" }] },
+            recent: { say: [`Ok, awesome. Glad someone has reached out already. Did they happen to renew the no-cost benefits you're entitled to as a policyholder while they were there?`], ask: [{ label: "Yes, renewed", go: "renewed" }, { label: "No, needs renewal", go: "renew" }] },
+            renewed: { say: [`Perfect! Just to make sure everything is still current, have there been any changes in your family situation, address, or beneficiary information since your last review?`], ask: [{ label: "Continue", go: "@close" }] },
+            renew: { say: [`No problem, that's exactly why I'm calling. Let's get those benefits renewed for you and make sure everything else is up to date. This will only take a few minutes.`], ask: [{ label: "Continue", go: "@close" }] }
+        },
+        rebuttals: { all: [
+            ["“Why do you need to verify?”", `{client}, I appreciate the question. Regular verification is crucial because outdated information could delay benefit payments to your loved ones if a claim needs to be filed. People move, family situations change, and beneficiary information may need updating. The insurance you invested in was important to you, and we want to make sure it works as intended when your family needs it most. This quick review keeps your records accurate and gives you access to the free benefits you're entitled to as a policyholder. Does that make sense?`],
+            ["“I'm too busy right now.”", `I completely understand how valuable your time is, {client}. Most of our policyholders are busy too. The good news is this only takes a few minutes, and it makes sure your policy is up to date should your family ever need to make a claim. Plus, we need to renew the complimentary benefits that come with being a policyholder. Would you prefer I call back at a specific time, or would you rather take care of it quickly right now?`],
+            ["“What free benefits?”", `As a policyholder with Globe Life, you're entitled to several complimentary benefits each year that many people aren't aware of: a free policy review, beneficiary updates at no charge, a coverage gap analysis to find any areas where your family might not be fully protected, and an additional no-cost accidental death benefit. I'd be happy to go through these with you and make sure you're taking full advantage of everything available to you.`],
+            ["“Wrong number.”", `I apologize for the confusion. I was trying to reach {client} about their Globe Life insurance policy. Do you know {client} or how I might reach them? It's important that we update their policy information.`, "Confirmed wrong number? Offer them the complimentary $3,000 accidental death policy for the inconvenience, and update the records."],
+            ["“Someone just reviewed it.”", `That's excellent to hear! It's great that you're staying on top of your coverage. Just to confirm: during that review, did they renew your annual no-cost accidental death benefit? It's separate from your main policy and needs to be renewed each year. Also, have there been any changes in your family since that review? New address, family additions, or anything else that might affect your coverage or beneficiaries?`]
+        ] }
+    }
+};
+/* Shared ending for every lead: start a Now presentation, or book the appointment. */
+const DIAL_SHARED = {
+    now: { say: [`Ok great! Give me one second for my computer to catch up.`], chips: ["Start the presentation and go straight into rapport (F.O.R.M.)."] },
+    book_time: { say: [`What time will you be home later today for me to give you a call back?`], chips: ["Give the 2 closest options.", "Ask about their evening routine. It builds rapport."], input: { key: "time", label: "Appointment day and time", ph: "e.g. Today 6:30 pm" } },
+    book_spouse: { say: [`Will your spouse be home as well?`], chips: ["Book a time when both will be home."] },
+    book_email: { say: [`What's a good email address for you?`], chips: ["Have them spell it."], input: { key: "email", label: "Email", ph: "name@example.com" } },
+    book_confirm: { say: [`Ok, {client}, if I'm booking an appointment with you, then I'm telling another family I'm not available at that time. Are you sure this will be a good time for you?`] },
+    book_bye: { say: [`Ok, I'll see you {time}. Have a great day!`] },
+    end: { say: [`Ok, well like I said, my name is {agent}. If you ever need anything, feel free to call. Hope you have a great day!`] }
+};
+if (/netlify\.app$|salelabs\.site$/.test(location.hostname)) document.documentElement.classList.add("nb-safe");
+
+/* =====================================================================
+   CALL MODE: a teleprompter for live calls. One line at a time,
+   cues as small chips, notes and objections slide out when needed.
+   Study mode is the full view with every instruction and slide.
+   ===================================================================== */
+const CM = { beat: 0, atEnd: false, drawer: null, showSlide: false, dial: false };
+function lsView() { return lsGet("glp_view"); }
+function callView() { const v = lsView(); return v ? v === "call" : tele(); }
+function setView(v) { lsSet("glp_view", v); cmSync(); }
+function cmActive() { return CM.dial || (isPresenting && callView() && currentSlideIndex > 0); }
+let cmSize = +(lsGet("glp_cm_size") || 30);
+
+/* Step 2 has its own beats: the F.O.R.M. questions. */
+slides[2].beats = () => [
+    { label: "Rapport · Family", say: `"So, are you from this area? Does your family live nearby? What family do you have around here?"`, chips: ["Spend 8 to 10 minutes on rapport before you start. Watch the clock up top.", "Every name is a future referral. Press N to jot it down."] },
+    { label: "Rapport · Occupation", say: `"How long have you been at your job? What exactly do you do there?"`, chips: ["People like to talk about their work. Show real interest."] },
+    { label: "Rapport · Recreation", say: `"What do you do for fun?"`, chips: ["Listen for hobbies you share."] },
+    { label: "Rapport · Me", say: `Share something you have in common: the same area, people you both know, a similar hobby.`, chips: ["Share briefly, then hand it back to them.", tele() ? "On the phone: smile while you talk and react to what they say." : "Don't share your screen yet."] }
+];
+
+/* Turn any step into beats: each spoken paragraph is one beat. */
+function beatsFor(i) {
+    const s = slides[i]; if (!s) return [];
+    if (s.beats) return s.beats();
+    const box = document.createElement("div"); box.innerHTML = s.content();
+    const beats = []; let pend = { chips: [], label: null }, img = null, ref = null, closed = false;
+    const last = () => beats[beats.length - 1];
+    const walk = el => { for (const n of Array.from(el.children)) {
+        const tag = n.tagName, cls = n.classList;
+        if (tag === "H1" || cls.contains("glp-callout") || cls.contains("glp-timer")) continue;
+        if (cls.contains("slide-image")) { const im = n.querySelector("img"); img = { src: im.getAttribute("src"), alt: im.alt, eapp: /eApp|recap|Leads|Survey|Health|Offer/i.test(im.alt) }; closed = true; continue; }
+        if (cls.contains("notes-container")) { pend.chips.push("Your F.O.R.M. notes: press N."); continue; }
+        if (cls.contains("glp-why")) { if (last()) last().why = n.querySelector("[data-why]").dataset.why; continue; }
+        if (cls.contains("glp-whys")) { ref = n.innerHTML; continue; }
+        if (cls.contains("script-block")) { walk(n); continue; }
+        if (tag === "H2" || tag === "H3") { pend.label = n.textContent.trim(); closed = true; continue; }
+        if (tag === "OL" || tag === "UL") { if (last()) last().say += n.outerHTML; continue; }
+        if (tag === "P" && cls.contains("instruction")) { const t = n.innerHTML.replace(/^\s*\*|\*\s*$/g, ""); if (last() && !closed) last().chips.push(t); else pend.chips.push(t); continue; }
+        if (tag === "P") {
+            const t = n.textContent.trim(); if (!t) continue; const st = n.querySelector("strong");
+            if (st && st.textContent.trim() === t && (/:$/.test(t) || t.length < 8)) { pend.label = t.replace(/:$/, ""); closed = true; continue; }
+            beats.push({ say: n.innerHTML, chips: pend.chips, label: pend.label, img, ref }); pend = { chips: [], label: null }; closed = false; continue;
+        }
+        walk(n);
+    } };
+    walk(box);
+    if (!beats.length) beats.push({ say: "<em>Nothing to say on this step.</em>", chips: pend.chips, img, ref });
+    else if (pend.chips.length) last().chips.push(...pend.chips);
+    return beats;
+}
+
+/* ---------- DOM ---------- */
+function cmBuild() {
+    if (document.getElementById("cm")) return;
+    const d = document.createElement("div"); d.id = "cm"; d.className = "cm globe-life-presentation"; d.hidden = true;
+    d.innerHTML = `
+    <header class="cm-top">
+        <div class="cm-where"><span class="cm-sec" id="cmSec"></span><b id="cmTitle"></b></div>
+        <div class="cm-tools">
+            <span class="cm-clock" id="cmClock" title="Time on this call"></span>
+            <span class="cm-size"><button type="button" data-cm="smaller" aria-label="Smaller text">A−</button><button type="button" data-cm="bigger" aria-label="Bigger text">A+</button></span>
+            <button type="button" data-cm="notes" id="cmNotesBtn">📝 Notes <kbd>N</kbd></button>
+            <button type="button" data-cm="obj">🛡️ Objections <kbd>O</kbd></button>
+            <button type="button" data-cm="tips" id="cmTipsBtn" hidden>💡 Tips <kbd>T</kbd></button>
+            <button type="button" data-dial="restart" id="cmRestartBtn" hidden title="Clear this call and start over">↺ New call</button>
+            <button type="button" data-cm="study" id="cmStudyBtn">Study mode</button>
+            <button type="button" data-cm="exit" aria-label="Exit">✕</button>
+        </div>
+        <div class="cm-prog"><div class="cm-prog-fill" id="cmProg"></div></div>
+    </header>
+    <main class="cm-stage" id="cmStage" style="--cm-size:${cmSize}px"></main>
+    <footer class="cm-foot">
+        <button type="button" data-cm="back" class="cm-back">← Back</button>
+        <div class="cm-dots" id="cmDots"></div>
+        <button type="button" data-cm="next" class="cm-next-btn" id="cmNextBtn">Next <kbd>Space</kbd></button>
+    </footer>
+    <aside class="cm-drawer" id="cmDrawer" hidden>
+        <div class="cm-drawer-head"><h3 id="cmDrawerTitle"></h3><button type="button" data-cm="close" aria-label="Close">✕</button></div>
+        <div class="cm-drawer-body" id="cmDrawerBody"></div>
+    </aside>`;
+    document.body.appendChild(d);
+    d.addEventListener("click", cmClick);
+    d.addEventListener("input", cmInput);
+    d.addEventListener("change", cmInput);
+    setInterval(cmClock, 1000);
+}
+function cmClick(e) {
+    const b = e.target.closest("[data-cm],[data-go],[data-dial]"); if (!b) return;
+    if (b.dataset.go) return dialGo(b.dataset.go, b.dataset.set ? JSON.parse(b.dataset.set) : null);
+    if (b.dataset.dial) return dialAction(b.dataset.dial, b);
+    const a = b.dataset.cm;
+    if (a === "next") return CM.dial ? dialNext() : cmNext();
+    if (a === "back") return CM.dial ? dialBack() : cmBack();
+    if (a === "notes" || a === "obj" || a === "tips") return cmDrawer(CM.drawer === a ? null : a);
+    if (a === "close") return cmDrawer(null);
+    if (a === "smaller" || a === "bigger") { cmSize = Math.max(20, Math.min(48, cmSize + (a === "bigger" ? 3 : -3))); lsSet("glp_cm_size", cmSize); document.getElementById("cmStage").style.setProperty("--cm-size", cmSize + "px"); return; }
+    if (a === "study") { if (CM.dial) return; return setView("study"); }
+    if (a === "exit") { if (CM.dial) return dialExit(); setView("study"); return; }
+    if (a === "slide") { CM.showSlide = !CM.showSlide; return cmRender(); }
+}
+function cmInput(e) {
+    const t = e.target;
+    if (t.dataset.note) { S.notes[t.dataset.note] = t.value; saveSession(); }
+    else if (t.dataset.why) { S.whys[t.dataset.why] = t.value; saveSession(); }
+    else if (t.dataset.yes) { S.yes[t.dataset.yes] = t.checked; saveSession(); }
+    else if (t.dataset.df) { S.dial[t.dataset.df] = t.value; if (["client", "spouse", "kids", "agent"].includes(t.dataset.df)) S[t.dataset.df] = t.value; if (t.dataset.df === "sponsor") S.referrer = t.value; if (t.dataset.df === "rel") S.referrerRel = t.value; saveSession(); updateSessionLine(); }
+    else if (t.dataset.din) { S.dial[t.dataset.din] = t.value; if (t.dataset.din === "time") S.time = t.value; if (t.dataset.din === "email") S.email = t.value; saveSession(); }
+}
+
+/* ---------- show / hide ---------- */
+function cmSync() {
+    cmBuild();
+    const on = cmActive();
+    document.getElementById("cm").hidden = !on;
+    document.body.classList.toggle("cm-on", on);
+    if (on) cmRender();
+    renderFormatBarSafe();
+}
+function renderFormatBarSafe() { try { if (isPresenting && !cmActive()) renderFormatBar(); } catch (e) {} }
+
+/* ---------- presentation beats ---------- */
+function cmRender() {
+    if (CM.dial) return dialRender();
+    const i = currentSlideIndex, s = slides[i], beats = beatsFor(i);
+    if (CM.atEnd) { CM.beat = beats.length - 1; CM.atEnd = false; }
+    CM.beat = Math.max(0, Math.min(CM.beat, beats.length - 1));
+    const b = beats[CM.beat], prev = beats[CM.beat - 1], next = beats[CM.beat + 1];
+    document.getElementById("cmSec").textContent = s.section;
+    document.getElementById("cmTitle").textContent = s.title;
+    document.getElementById("cmTipsBtn").hidden = true;
+    document.getElementById("cmRestartBtn").hidden = true;
+    document.getElementById("cmStudyBtn").hidden = false;
+    const order = stepOrder(), pos = Math.max(0, order.indexOf(i));
+    document.getElementById("cmProg").style.width = ((pos + (CM.beat + 1) / beats.length) / order.length * 100) + "%";
+    document.getElementById("cmDots").innerHTML = beats.map((_, k) => `<span class="${k === CM.beat ? "on" : k < CM.beat ? "done" : ""}"></span>`).join("") + `<em>Step ${pos + 1} of ${order.length}</em>`;
+    const lastStep = i === slides.length - 1;
+    document.getElementById("cmNextBtn").innerHTML = next ? `Next <kbd>Space</kbd>` : lastStep ? "Done" : `Next step <kbd>Space</kbd>`;
+    let h = "";
+    if (b.ref) h += `<details class="cm-ref"><summary>💬 In their own words</summary>${b.ref}</details>`;
+    h += prev ? `<div class="cm-prev"><div>${prev.say}</div></div>` : `<div class="cm-prev cm-start">${esc(s.title)}</div>`;
+    if (b.label) h += `<div class="cm-label">${esc(b.label)}</div>`;
+    h += `<div class="cm-now">${b.say}</div>`;
+    if (b.chips.length) h += `<div class="cm-chips">${b.chips.map(c => `<span class="cm-chip">${c}</span>`).join("")}</div>`;
+    if (b.why) h += `<div class="cm-why"><label class="glp-chk"><input type="checkbox" data-yes="${b.why}" ${S.yes[b.why] ? "checked" : ""}> Got the verbal yes</label><input type="text" class="form-input" data-why="${b.why}" value="${esc(S.whys[b.why] || "")}" placeholder="Type why it matters, in their words" aria-label="Why it matters, in their words"></div>`;
+    if (b.img) {
+        if (tele()) h += `<button type="button" class="cm-slidebtn" data-cm="slide">${CM.showSlide ? "Hide slide" : "🖼 View slide"} <small>for your eyes only</small></button>${CM.showSlide ? `<img class="cm-slideimg" src="${b.img.src}" alt="${esc(b.img.alt)}">` : ""}`;
+        else h += `<div class="cm-sharing"><img src="${b.img.src}" alt=""><span>${b.img.eapp ? "Share your eApp for this" : "On their screen now"}</span></div>`;
+    }
+    h += next ? `<div class="cm-nextline">${next.say}</div>` : `<div class="cm-nextline cm-upnext">${lastStep ? "End of the presentation" : "Next step: " + esc(slides[nextStepIndex()].title)}</div>`;
+    document.getElementById("cmStage").innerHTML = h;
+    if (CM.drawer) cmDrawer(CM.drawer);
+    cmClock();
+}
+function stepOrder() { const lt = S.leadType ? LEAD_SLIDE[S.leadType] : 3; return slides.map(s => s.id).filter(id => id > 0 && (id < 3 || id > 7 || id === lt)); }
+function nextStepIndex() { const i = currentSlideIndex; if (i === 2) return S.leadType ? LEAD_SLIDE[S.leadType] : 3; if (i >= 3 && i <= 7) return 8; return Math.min(i + 1, slides.length - 1); }
+function cmNext() {
+    const beats = beatsFor(currentSlideIndex); CM.showSlide = false;
+    if (CM.beat < beats.length - 1) { CM.beat++; return cmRender(); }
+    if (currentSlideIndex === slides.length - 1) { flash("That's the end. Press O for objections if they stall."); return; }
+    CM.beat = 0; handleNextClick();
+}
+function cmBack() {
+    CM.showSlide = false;
+    if (CM.beat > 0) { CM.beat--; return cmRender(); }
+    if (currentSlideIndex <= 1) return;
+    CM.atEnd = true; navigateToSlide(prevTarget());
+}
+function cmClock() {
+    const el = document.getElementById("cmClock"); if (!el || document.getElementById("cm").hidden) return;
+    const start = CM.dial ? (S.dial && S.dial.path && S.dial.path.length ? S.dial.start : null) : S.rapportStart;
+    if (!start) { el.textContent = ""; return; }
+    const sec = Math.floor((Date.now() - start) / 1000), rap = !CM.dial && currentSlideIndex >= 2 && currentSlideIndex <= 7;
+    el.className = "cm-clock" + (rap && sec >= 480 ? " ok" : "");
+    el.textContent = "⏱ " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0") + (rap ? (sec >= 480 ? " rapport ✓" : " rapport") : "");
+}
+
+/* ---------- drawers ---------- */
+function cmDrawer(kind) {
+    CM.drawer = kind; const dr = document.getElementById("cmDrawer");
+    if (!kind) { dr.hidden = true; return; }
+    const title = { notes: "📝 F.O.R.M. notes", obj: CM.dial ? "🛡️ Phone rebuttals" : "🛡️ Objections & rebuttals", tips: "💡 Lead tips" }[kind];
+    let h = "";
+    if (kind === "notes") h = [["family", "👨‍👩‍👧‍👦 Family"], ["occupation", "💼 Occupation"], ["recreation", "🎯 Recreation"], ["commonalities", "🤝 Me (commonalities)"], ["additional", "📋 Additional"]].map(([k, l]) => `<label class="form-label" for="cmn_${k}">${l}</label><textarea id="cmn_${k}" class="form-input" data-note="${k}">${esc(S.notes[k] || "")}</textarea>`).join("") + `<p class="glp-saved">Saves as you type.</p>`;
+    else if (kind === "obj") h = CM.dial ? dialRebuttalsHTML() : objectionsHTML();
+    else h = dialTipsHTML();
+    const keepFocus = dr.contains(document.activeElement) && !dr.hidden;
+    if (keepFocus && CM._drawerKind === kind) return; // don't wipe what they're typing
+    CM._drawerKind = kind;
+    document.getElementById("cmDrawerTitle").textContent = title;
+    document.getElementById("cmDrawerBody").innerHTML = h; dr.hidden = false;
+}
+
+/* ---------- keys ---------- */
+document.addEventListener("keydown", e => {
+    if (!cmActive()) return;
+    const typing = /input|textarea|select/i.test(document.activeElement.tagName);
+    if (e.key === "Escape") { if (typing) document.activeElement.blur(); cmDrawer(null); return; }
+    if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (e.key === " " || e.key === "ArrowRight") { e.preventDefault(); CM.dial ? dialNext() : cmNext(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); CM.dial ? dialBack() : cmBack(); }
+    else if (k === "n") cmDrawer(CM.drawer === "notes" ? null : "notes");
+    else if (k === "o") cmDrawer(CM.drawer === "obj" ? null : "obj");
+    else if (k === "t" && CM.dial) cmDrawer(CM.drawer === "tips" ? null : "tips");
+    else if (CM.dial && /^[1-4]$/.test(e.key)) { const btn = document.querySelectorAll("#cmStage .cm-ask button")[+e.key - 1]; if (btn) { e.preventDefault(); btn.click(); } }
+}, true);
+
+/* =====================================================================
+   MAKE THE CALL
+   ===================================================================== */
+function dialState() { if (!S.dial || typeof S.dial !== "object") S.dial = {}; const d = S.dial; d.lead = d.lead || "adp"; d.ver = d.ver || "new"; d.path = d.path || []; d.facts = d.facts || {}; d.line = d.line || 0; return d; }
+function dialLead() { return DIAL_LEADS[dialState().lead]; }
+function dialStart() { return dialLead().versions ? "intro_" + dialState().ver : "intro"; }
+function dialNode(id) { return id.startsWith("@") ? null : (dialLead().nodes[id] || DIAL_SHARED[id]); }
+function T(s) {
+    const d = dialState();
+    const v = { client: S.client, agent: S.agent, sponsor: S.referrer, rel: S.referrerRel, spouse: S.spouse, time: S.time };
+    const fb = { client: "(client)", agent: "(agent)", sponsor: "(sponsor)", rel: "(friend/family member)", spouse: "(spouse)", time: "(day and time)" };
+    return s.replace(/\{(\w+)\}/g, (_, k) => v[k] ? `<span class="ph filled">${esc(v[k])}</span>` : `<span class="ph">${fb[k] || k}</span>`);
+}
+function openDial() {
+    const d = dialState(); CM.dial = true; CM.drawer = null;
+    if (!isPresenting) { isPresenting = false; }
+    cmSync();
+}
+function dialExit() { CM.dial = false; cmDrawer(null); cmSync(); }
+function dialCur() { const d = dialState(); return d.path.length ? d.path[d.path.length - 1] : null; }
+function dialGo(target, set) {
+    const d = dialState(); if (set) Object.assign(d.facts, set);
+    if (target === "@close") target = d.facts.married && d.facts.spouseHome === false ? "book_time" : "now";
+    if (target === "@book") target = "book_time";
+    if (target === "@end") target = "end";
+    if (target === "@begin") { d.path = []; d.facts = {}; d.start = Date.now(); target = dialStart(); }
+    d.path.push(target); d.line = 0; saveSession(); dialRender();
+}
+function dialNext() {
+    const d = dialState(), id = dialCur();
+    if (!id) return dialGo("@begin");
+    const n = dialNode(id);
+    if (d.line < n.say.length - 1) { d.line++; saveSession(); return dialRender(); }
+    const flow = ["book_time", "book_spouse", "book_email", "book_confirm", "book_bye"];
+    const fi = flow.indexOf(id);
+    if (fi >= 0 && fi < flow.length - 1) { let nx = flow[fi + 1]; if (nx === "book_spouse" && !d.facts.married) nx = "book_email"; return dialGo(nx); }
+    if (n.ask && n.ask.length === 1) return dialGo(n.ask[0].go, n.ask[0].set);
+    if (n.ask) flash("Pick their answer below (or press 1, 2, 3…).");
+}
+function dialBack() {
+    const d = dialState();
+    if (d.line > 0) { d.line--; saveSession(); return dialRender(); }
+    if (d.path.length) { d.path.pop(); const n = dialCur() && dialNode(dialCur()); d.line = n ? n.say.length - 1 : 0; saveSession(); dialRender(); }
+}
+function dialAction(a, el) {
+    const d = dialState();
+    if (a === "lead") { d.lead = el.dataset.val; d.path = []; saveSession(); return dialRender(); }
+    if (a === "ver") { d.ver = el.dataset.val; d.path = []; saveSession(); return dialRender(); }
+    if (a === "fmt") { S.format = el.dataset.val; saveSession(); updateSessionLine(); return dialRender(); }
+    if (a === "book") return dialGo("book_time");
+    if (a === "restart") { d.path = []; d.facts = {}; d.start = null; d.line = 0; saveSession(); return dialRender(); }
+    if (a === "present" || a === "saveappt") {
+        const L = dialLead();
+        S.leadType = L.tool; S.type = a === "present" ? "now" : "appointment";
+        if (d.facts.married === false) S.spouse = "";
+        if (!S.format) S.format = "tele";
+        if (a === "present" && !S.rapportStart) S.rapportStart = Date.now();
+        saveSession(); updateSessionLine(); generateNavigation();
+        CM.dial = false; cmDrawer(null);
+        if (a === "saveappt") {
+            const r = (() => { try { return JSON.parse(lsGet("glp_appts") || "[]"); } catch (e) { return []; } })();
+            r.unshift({ client: S.client, spouse: S.spouse, lead: L.name, time: S.time, email: S.email || "", format: S.format, at: new Date().toISOString() });
+            lsSet("glp_appts", JSON.stringify(r.slice(0, 50)));
+            flash("Appointment saved: " + (S.client || "client") + (S.time ? ", " + S.time : ""));
+            d.path = []; saveSession();
+            if (!isPresenting) togglePresentation(); setCurrentSlide(0); cmSync(); return;
+        }
+        if (!isPresenting) togglePresentation();
+        CM.beat = 0; setCurrentSlide(tele() ? 2 : 1); cmSync(); return;
+    }
+}
+function dialRender() {
+    const d = dialState(), L = dialLead(), id = dialCur();
+    document.getElementById("cmSec").textContent = "Make the call";
+    document.getElementById("cmTitle").textContent = L.name + (L.versions ? (d.ver === "new" ? " · New lead" : " · Aged lead") : "");
+    document.getElementById("cmTipsBtn").hidden = false;
+    document.getElementById("cmRestartBtn").hidden = !id;
+    document.getElementById("cmStudyBtn").hidden = true;
+    document.getElementById("cmProg").style.width = id ? Math.min(100, d.path.length * 14) + "%" : "0%";
+    document.getElementById("cmDots").innerHTML = id ? `<em>${d.path.length} ${d.path.length === 1 ? "step" : "steps"} into the call</em>` : "";
+    const nb = document.getElementById("cmNextBtn");
+    let h = "";
+    if (!id) {
+        nb.innerHTML = `📞 Dial <kbd>Space</kbd>`;
+        h = `<div class="dial-setup">
+            <h2>Before you dial</h2>
+            <div class="dial-row"><span class="dial-k">Lead type</span>${Object.entries(DIAL_LEADS).map(([k, v]) => `<button type="button" class="dial-pill ${d.lead === k ? "on" : ""}" data-dial="lead" data-val="${k}">${v.name}</button>`).join("")}</div>
+            ${L.versions ? `<div class="dial-row"><span class="dial-k">Lead age</span><button type="button" class="dial-pill ${d.ver === "new" ? "on" : ""}" data-dial="ver" data-val="new">New lead</button><button type="button" class="dial-pill ${d.ver === "aged" ? "on" : ""}" data-dial="ver" data-val="aged">Aged lead</button></div>` : ""}
+            <div class="dial-row"><span class="dial-k">If they say yes</span><button type="button" class="dial-pill ${S.format === "tele" || !S.format ? "on" : ""}" data-dial="fmt" data-val="tele">📞 Present by phone</button><button type="button" class="dial-pill ${S.format === "zoom" ? "on" : ""}" data-dial="fmt" data-val="zoom">📹 Present on Zoom</button></div>
+            <div class="dial-fields">
+                <label>Your name<input class="form-input" data-df="agent" value="${esc(S.agent)}"></label>
+                <label>Client first name<input class="form-input" data-df="client" value="${esc(S.client)}"></label>
+                <label>Spouse (if on the lead)<input class="form-input" data-df="spouse" value="${esc(S.spouse)}"></label>
+                <label>Kids' names (if on the lead)<input class="form-input" data-df="kids" value="${esc(S.kids)}"></label>
+                ${d.lead === "adp" ? `<label>Sponsor (who gifted it)<input class="form-input" data-df="sponsor" value="${esc(S.referrer)}"></label><label>Sponsor is their…<input class="form-input" data-df="rel" value="${esc(S.referrerRel)}" placeholder="e.g. coworker"></label>` : ""}
+            </div>
+            <p class="dial-about">${esc(L.about)}</p>
+            <p class="dial-keys">On the call: <kbd>Space</kbd> next line · <kbd>1</kbd>–<kbd>4</kbd> pick their answer · <kbd>O</kbd> rebuttals · <kbd>T</kbd> tips · <kbd>N</kbd> notes</p>
+        </div>`;
+        document.getElementById("cmStage").innerHTML = h; if (CM.drawer) cmDrawer(CM.drawer); return;
+    }
+    const n = dialNode(id), prevId = d.path[d.path.length - 2], prevN = prevId && dialNode(prevId);
+    const prevSay = d.line > 0 ? n.say[d.line - 1] : prevN ? prevN.say[prevN.say.length - 1] : null;
+    const lastLine = d.line === n.say.length - 1;
+    h += prevSay ? `<div class="cm-prev"><div>${T(prevSay)}</div></div>` : `<div class="cm-prev cm-start">They pick up…</div>`;
+    if (id.startsWith("book")) h += `<div class="cm-label">Set the appointment</div>`;
+    h += `<div class="cm-now">“${T(n.say[d.line])}”</div>`;
+    const chips = (n.chips || []).slice();
+    if (id === "now" && d.facts.bank === false) chips.push("No local bank: still present, and collect referrals.");
+    if (lastLine && chips.length) h += `<div class="cm-chips">${chips.map(c => `<span class="cm-chip">${c}</span>`).join("")}</div>`;
+    if (lastLine && n.input) h += `<div class="cm-why"><label class="form-label">${n.input.label}</label><input class="form-input" data-din="${n.input.key}" value="${esc(d[n.input.key] || (n.input.key === "time" ? S.time : S.email) || "")}" placeholder="${n.input.ph}"></div>`;
+    nb.innerHTML = `Next <kbd>Space</kbd>`;
+    if (lastLine && n.ask && n.ask.length > 1) {
+        h += `<div class="cm-ask">${n.ask.map((a, k) => `<button type="button" data-go="${a.go}" ${a.set ? `data-set='${JSON.stringify(a.set)}'` : ""}><kbd>${k + 1}</kbd> ${esc(a.label)}</button>`).join("")}</div>`;
+        nb.innerHTML = `Pick their answer`;
+    } else if (!lastLine) {
+        h += `<div class="cm-nextline">${T(n.say[d.line + 1])}</div>`;
+    } else if (id === "now") {
+        h += `<div class="cm-ask big"><button type="button" data-dial="present">▶ Start the Now presentation</button><button type="button" data-dial="book" class="alt">Book an appointment instead</button></div>`;
+        nb.innerHTML = `—`;
+    } else if (id === "book_bye") {
+        h += `<div class="cm-ask big"><button type="button" data-dial="saveappt">✓ Save the appointment</button><button type="button" data-dial="restart" class="alt">Dial the next lead</button></div>`;
+        nb.innerHTML = `—`;
+    } else if (id === "end") {
+        h += `<div class="cm-ask big"><button type="button" data-dial="restart">Dial the next lead</button></div>`; nb.innerHTML = `—`;
+    } else if (n.ask && n.ask.length === 1) {
+        h += `<div class="cm-nextline cm-upnext">Press Next when they're ready</div>`;
+    } else if (id.startsWith("book")) {
+        h += `<div class="cm-nextline cm-upnext">Press Next</div>`;
+    }
+    h += `<div class="dial-objhint">They pushed back? Press <kbd>O</kbd> for the rebuttal.</div>`;
+    document.getElementById("cmStage").innerHTML = h;
+    if (CM.drawer) cmDrawer(CM.drawer);
+    cmClock();
+}
+function dialRebuttalsHTML() {
+    const d = dialState(), L = dialLead();
+    const list = L.rebuttals.all || L.rebuttals[d.ver] || [];
+    return `<p class="glp-tip">Acknowledge it, answer it in one breath, then go right back to the script with a question.</p>` + list.map(([t, body, tip]) => `<details class="glp-reb"><summary>${t}</summary><div class="script-block"><p>"${T(body)}"</p>${tip ? `<p class="instruction">${esc(tip)}</p>` : ""}</div></details>`).join("");
+}
+function dialTipsHTML() {
+    const L = dialLead();
+    return `<p>${esc(L.about)}</p><h4>Best practices</h4><ul>${L.tips.map(t => `<li>${esc(t)}</li>`).join("")}</ul><h4>Benefits to highlight</h4><ul>${L.benefits.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+}
+document.addEventListener("DOMContentLoaded", () => {
+    if (/^#client/.test(location.hash)) return;
+    cmBuild();
+    const tb = document.querySelector(".glp-topbar");
+    if (tb && !document.getElementById("dialBtn")) { const b = document.createElement("button"); b.id = "dialBtn"; b.type = "button"; b.className = "toggle-btn dial-btn"; b.textContent = "📞 Make the call"; b.onclick = openDial; tb.appendChild(b); }
+    dialFromHash();
+});
+function dialFromHash() {
+    const m = (location.hash || "").match(/^#dial(?:-(\w+))?/); if (!m) return;
+    if (MODE === "practice") { try { const x = JSON.parse(lsGet(SESSION_KEY) || "null"); if (x) S = Object.assign(blankSession(), x); } catch (e) {} updateSessionLine(); generateNavigation(); }
+    const d = dialState();
+    if (m[1] && DIAL_LEADS[m[1]] && d.lead !== m[1]) { d.lead = m[1]; d.path = []; }
+    openDial();
+}
+window.addEventListener("hashchange", dialFromHash);
+
+/* ---------- Academy look: landing screen and framed mode ---------- */
+(function () {
+    try { if (window.top !== window.self) document.documentElement.classList.add("framed"); } catch (e) { document.documentElement.classList.add("framed"); }
+    function wire() {
+        const landing = document.getElementById("glpLanding"), cont = document.getElementById("presentationContainer");
+        const start = document.getElementById("landingStart"), dial = document.getElementById("landingDial");
+        if (!landing || !cont) return;
+        const sync = () => { landing.hidden = cont.style.display === "block"; };
+        new MutationObserver(sync).observe(cont, { attributes: true, attributeFilter: ["style"] });
+        sync();
+        if (start) start.addEventListener("click", () => { const t = document.getElementById("togglePresentationBtn"); if (t && cont.style.display !== "block") t.click(); });
+        if (dial) dial.addEventListener("click", () => { const b = document.getElementById("dialBtn"); if (b) b.click(); });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
+})();
+
+    </script>
+</body>
+</html>

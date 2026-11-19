@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Globe Life Presentation</title>
+    <title>Presentation tool · Virtual Presentation Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Scoped styles to avoid conflicts with website builder */
         .globe-life-presentation {
@@ -810,11 +812,11 @@
         /* ---------- Call Mode ---------- */
         body.cm-on { overflow: hidden; }
         .cm[hidden] { display: none !important; }
-        .cm { position: fixed; inset: 0; z-index: 60; background: #f7f9fc; display: flex; flex-direction: column; color: #14213d; }
+        .cm { position: fixed; inset: 0; z-index: 60; background: #f3f6fa; display: flex; flex-direction: column; color: #14213d; }
         .cm kbd { font: 600 11px/1 ui-monospace, Menlo, monospace; background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.12); border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; margin-left: 4px; color: inherit; }
         .cm-top { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px; background: #fff; border-bottom: 1px solid #e3e9f2; flex-wrap: wrap; }
         .cm-where { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-        .cm-sec { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0047AB; }
+        .cm-sec { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b4fb3; }
         .cm-where b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cm-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .cm-tools button { background: #fff; border: 1px solid #d5deea; border-radius: 999px; padding: 6px 11px; font-size: 13px; font-weight: 600; color: #1f3556; cursor: pointer; }
@@ -826,18 +828,18 @@
         .cm-clock:empty { display: none; }
         .cm-clock.ok { color: #146c2e; background: #e6f6ea; }
         .cm-prog { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: transparent; }
-        .cm-prog-fill { height: 100%; background: linear-gradient(90deg, #0047AB, #3b82f6); width: 0; transition: width .3s; }
+        .cm-prog-fill { height: 100%; background: linear-gradient(90deg, #0b4fb3, #3b82f6); width: 0; transition: width .3s; }
         .cm-stage { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 28px max(24px, calc((100vw - 900px) / 2)); }
         .cm-prev, .cm-nextline { font-size: calc(var(--cm-size) * .55); line-height: 1.45; color: #9aa6b8; max-height: 4.4em; overflow: hidden; }
         .cm-prev { -webkit-mask-image: linear-gradient(to top, #000 60%, transparent); mask-image: linear-gradient(to top, #000 60%, transparent); display: flex; flex-direction: column; justify-content: flex-end; }
         .cm-nextline { -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent); mask-image: linear-gradient(to bottom, #000 50%, transparent); }
         .cm-prev p, .cm-nextline p, .cm-now p { margin: 0; }
         .cm-start, .cm-upnext { font-size: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #9aa6b8; mask-image: none; -webkit-mask-image: none; }
-        .cm-label { align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0047AB; background: #e6f0ff; border-radius: 999px; padding: 5px 12px; margin-bottom: -6px; }
-        .cm-now { font-size: var(--cm-size); line-height: 1.4; font-weight: 500; color: #0f1d36; border-left: 4px solid #0047AB; padding-left: 20px; }
+        .cm-label { align-self: flex-start; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0b4fb3; background: #e6f0ff; border-radius: 999px; padding: 5px 12px; margin-bottom: -6px; }
+        .cm-now { font-size: var(--cm-size); line-height: 1.4; font-weight: 500; color: #0f1d36; border-left: 4px solid #0b4fb3; padding-left: 20px; }
         .cm-now ol, .cm-now ul { font-size: .82em; margin: 10px 0 0; padding-left: 1.3em; }
         .cm-now li { margin-bottom: 4px; }
-        .cm-now .ph { color: #0047AB; font-weight: 600; background: rgba(0,71,171,.08); border-radius: 4px; padding: 0 4px; }
+        .cm-now .ph { color: #0b4fb3; font-weight: 600; background: rgba(0,71,171,.08); border-radius: 4px; padding: 0 4px; }
         .cm-now .ph.filled { background: rgba(40,167,69,.12); color: #146c2e; }
         .cm-chips { display: flex; flex-wrap: wrap; gap: 8px; }
         .cm-chip { font-size: 14px; font-weight: 600; color: #146c2e; background: #e9f6ec; border: 1px solid #cfe9d6; border-radius: 999px; padding: 6px 12px; line-height: 1.35; }
@@ -855,12 +857,12 @@
         .cm-ref p { margin: 6px 0; }
         .cm-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; background: #fff; border-top: 1px solid #e3e9f2; }
         .cm-foot button { border: 1px solid #d5deea; background: #fff; border-radius: 12px; padding: 12px 18px; font-size: 15px; font-weight: 700; color: #1f3556; cursor: pointer; }
-        .cm-foot .cm-next-btn { background: #0047AB; border-color: #0047AB; color: #fff; min-width: 150px; }
+        .cm-foot .cm-next-btn { background: #0b4fb3; border-color: #0b4fb3; color: #fff; min-width: 150px; }
         .cm-foot .cm-next-btn kbd { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); }
         .cm-dots { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
         .cm-dots span { width: 8px; height: 8px; border-radius: 50%; background: #d5deea; }
         .cm-dots span.done { background: #8fb0e0; }
-        .cm-dots span.on { background: #0047AB; transform: scale(1.3); }
+        .cm-dots span.on { background: #0b4fb3; transform: scale(1.3); }
         .cm-dots em { font-style: normal; font-size: 12px; color: #8090a6; margin-left: 8px; }
         .cm-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: #fff; box-shadow: -12px 0 30px rgba(15,25,45,.18); display: flex; flex-direction: column; z-index: 2; }
         .cm-drawer[hidden] { display: none; }
@@ -870,27 +872,27 @@
         .cm-drawer-body { padding: 14px 18px; overflow-y: auto; font-size: 15px; line-height: 1.5; }
         .cm-drawer-body textarea.form-input { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px solid #cdd8e6; border-radius: 8px; font-family: inherit; font-size: 14px; margin-bottom: 10px; }
         .cm-drawer-body .form-label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-        .cm-drawer-body h4 { margin: 14px 0 6px; color: #0047AB; }
+        .cm-drawer-body h4 { margin: 14px 0 6px; color: #0b4fb3; }
         .cm-drawer-body ul { padding-left: 1.2em; margin: 0; }
         .cm-drawer-body li { margin-bottom: 6px; }
         .cm-ask { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; max-width: 760px; }
         .cm-ask button { text-align: left; background: #fff; border: 2px solid #c9d7ec; border-radius: 12px; padding: 14px 16px; font-size: 16px; font-weight: 700; color: #0f1d36; cursor: pointer; }
-        .cm-ask button:hover { border-color: #0047AB; background: #f3f7ff; }
-        .cm-ask.big button { background: #0047AB; color: #fff; border-color: #0047AB; text-align: center; }
-        .cm-ask.big button.alt { background: #fff; color: #0047AB; }
+        .cm-ask button:hover { border-color: #0b4fb3; background: #f3f7ff; }
+        .cm-ask.big button { background: #0b4fb3; color: #fff; border-color: #0b4fb3; text-align: center; }
+        .cm-ask.big button.alt { background: #fff; color: #0b4fb3; }
         .dial-objhint { font-size: 13px; color: #8090a6; }
         .dial-setup { background: #fff; border: 1px solid #e3e9f2; border-radius: 16px; padding: 22px 24px; box-shadow: 0 6px 24px rgba(15,25,45,.06); }
         .dial-setup h2 { margin: 0 0 14px; font-size: 22px; color: #0f1d36; background: none; border: 0; padding: 0; }
         .dial-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
         .dial-k { width: 120px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5a6880; }
         .dial-pill { background: #fff; border: 1px solid #cdd8e6; border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 14px; color: #1f3556; cursor: pointer; }
-        .dial-pill.on { background: #0047AB; border-color: #0047AB; color: #fff; }
+        .dial-pill.on { background: #0b4fb3; border-color: #0b4fb3; color: #fff; }
         .dial-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 14px; margin: 16px 0 6px; }
         .dial-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #5a6880; }
         .dial-about { font-size: 14px; color: #5a6880; margin: 12px 0 4px; }
         .dial-keys { font-size: 13px; color: #8090a6; margin: 8px 0 0; }
         .globe-life-presentation .glp-topbar { gap: 10px; }
-        .globe-life-presentation .dial-btn { background: #fff; color: #0047AB; border: 2px solid #0047AB; }
+        .globe-life-presentation .dial-btn { background: #fff; color: #0b4fb3; border: 2px solid #0b4fb3; }
         .globe-life-presentation .dial-callout .glp-small { margin: 0 2px; }
         @media (max-width: 640px) { .cm-prev, .cm-nextline { display: none; } .dial-k { width: 100%; } }
         body.cm-on .nav-buttons, body.cm-on .glp-keys, body.cm-on .glp-flash:not(.show) { display: none !important; }
@@ -902,14 +904,175 @@
         html.nb-safe .globe-life-presentation .glp-overlay-card { padding-bottom: 70px; }
         html.nb-safe .cm-drawer-body { padding-bottom: 70px; }
 
+/* ===== Academy look (matches the Virtual Presentation Academy) ===== */
+:root { --ink: #0f1b2d; --muted: #4f5d73; --line: #dde3ec; --bg: #f3f6fa; --sky: #eef5fd; --sky-line: #d3e3f5; --accent: #0b4fb3; --accent-soft: #eaf1fc; --good: #217a3b; --good-soft: #e7f4ea; --warn: #8f5200; --warn-soft: #fff4e5; --bad: #a3261b; }
+html, body { margin: 0; background: var(--bg); }
+.globe-life-presentation { font-family: "Inter", "Segoe UI", system-ui, sans-serif; color: var(--ink); }
+#glp { min-height: 100vh; }
+
+/* Top bar */
+.globe-life-presentation .glp-topbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; background: #fff; border-bottom: 1px solid var(--line); }
+.globe-life-presentation .glp-brand { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
+.globe-life-presentation .glp-brand img { width: 30px; height: 30px; flex: none; }
+.globe-life-presentation .glp-brand b { display: block; font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.globe-life-presentation .glp-brand span { display: block; font-size: 12px; color: var(--muted); }
+.globe-life-presentation .toggle-btn, .globe-life-presentation .toggle-btn.dial-btn { margin: 0; display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; min-height: 40px; font: inherit; font-size: 14px; font-weight: 700; border-radius: 999px; box-shadow: none; transform: none; background: var(--accent); color: #fff; border: 1.5px solid var(--accent); }
+.globe-life-presentation .toggle-btn:hover { transform: none; box-shadow: none; background: #083a85; border-color: #083a85; }
+.globe-life-presentation .toggle-btn.active { background: #fff; color: var(--ink); border-color: var(--line); box-shadow: none; }
+.globe-life-presentation .toggle-btn.active:hover { background: var(--bg); }
+.globe-life-presentation .toggle-btn.dial-btn { background: #fff; color: var(--accent); border-color: var(--accent); }
+.globe-life-presentation .toggle-btn.dial-btn:hover { background: var(--accent-soft); }
+html.framed .globe-life-presentation .glp-brand { visibility: hidden; }
+
+/* Landing (before starting) */
+.glp-landing { max-width: 920px; margin: 0 auto; padding: 48px 24px; }
+.glp-landing .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--good); }
+.glp-landing h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; color: var(--ink); font-weight: 800; }
+.glp-landing h1::after { display: none; }
+.glp-landing .lead { font-size: 17px; line-height: 1.6; color: var(--muted); margin: 0 0 28px; max-width: 640px; }
+.glp-landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.glp-choice { text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; transition: border-color .15s, box-shadow .15s; }
+.glp-choice:hover { border-color: var(--accent); box-shadow: 0 6px 20px rgba(15,27,45,.08); }
+.glp-choice .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--accent-soft); }
+.glp-choice.call .ic { background: var(--good-soft); }
+.glp-choice b { font-size: 19px; color: var(--ink); }
+.glp-choice span { font-size: 15px; line-height: 1.5; color: var(--muted); }
+.glp-choice .go { margin-top: 6px; font-weight: 700; color: var(--accent); font-size: 15px; }
+.glp-landing .glp-keys { text-align: left; margin: 22px 0 0; }
+
+/* Main layout fills the screen */
+.globe-life-presentation .presentation-container { margin: 0; width: 100%; max-width: none; height: calc(100vh - 60px - 68px); border-radius: 0; box-shadow: none; background: #fff; position: relative; }
+html.framed .globe-life-presentation .presentation-container { height: calc(100vh - 60px - 68px); }
+
+/* Left navigation (Sky) */
+.globe-life-presentation .nav-panel { width: 250px; min-width: 250px; background: var(--sky); border-right: 1px solid var(--sky-line); }
+.globe-life-presentation .nav-header { background: var(--sky); color: var(--ink); text-align: left; padding: 18px 16px 14px; border-bottom: 1px solid var(--sky-line); }
+.globe-life-presentation .nav-header h3 { color: var(--ink); font-size: 14px; }
+.globe-life-presentation .glp-session { color: var(--muted); opacity: 1; }
+.globe-life-presentation .progress-bar { background: var(--sky-line); height: 6px; border-radius: 3px; }
+.globe-life-presentation .progress-fill { background: var(--good); border-radius: 3px; }
+.globe-life-presentation .nav-section-title { color: var(--muted); border-bottom: 0; font-size: 11.5px; letter-spacing: .07em; padding: 6px 16px 4px; margin-bottom: 2px; }
+.globe-life-presentation .nav-item { margin: 1px 10px; padding: 9px 12px; border-left: 0; border-radius: 8px; color: #3f5470; font-size: 13.5px; }
+.globe-life-presentation .nav-item:hover { background: #e0ecfa; color: var(--ink); border-left: 0; }
+.globe-life-presentation .nav-item.active { background: #fff; color: var(--accent); border-left: 0; box-shadow: 0 0 0 1px var(--sky-line); font-weight: 700; }
+.globe-life-presentation .nav-item.active::before { display: none; }
+.globe-life-presentation .nav-item.lead-pick { color: var(--accent); }
+.globe-life-presentation .nav-item.lead-pick::after { color: var(--good); }
+.globe-life-presentation .glp-navfoot { background: var(--sky); border-top: 1px solid var(--sky-line); }
+
+/* Content */
+.globe-life-presentation .content-panel { background: #fff; }
+.globe-life-presentation .content-panel h1 { color: var(--ink); font-size: 28px; font-weight: 800; }
+.globe-life-presentation .content-panel h1::after { background: var(--accent); height: 3px; width: 48px; border-radius: 2px; }
+.globe-life-presentation .content-panel h2 { background: var(--sky); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; color: var(--ink); font-size: 18px; }
+.globe-life-presentation .content-panel h3 { color: var(--ink); }
+.globe-life-presentation .content-panel p { color: #2f3c51; }
+.globe-life-presentation .script-block { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 12px 12px 0; box-shadow: none; }
+.globe-life-presentation .script-block p, .globe-life-presentation .script-block li { color: var(--ink); }
+.globe-life-presentation .instruction { background: var(--warn-soft); border-left: 3px solid var(--warn); color: #5c3b00; border-radius: 0 10px 10px 0; }
+.globe-life-presentation .ph { color: var(--accent); background: rgba(11,79,179,.08); }
+.globe-life-presentation .glp-callout { background: var(--warn-soft); border-color: #f3d19e; }
+.globe-life-presentation .glp-whys { background: var(--good-soft); border-left-color: var(--good); }
+.globe-life-presentation .glp-pill.zoom { background: var(--accent-soft); color: var(--accent); }
+.globe-life-presentation .glp-pill.tele { background: var(--warn-soft); color: var(--warn); }
+
+/* Choice cards and buttons */
+.globe-life-presentation .selection-card { background: #fff; border: 2px solid var(--line); border-radius: 14px; box-shadow: none; }
+.globe-life-presentation .selection-card:hover { border-color: var(--accent); transform: none; box-shadow: 0 6px 18px rgba(15,27,45,.06); }
+.globe-life-presentation .selection-card.selected { background: var(--accent-soft); border-color: var(--accent); }
+.globe-life-presentation .selection-card.selected::after { background: var(--accent); }
+.globe-life-presentation .selection-card h3, .globe-life-presentation .selection-card.selected h3 { color: var(--ink); }
+.globe-life-presentation .selection-card p { color: var(--muted); }
+.globe-life-presentation .option-btn { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); box-shadow: none; }
+.globe-life-presentation .option-btn:hover { background: var(--accent-soft); transform: none; }
+.globe-life-presentation .option-btn.selected { background: var(--accent); color: #fff; }
+.globe-life-presentation .option-confirmation { background: var(--good-soft); border-color: var(--good); color: #14532d; }
+.globe-life-presentation .save-btn, .globe-life-presentation .toggle-notes-btn { background: var(--accent); box-shadow: none; }
+.globe-life-presentation .glp-small { color: var(--accent); border-color: #c9d6ea; font-weight: 700; }
+.globe-life-presentation .glp-small:hover { background: var(--accent-soft); }
+.globe-life-presentation .form-input { border: 2px solid var(--line); border-radius: 10px; font: inherit; color: var(--ink); }
+.globe-life-presentation .form-input:focus { border-color: var(--accent); box-shadow: none; }
+.globe-life-presentation .form-label { color: var(--ink); }
+
+/* Tips */
+.globe-life-presentation .tips-panel { background: var(--bg); border-left: 1px solid var(--line); }
+.globe-life-presentation .tips-header { background: var(--bg); color: var(--muted); text-align: left; padding: 18px 16px 6px; }
+.globe-life-presentation .tips-header h3 { color: var(--muted); font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
+.globe-life-presentation .tip-card { background: #fff; border: 1px solid var(--line); border-left: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+.globe-life-presentation .tip-card:hover { transform: none; box-shadow: none; }
+.globe-life-presentation .tip-card h4 { color: var(--ink); }
+.globe-life-presentation .tip-card p { color: var(--muted); }
+.globe-life-presentation .glp-objections-btn { background: #fff; color: var(--bad); border: 1.5px solid #e9b4ae; box-shadow: 0 4px 14px rgba(15,27,45,.1); font-weight: 700; }
+.globe-life-presentation .glp-objections-btn:hover { background: #fdecea; }
+.globe-life-presentation .glp-reb summary { color: var(--accent); }
+.globe-life-presentation .glp-overlay-card { border-radius: 14px; }
+
+/* Bottom bar */
+.globe-life-presentation .nav-buttons { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: 68px; margin: 0; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #fff; border-top: 1px solid var(--line); box-shadow: none; }
+.globe-life-presentation .nav-btn { background: #fff; color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px; box-shadow: none; font: inherit; font-weight: 700; padding: 11px 22px; transform: none; }
+.globe-life-presentation .nav-btn:hover:not(:disabled) { background: var(--bg); transform: none; box-shadow: none; }
+.globe-life-presentation .nav-btn.next-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+.globe-life-presentation .nav-btn.next-btn:hover:not(:disabled) { background: #083a85; }
+.globe-life-presentation .nav-btn:disabled { opacity: .45; }
+.globe-life-presentation .glp-keys { display: none !important; }
+.glp-landing .glp-keys { display: block !important; color: var(--muted); }
+
+/* Make the call screen */
+.cm, .cm button, .cm input, .cm select, .cm textarea { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
+.glp-landing h1 { border: 0; padding: 0; }
+.globe-life-presentation .glp-brand { order: -2; }
+.globe-life-presentation .toggle-btn.dial-btn { order: -1; }
+.globe-life-presentation .nav-sub-item { color: #3f5470; padding-left: 22px; opacity: 1; font-size: 13px; }
+.globe-life-presentation .glp-new { color: #8f5200; background: #fff4e5; }
+html.framed .globe-life-presentation .glp-brand { display: none; }
+html.framed .globe-life-presentation .glp-topbar { justify-content: flex-end; height: 56px; }
+html.framed .globe-life-presentation .presentation-container { height: calc(100vh - 56px - 68px); }
+@media (max-width: 1200px) { .globe-life-presentation .presentation-container { width: 100%; max-width: none; } }
+@media (max-width: 900px) {
+  .globe-life-presentation .presentation-container { margin: 0; width: 100%; border-radius: 0; }
+  .globe-life-presentation .presentation-layout { flex-direction: column; height: 100%; min-height: 0; }
+  .globe-life-presentation .nav-panel { width: 100%; min-width: 0; height: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--sky-line); }
+  .globe-life-presentation .nav-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+  .globe-life-presentation .nav-header h3 { display: none; }
+  .globe-life-presentation .glp-session { margin: 0; white-space: nowrap; }
+  .globe-life-presentation .progress-bar { margin: 0; flex: 1; }
+  .globe-life-presentation .nav-content { display: flex; overflow-x: auto; padding: 8px 6px; gap: 0; }
+  .globe-life-presentation .nav-section { display: flex; flex-shrink: 0; margin: 0; }
+  .globe-life-presentation .nav-section-title { display: none; }
+  .globe-life-presentation .nav-item { white-space: nowrap; margin: 0 2px; padding-left: 12px; }
+  .globe-life-presentation .glp-navfoot { display: none; }
+  .globe-life-presentation .content-panel { flex: 1; min-height: 0; overflow: auto; }
+  .globe-life-presentation .content-wrapper { padding: 20px 18px 80px; }
+  .globe-life-presentation .toggle-btn { padding: 8px 14px; font-size: 13px; }
+}
+@media (max-width: 600px) {
+  .globe-life-presentation .glp-brand div { display: none; }
+  .globe-life-presentation .glp-topbar { padding: 0 12px; gap: 8px; }
+  .globe-life-presentation .toggle-btn { white-space: nowrap; }
+  .glp-landing h1 { font-size: 27px; }
+}
+
     </style>
 </head>
 <body>
     <div class="globe-life-presentation" id="glp">
         <!-- Start Button -->
         <div class="glp-topbar">
+            <div class="glp-brand"><img src="globe.png" alt=""><div><b>Presentation tool</b><span>Virtual Presentation Academy</span></div></div>
             <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
         </div>
+
+        <!-- Landing: shown until a presentation starts -->
+        <section class="glp-landing" id="glpLanding">
+            <div class="eyebrow">Ready when you are</div>
+            <h1>What are you doing next?</h1>
+            <p class="lead">Use this on every real call. It walks you through the script step by step, fills in your client's names, and keeps rebuttals one tap away.</p>
+            <div class="glp-landing-grid">
+                <button class="glp-choice call" type="button" id="landingDial"><span class="ic" aria-hidden="true">📞</span><b>Make the call</b><span>You haven't reached them yet. Get the opening for their lead type, the rebuttals, and book the appointment or start now.</span><span class="go">Start dialing →</span></button>
+                <button class="glp-choice" type="button" id="landingStart"><span class="ic" aria-hidden="true">🖥️</span><b>Start the presentation</b><span>They're ready. Present by phone or on Zoom, with the client slides on their screen and your script on yours.</span><span class="go">Start presenting →</span></button>
+            </div>
+            <p class="glp-keys">Tip: during the presentation, use the ← and → arrow keys to move between steps.</p>
+        </section>
 
         <!-- Main Presentation Container -->
         <div id="presentationContainer" class="presentation-container">
@@ -1953,6 +2116,22 @@ function dialFromHash() {
     openDial();
 }
 window.addEventListener("hashchange", dialFromHash);
+
+/* ---------- Academy look: landing screen and framed mode ---------- */
+(function () {
+    try { if (window.top !== window.self) document.documentElement.classList.add("framed"); } catch (e) { document.documentElement.classList.add("framed"); }
+    function wire() {
+        const landing = document.getElementById("glpLanding"), cont = document.getElementById("presentationContainer");
+        const start = document.getElementById("landingStart"), dial = document.getElementById("landingDial");
+        if (!landing || !cont) return;
+        const sync = () => { landing.hidden = cont.style.display === "block"; };
+        new MutationObserver(sync).observe(cont, { attributes: true, attributeFilter: ["style"] });
+        sync();
+        if (start) start.addEventListener("click", () => { const t = document.getElementById("togglePresentationBtn"); if (t && cont.style.display !== "block") t.click(); });
+        if (dial) dial.addEventListener("click", () => { const b = document.getElementById("dialBtn"); if (b) b.click(); });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
+})();
 
     </script>
 </body>
