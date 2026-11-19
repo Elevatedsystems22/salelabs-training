@@ -895,6 +895,12 @@
         @media (max-width: 640px) { .cm-prev, .cm-nextline { display: none; } .dial-k { width: 100%; } }
         body.cm-on .nav-buttons, body.cm-on .glp-keys, body.cm-on .glp-flash:not(.show) { display: none !important; }
         .glp-flash { z-index: 200; }
+        /* Hosted on Netlify: keep controls clear of the "Powered by Netlify" badge in the bottom-right corner. */
+        html.nb-safe .cm-foot { padding-bottom: 62px; }
+        html.nb-safe .globe-life-presentation .glp-objections-btn { bottom: 70px; }
+        html.nb-safe .globe-life-presentation .nav-buttons { margin-bottom: 56px; }
+        html.nb-safe .globe-life-presentation .glp-overlay-card { padding-bottom: 70px; }
+        html.nb-safe .cm-drawer-body { padding-bottom: 70px; }
 
     </style>
 </head>
@@ -1579,6 +1585,7 @@ const DIAL_SHARED = {
     book_bye: { say: [`Ok, I'll see you {time}. Have a great day!`] },
     end: { say: [`Ok, well like I said, my name is {agent}. If you ever need anything, feel free to call. Hope you have a great day!`] }
 };
+if (/netlify\.app$|salelabs\.site$/.test(location.hostname)) document.documentElement.classList.add("nb-safe");
 
 /* =====================================================================
    CALL MODE: a teleprompter for live calls. One line at a time,

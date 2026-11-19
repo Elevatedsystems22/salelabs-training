@@ -438,6 +438,9 @@ body.tool-open .rail { display: none; } body.tool-open .app { grid-template-colu
 .castsel label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
 .castsel select { padding: 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; }
 .caststage video { width: 100%; max-width: 520px; border-radius: 12px; background: #0b1424; aspect-ratio: 16/9; }
+/* Hosted on Netlify: keep controls clear of the "Powered by Netlify" badge in the bottom-right corner. */
+html.nb-safe .mbar { padding-bottom: 60px; }
+html.nb-safe .tooldrawer { padding-bottom: 56px; }
 </style>
 </head>
 <body>
@@ -1370,6 +1373,7 @@ function certified() { return examPassed("tele") && examPassed("zoom"); }
 
 /* Claude capabilities (artifact runtime) */
 let sampleFn = null, ttsApi = null, dictApi = null;
+if (/netlify\.app$|salelabs\.site$/.test(location.hostname)) document.documentElement.classList.add("nb-safe");
 /* =========================================================
    OWN-SITE MODE
    Inside claude.ai the course uses Claude's built-in connection. On your own site
