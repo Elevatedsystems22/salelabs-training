@@ -521,6 +521,11 @@ html.nb-safe .tooldrawer { padding-bottom: 56px; }
 .mgr-table { min-width: 760px; }
 .mgr-table td { vertical-align: middle; }
 .mgr-banner { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+.rail .group-btn { padding: 10px; margin-top: 4px; font-size: 11.5px; letter-spacing: .07em; color: #9fb0c8; display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; cursor: pointer; font-family: inherit; font-weight: 700; text-transform: uppercase; text-align: left; border-radius: 8px; min-height: 36px; }
+.rail .group-btn:hover { background: #1d2f4a; color: #dce4ef; }
+.group-btn .caret { width: 12px; font-size: 12px; }
+.group-btn span:nth-child(2) { flex: 1; }
+.group-btn .gcount { font-size: 12px; letter-spacing: 0; color: #9fb0c8; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .todo .btn.small { color: var(--on-accent); }
 </style>
@@ -1868,16 +1873,28 @@ function renderRail() {
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
   h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
-  let lastSection = "";
-  MODULES.forEach((m, i) => {
-    if (m.section !== lastSection) { h += `<div class="group">${esc(m.section)}</div>`; lastSection = m.section; }
-    const done = moduleDone(m.id); const un = moduleUnlocked(i);
-    const total = DRILLS[m.id] ? 2 : 1; const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0);
-    const active = inLesson && view.id === m.id;
-    h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
+  const sections = [];
+  MODULES.forEach((m, i) => { let g = sections[sections.length - 1]; if (!g || g.name !== m.section) { g = { name: m.section, items: [] }; sections.push(g); } g.items.push([m, i]); });
+  const curId = inLesson ? view.id : next.id;
+  store.railOpen = store.railOpen || {};
+  sections.forEach((g, gi) => {
+    const doneN = g.items.filter(([m]) => moduleDone(m.id)).length;
+    const hasCur = g.items.some(([m]) => m.id === curId);
+    const open = g.name in store.railOpen ? store.railOpen[g.name] : hasCur;
+    h += `<button class="group group-btn" type="button" data-railsec="${esc(g.name)}" aria-expanded="${open}" aria-controls="railsec${gi}"><span class="caret" aria-hidden="true">${open ? "▾" : "▸"}</span><span>${esc(g.name)}</span><span class="gcount">${doneN === g.items.length ? "✓" : doneN + "/" + g.items.length}</span></button><div id="railsec${gi}" ${open ? "" : "hidden"}>`;
+    g.items.forEach(([m, i]) => {
+      const done = moduleDone(m.id); const un = moduleUnlocked(i);
+      const total = DRILLS[m.id] ? 2 : 1; const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0);
+      const active = inLesson && view.id === m.id;
+      h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
+    });
+    h += `</div>`;
   });
+  h += `<div class="row" style="padding:6px 8px;gap:12px"><button class="linkbtn" type="button" data-railall="1">Expand all</button><button class="linkbtn" type="button" data-railall="0">Collapse all</button></div>`;
   $("#nav").innerHTML = h;
+  document.querySelectorAll("[data-railsec]").forEach(b => b.onclick = e => { e.stopPropagation(); const k = b.dataset.railsec, open = b.getAttribute("aria-expanded") !== "true"; store.railOpen[k] = open; try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (er) {} renderRail(); const nb = document.querySelector(`[data-railsec="${CSS.escape(k)}"]`); if (nb) nb.focus(); });
+  document.querySelectorAll("[data-railall]").forEach(b => b.onclick = e => { e.stopPropagation(); const v = b.dataset.railall === "1"; sections.forEach(g => store.railOpen[g.name] = v); try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (er) {} renderRail(); });
 }
 
 /* =========================================================
