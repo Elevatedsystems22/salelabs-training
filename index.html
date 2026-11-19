@@ -1270,7 +1270,7 @@ HOW TO BEHAVE
 - Real phone talk: short, 1 sentence usually. A little guarded at first, like anyone getting a call from a number they don't know.
 - If the agent opens with "Is this…?" or "May I speak with…?", or sounds unsure or like a telemarketer, be cooler and shorter.
 - Raise these objections, one at a time, in order, at natural moments (the first one early):
-${D.objections.map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
+${(rp.dialObjections || D.objections).map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
 - Move past an objection only when the agent acknowledges it, answers it briefly and asks a forward question. Weak or pushy: repeat it, get shorter, lower mood.
 - Answer the family questions (married? spouse home? kids? bank?) honestly from your profile when asked.
 - OUTCOME RULES: ${D.outcome}
@@ -1300,7 +1300,7 @@ THE AGENCY'S FIRST-CALL METHOD
 - Ending: everyone needed is there -> start now ("give me one second for my computer to catch up"). Married but spouse not home, or no time now -> book: what time will you be home (2 closest options), will your spouse be home, email (spell it), commitment question ("if I'm booking an appointment with you, then I'm telling another family I'm not available at that time. Are you sure this will be a good time?"), confirm the day and time.
 
 THIS LEAD: ${D.lead}${D.ver ? " (" + D.ver + ")" : ""}. ${D.card} Situation: ${D.situation}
-Objections the lead was told to raise: ${D.objections.join(" | ")}
+Objections the lead was told to raise: ${(rp.dialObjections || D.objections).join(" | ")}
 Best outcome: ${D.outcome}
 OUTCOME: ${rp.decision}${rp.decisionNote ? " (" + rp.decisionNote + ")" : ""}. Call length: ${Math.round(rp.duration / 60)} min.
 
@@ -1376,6 +1376,92 @@ function certified() { return examPassed("tele") && examPassed("zoom"); }
 /* Claude capabilities (artifact runtime) */
 let sampleFn = null, ttsApi = null, dictApi = null;
 if (/netlify\.app$|salelabs\.site$/.test(location.hostname)) document.documentElement.classList.add("nb-safe");
+/* =========================================================
+   FREE REALISTIC VOICES (Kokoro, runs in the agent's browser; no per-minute cost)
+   Used on your own site. The first call downloads the voice model once; after that it's cached.
+   ========================================================= */
+const VIDEO_ENABLED = false; // Video avatars (Anam) are off. Set true only if you go back to a paid video plan.
+const KOKORO_VOICES = {
+  Tasha: { voice: "af_heart", speed: 1.02 }, Marcus: { voice: "am_michael", speed: 0.98 },
+  Danielle: { voice: "af_bella", speed: 0.95 },
+  Earl: { voice: "am_fenrir", speed: 0.9 }, Linda: { voice: "af_sarah", speed: 0.95 },
+  Ray: { voice: "am_puck", speed: 1.05 }, Angie: { voice: "af_aoede", speed: 1.0 },
+  Travis: { voice: "am_michael", speed: 1.04 }
+};
+const VOICE = { tts: null, loading: null, status: "idle", pct: 0, files: {} };
+function loadVoiceModel() {
+  if (VOICE.loading || VOICE.status === "ready") return VOICE.loading;
+  VOICE.status = "loading"; VOICE.pct = 0; voiceStatusRender();
+  const progress = p => {
+    if (!p || !p.file) return;
+    if (p.status === "progress" && p.total) VOICE.files[p.file] = [p.loaded, p.total];
+    else if (p.status === "done" && VOICE.files[p.file]) VOICE.files[p.file][0] = VOICE.files[p.file][1];
+    let a = 0, b = 0; Object.values(VOICE.files).forEach(([l, t]) => { a += l; b += t; });
+    if (b) { VOICE.pct = Math.min(99, Math.round(a / b * 100)); voiceStatusRender(); }
+  };
+  VOICE.loading = (async () => {
+    const { KokoroTTS } = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js");
+    const id = "onnx-community/Kokoro-82M-v1.0-ONNX";
+    let tts = null;
+    if (navigator.gpu) { try { tts = await KokoroTTS.from_pretrained(id, { dtype: "fp32", device: "webgpu", progress_callback: progress }); } catch (e) { tts = null; } }
+    if (!tts) tts = await KokoroTTS.from_pretrained(id, { dtype: "q8", device: "wasm", progress_callback: progress });
+    VOICE.tts = tts; VOICE.status = "ready"; VOICE.pct = 100; voiceStatusRender(); return tts;
+  })().catch(err => { console.warn("Voice model failed to load", err); VOICE.status = "failed"; VOICE.loading = null; voiceStatusRender(); });
+  return VOICE.loading;
+}
+function voiceStatusText() {
+  if (!SITE_MODE) return "";
+  return VOICE.status === "ready" ? "Realistic voices ready." : VOICE.status === "loading" ? `Loading realistic voices… ${VOICE.pct}% (one-time download)` : VOICE.status === "failed" ? "Realistic voices couldn't load on this computer, so the family will use your browser's basic voices." : "";
+}
+function voiceStatusRender() { document.querySelectorAll("[data-voicestatus]").forEach(el => { el.textContent = voiceStatusText(); el.hidden = !el.textContent; }); }
+/* Start making a line's audio as soon as the line arrives, so it's ready when its turn comes. */
+function prepLine(l) {
+  if (!VOICE.tts || l.audioP) return;
+  const v = KOKORO_VOICES[l.speaker] || { voice: FEMALE[l.speaker] ? "af_heart" : "am_michael", speed: 1 };
+  l.audioP = VOICE.tts.generate(l.text, { voice: v.voice, speed: v.speed }).then(a => URL.createObjectURL(a.toBlob())).catch(() => null);
+}
+function playKokoro(l, done) {
+  let finished = false; const fin = () => { if (finished) return; finished = true; if (rp && rp.curAudio === au) rp.curAudio = null; done(); };
+  let au = null;
+  const wait = setTimeout(() => { if (!au) { l.audioP = null; fin(); } }, 9000 + words(l.text) * 300);
+  l.audioP.then(url => {
+    clearTimeout(wait);
+    if (finished || !rp || rp.capLine !== l) return;
+    if (!url) { fin(); return; }
+    au = new Audio(url); rp.curAudio = au;
+    au.onended = fin; au.onerror = fin;
+    au.play().catch(fin);
+    setTimeout(() => { if (rp && rp.curAudio === au && !finished) fin(); }, 4000 + words(l.text) * 700);
+  });
+}
+
+/* =========================================================
+   VARIED OBJECTIONS: every call mixes the family's main objection with others,
+   so agents can't memorize one script per family.
+   ========================================================= */
+const OBJECTION_BANK = [
+  { t: "I need to think about it.", any: true },
+  { t: "Can you just email me something to look over?", any: true },
+  { t: "Honestly, I don't trust insurance companies. They never pay out.", any: true },
+  { t: "That's more than I was hoping to spend each month.", any: true },
+  { t: "I want to shop around and compare a few quotes first.", any: true },
+  { t: "Can we finish this another time? It's getting late.", any: true },
+  { t: "We need to talk it over between the two of us first.", couple: true },
+  { t: "I'd want to run this by my family before I sign anything.", single: true }
+];
+const PHONE_OBJECTION_BANK = ["How did you get my number?", "Is this some kind of scam?", "I'm not really interested in buying anything.", "Can you just call me back another time?"];
+function pickObjections(fam) {
+  const couple = fam.speakers.length > 1;
+  const core = fam.objections[0];
+  const fit = OBJECTION_BANK.filter(o => o.any || (couple ? o.couple : o.single));
+  const pool = shuffle(fam.objections.slice(1).concat(shuffle(fit).slice(0, 3).map(o => `${fam.speakers[Math.floor(Math.random() * fam.speakers.length)]}: "${o.t}"`)));
+  return [core].concat(pool.slice(0, fam.difficulty === "Hard" ? 2 : 1));
+}
+function pickDialObjections(fam) {
+  const D = DIAL_FAM[fam.id]; const extra = PHONE_OBJECTION_BANK[Math.floor(Math.random() * PHONE_OBJECTION_BANK.length)];
+  return D.objections.concat([`${fam.speakers[0]}: "${extra}"`]);
+}
+
 /* =========================================================
    OWN-SITE MODE
    Inside claude.ai the course uses Claude's built-in connection. On your own site
@@ -1849,11 +1935,13 @@ Output ONLY JSON, no markdown:
 
 let practiceFormat = "zoom";
 function familyPickView(mode) {
+  if (SITE_MODE) setTimeout(loadVoiceModel, 0);
   const exam = mode === "exam";
   const intro = exam
     ? `<p class="lead">To get certified you pass two live calls: one <b>Telesales</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
     : `<p class="lead">Pick a format and a family. In practice you'll see a live "temperature" meter showing how warm the family is, plus a rebuttal cheat sheet. Practice calls don't count toward certification.</p>`;
   let h = `<div class="page"><div class="eyebrow">${exam ? "Final exam" : "Practice"}</div><h1>${exam ? "Live AI family exam" : "Practice with an AI family"}</h1>${intro}`;
+  if (SITE_MODE) h += `<p class="small" data-voicestatus ${voiceStatusText() ? "" : "hidden"}>${esc(voiceStatusText())}</p>`;
   if (!sampleFn) h += `<div class="warn"><b>AI family unavailable here</b>The AI family runs through Claude. Open this page on claude.ai while signed in, then allow it when asked.</div>`;
   h += `<div class="card"><h2>How the call works</h2><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
     <li><b>First call:</b> practice dialing the lead. They don't know you're calling. Use your dial script, handle their pushback, and start the presentation now or book the appointment.</li>
@@ -2185,7 +2273,9 @@ function startCall(fam, mode, format) {
     buffer: "", partial: "", lastHeard: 0, turnStart: 0, lastActivity: 0, gen: 0, awaiting: false, abort: null, queue: [], familySpeaking: false,
     lastInterjectAt: 0, nudged: false, micOn: false, micMuted: false, speaking: null, voiceMap: {}, started: 0, timer: null, loop: null, ended: false, countdown: 5 };
   if (format === "dial") { rp.dial = true; rp.format = "tele"; }
-  rp.video = SITE_MODE && castReady(fam); // Zoom shows the video people; phone calls use their real voices with no picture
+  rp.video = VIDEO_ENABLED && SITE_MODE && castReady(fam); // video avatars are off unless VIDEO_ENABLED
+  rp.objections = pickObjections(fam); if (rp.dial) rp.dialObjections = pickDialObjections(fam);
+  if (SITE_MODE) loadVoiceModel();
   const taken = []; fam.speakers.forEach(n => { const v = pickVoice(n, taken); rp.voiceMap[n] = v; if (v) taken.push(v.name); });
   view = { name: "call" }; render();
 }
@@ -2206,6 +2296,7 @@ function lobbyView() {
       <label class="chk"><input type="checkbox" id="optPhones" ${rp.headphones ? "checked" : ""}><span>I'm wearing headphones<br><span class="msmall">Lets you talk over the family. Without headphones, your mic pauses while they speak so it doesn't hear them.</span></span></label>
       <label for="optPause">How long a pause before the family responds</label>
       <select id="optPause"><option value="short" ${rp.pause === "short" ? "selected" : ""}>Short (1.2 seconds)</option><option value="normal" ${rp.pause === "normal" ? "selected" : ""}>Normal (1.8 seconds)</option><option value="long" ${rp.pause === "long" ? "selected" : ""}>Long (2.6 seconds)</option></select>
+      ${SITE_MODE ? `<p class="cap sys" data-voicestatus ${voiceStatusText() ? "" : "hidden"}>${esc(voiceStatusText())}</p>` : ""}
       ${dictApi ? "" : `<p class="cap sys">Voice input isn't available in this browser, so you'll type. For the full spoken call, open this page in Chrome or the Claude desktop app's main window.</p>`}
       ${synth || ttsApi ? "" : `<p class="cap sys">This browser can't play the family's voices, so their lines appear as captions.</p>`}
     </div>
@@ -2309,7 +2400,7 @@ function sendTyped() { const i = $("#agentInput"); if (!i) return; const t = i.v
 
 /* ---- family speech ---- */
 function familySays(lines) {
-  lines.forEach(l => { rp.msgs.push({ who: "family", speaker: l.speaker, text: l.text }); rp.queue.push(l); });
+  lines.forEach(l => { rp.msgs.push({ who: "family", speaker: l.speaker, text: l.text }); rp.queue.push(l); if (rp.sound && SITE_MODE) prepLine(l); });
   rp.lastActivity = Date.now(); renderMsgs();
   if (!rp.familySpeaking) playNext();
 }
@@ -2320,7 +2411,10 @@ function playNext() {
   rp.capLine = l; updateCaptions();
   const done = () => { if (!rp || rp.capLine !== l) return; playNext(); };
   const useSynth = rp.sound && synth && (dictApi || !ttsApi);
-  if (rp.video && VID.people[l.speaker]) {
+  if (rp.sound && SITE_MODE && VOICE.tts && !(rp.video && VID.people[l.speaker])) {
+    rp.familySpeaking = true; setSpeaking(l.speaker);
+    prepLine(l); playKokoro(l, done);
+  } else if (rp.video && VID.people[l.speaker]) {
     rp.familySpeaking = true; setSpeaking(l.speaker);
     videoSay(l.speaker, l.text).then(done);
   } else if (useSynth) {
@@ -2341,6 +2435,7 @@ function playNext() {
   }
 }
 function interruptFamily() {
+  if (rp && rp.curAudio) { try { rp.curAudio.pause(); } catch (e) {} rp.curAudio = null; }
   if (rp && rp.video && rp.capLine) videoMute(rp.capLine.speaker);
   if (synth) try { synth.cancel(); } catch (e) {}
   if (ttsApi) try { ttsApi.stop(); } catch (e) {}
@@ -2426,10 +2521,10 @@ HOW TO BEHAVE
 - A line ending in [interrupted by agent] means the agent talked over you; react like a person would if it keeps happening.
 - Tie-downs and "why is this important to you?": give a real personal answer if warm (mood 55+), a short flat one if cool.
 - At the close (when asked to choose an option or buy), you MUST raise your objections first, one at a time, in this order, even if you like the agent:
-${f.objections.map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
+${(rp.objections || f.objections).map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
 - Move past an objection only when the agent handles it well: acknowledges it, reconnects to needs you already admitted, solves the real concern, and re-asks with a choice. A weak, pushy or ignored rebuttal: repeat or deepen the objection and lower mood.
 - BUDGET: comfortable about $${f.budget.comfortable}/mo, absolute max $${f.budget.max}/mo. Never agree to a premium above your max. Prices: Option 1 $${f.quote.opt1}/mo (Final Expense $30,000, inflation built in); Option 2 $${f.quote.opt2}/mo (Final Expense lowered to $15,000, today's cost). There is no cheaper plan.
-- ${f.buyingNotes}
+- ${f.buyingNotes} (The objections that must be handled before you buy are the ones in the list above.)
 - If the agent never actually asks you to choose or buy, do not offer to buy on your own.
 - Decline (no_sale) if the agent gives up, misrepresents things, promises guaranteed approval, or is rude. End the call (hung_up) only if mood drops near 0 or the agent is disrespectful.
 
@@ -2507,7 +2602,7 @@ function afterCallRender() {
   const bind = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
   bind("#micBtn", micButton);
   bind("#scriptBtn", () => { if (toolOpenAt != null) { closeTool(); return; } if (rp.panel) { rp.panel = null; rerenderCall(); } openTool(toolStepForCall()); });
-  bind("#voiceBtn", () => { rp.sound = !rp.sound; if (!rp.sound) { if (synth) try { synth.cancel(); } catch (e) {} if (ttsApi) try { ttsApi.stop(); } catch (e) {} rp.familySpeaking = false; } rerenderCall(); });
+  bind("#voiceBtn", () => { rp.sound = !rp.sound; if (!rp.sound) { if (rp.curAudio) { try { rp.curAudio.pause(); } catch (e) {} } if (synth) try { synth.cancel(); } catch (e) {} if (ttsApi) try { ttsApi.stop(); } catch (e) {} rp.familySpeaking = false; } rerenderCall(); });
   bind("#typeBtn", () => { rp.typing = !rp.typing; rerenderCall(); const i = $("#agentInput"); if (i) i.focus(); });
   bind("#shareBtn", () => { if (rp.sharing) { rp.sharing = false; rerenderCall(); } else setSlide(rp.current == null ? 0 : rp.current); });
   bind("#prevSlide", () => setSlide(rp.current - 1));
@@ -2594,6 +2689,7 @@ function stopLive() {
   closeTool();
   stopVideoFamily();
   if (!rp) return;
+  if (rp.curAudio) { try { rp.curAudio.pause(); } catch (e) {} rp.curAudio = null; }
   clearInterval(rp.loop); clearInterval(rp.timer);
   if (rp.abort) try { rp.abort.abort(); } catch (e) {}
   if (synth) try { synth.cancel(); } catch (e) {}
@@ -2674,7 +2770,7 @@ THE CORRECT PRESENTATION FLOW (agency script):
 
 FAMILY (hidden from the agent): ${f.name}
 ${f.profile}
-Objections the family was told to raise: ${f.objections.join(" | ")}
+Objections the family was told to raise: ${(rp.objections || f.objections).join(" | ")}
 Quote: Option 1 $${f.quote.opt1}/mo (Final Expense $30,000, inflation built in), Option 2 $${f.quote.opt2}/mo (Final Expense $15,000, the 'can't afford' adjustment). Family max budget $${f.budget.max}/mo.
 FORMAT: ${rp.format === "tele" ? "TELESALES (phone only, nothing shared). The agent must describe each slide in words, check in often (\"Does that make sense?\"), say numbers slowly, and must NOT refer to a screen or slide (\"as you can see\"). Score this inside company, benefits and conduct." : "ZOOM (video, screen shared). The agent should build rapport before sharing, share the right slide at the right time, and confirm the family can see it."}
 OUTCOME: ${rp.decision}${rp.decisionNote ? " (" + rp.decisionNote + ")" : ""}. Call length: ${Math.round(rp.duration / 60)} min. ${rp.format === "tele" ? "Steps the agent marked in order" : "Slides shared in order"}: ${rp.shared.map(i => STEPS[i]).join(" > ") || "none"}.

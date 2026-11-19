@@ -1,6 +1,6 @@
 /* The AI family brain and the grader. Streams plain text back to the course.
    Needs the environment variable ANTHROPIC_API_KEY.
-   Optional: MODEL_FAST (family replies, drills) and MODEL_SMART (call grading). */
+   Optional: MODEL_FAST (family replies, drills; default Haiku, the low-cost model) and MODEL_SMART (final call grading; default Sonnet). */
 import { allowed, json } from "../lib/guard.mjs";
 
 const MAX_PROMPT = 120000;
@@ -14,7 +14,7 @@ export default async (req) => {
   const prompt = String(body.prompt || "");
   if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad_request" }, 400);
   const smart = body.tier === "complex";
-  const model = smart ? (process.env.MODEL_SMART || "claude-opus-5-5") : (process.env.MODEL_FAST || "claude-sonnet-5-5");
+  const model = smart ? (process.env.MODEL_SMART || "claude-sonnet-5-5") : (process.env.MODEL_FAST || "claude-haiku-5-5");
 
   const upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
