@@ -1651,6 +1651,7 @@ function cmBuild() {
             <button type="button" data-cm="notes" id="cmNotesBtn">📝 Notes <kbd>N</kbd></button>
             <button type="button" data-cm="obj">🛡️ Objections <kbd>O</kbd></button>
             <button type="button" data-cm="tips" id="cmTipsBtn" hidden>💡 Tips <kbd>T</kbd></button>
+            <button type="button" data-dial="restart" id="cmRestartBtn" hidden title="Clear this call and start over">↺ New call</button>
             <button type="button" data-cm="study" id="cmStudyBtn">Study mode</button>
             <button type="button" data-cm="exit" aria-label="Exit">✕</button>
         </div>
@@ -1716,6 +1717,7 @@ function cmRender() {
     document.getElementById("cmSec").textContent = s.section;
     document.getElementById("cmTitle").textContent = s.title;
     document.getElementById("cmTipsBtn").hidden = true;
+    document.getElementById("cmRestartBtn").hidden = true;
     document.getElementById("cmStudyBtn").hidden = false;
     const order = stepOrder(), pos = Math.max(0, order.indexOf(i));
     document.getElementById("cmProg").style.width = ((pos + (CM.beat + 1) / beats.length) / order.length * 100) + "%";
@@ -1754,7 +1756,7 @@ function cmBack() {
 }
 function cmClock() {
     const el = document.getElementById("cmClock"); if (!el || document.getElementById("cm").hidden) return;
-    const start = CM.dial ? S.dial.start : S.rapportStart;
+    const start = CM.dial ? (S.dial && S.dial.path && S.dial.path.length ? S.dial.start : null) : S.rapportStart;
     if (!start) { el.textContent = ""; return; }
     const sec = Math.floor((Date.now() - start) / 1000), rap = !CM.dial && currentSlideIndex >= 2 && currentSlideIndex <= 7;
     el.className = "cm-clock" + (rap && sec >= 480 ? " ok" : "");
@@ -1842,7 +1844,7 @@ function dialAction(a, el) {
     if (a === "ver") { d.ver = el.dataset.val; d.path = []; saveSession(); return dialRender(); }
     if (a === "fmt") { S.format = el.dataset.val; saveSession(); updateSessionLine(); return dialRender(); }
     if (a === "book") return dialGo("book_time");
-    if (a === "restart") { d.path = []; d.facts = {}; saveSession(); return dialRender(); }
+    if (a === "restart") { d.path = []; d.facts = {}; d.start = null; d.line = 0; saveSession(); return dialRender(); }
     if (a === "present" || a === "saveappt") {
         const L = dialLead();
         S.leadType = L.tool; S.type = a === "present" ? "now" : "appointment";
@@ -1868,6 +1870,7 @@ function dialRender() {
     document.getElementById("cmSec").textContent = "Make the call";
     document.getElementById("cmTitle").textContent = L.name + (L.versions ? (d.ver === "new" ? " · New lead" : " · Aged lead") : "");
     document.getElementById("cmTipsBtn").hidden = false;
+    document.getElementById("cmRestartBtn").hidden = !id;
     document.getElementById("cmStudyBtn").hidden = true;
     document.getElementById("cmProg").style.width = id ? Math.min(100, d.path.length * 14) + "%" : "0%";
     document.getElementById("cmDots").innerHTML = id ? `<em>${d.path.length} ${d.path.length === 1 ? "step" : "steps"} into the call</em>` : "";
