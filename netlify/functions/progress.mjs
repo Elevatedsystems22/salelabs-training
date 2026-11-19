@@ -1,23 +1,16 @@
 /* Trainee progress for the Manager view.
    POST /api/progress   the course saves a small progress snapshot for each trainee (no AI cost).
-   GET  /api/progress   the manager view reads everyone; needs the header x-manager-code.
-   DELETE /api/progress?uid=…   removes one trainee from the list; needs x-manager-code.
+   GET  /api/progress   the manager view reads everyone; needs a manager sign-in.
+   DELETE /api/progress?uid=…   removes one trainee from the list; needs a manager sign-in.
    Needs the environment variable MANAGER_CODE (your manager passcode). Data is kept in Netlify Blobs. */
 import { getStore } from "@netlify/blobs";
-import { timingSafeEqual } from "node:crypto";
+import { authManager } from "../lib/auth.mjs";
 import { allowed, json } from "../lib/guard.mjs";
 
 const UID = /^[A-Za-z0-9-]{8,64}$/;
 const str = (v, n) => String(v == null ? "" : v).slice(0, n);
 const num = (v, lo, hi) => { const x = Number(v); return Number.isFinite(x) ? Math.min(hi, Math.max(lo, Math.round(x))) : 0; };
 
-function codeOk(req) {
-  const want = process.env.MANAGER_CODE || "";
-  const got = req.headers.get("x-manager-code") || "";
-  if (!want || !got) return false;
-  const a = Buffer.from(got), b = Buffer.from(want);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 function clean(s) {
   return {
@@ -63,15 +56,15 @@ export default async (req) => {
   }
 
   if (req.method === "GET") {
-    if (!process.env.MANAGER_CODE) return json({ error: "missing_code", message: "MANAGER_CODE is not set in Netlify." }, 500);
-    if (!codeOk(req)) return json({ error: "wrong_code" }, 401);
+    if (!process.env.MANAGER_CODE && !process.env.SESSION_SECRET) return json({ error: "missing_code", message: "MANAGER_CODE is not set in Netlify." }, 500);
+    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
     const { blobs } = await db.list();
     const rows = await Promise.all(blobs.map(b => db.get(b.key, { type: "json" }).catch(() => null)));
     return json({ trainees: rows.filter(Boolean) });
   }
 
   if (req.method === "DELETE") {
-    if (!codeOk(req)) return json({ error: "wrong_code" }, 401);
+    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
     const uid = new URL(req.url).searchParams.get("uid") || "";
     if (!UID.test(uid)) return json({ error: "bad_request" }, 400);
     await db.delete(uid);
