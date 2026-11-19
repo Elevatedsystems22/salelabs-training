@@ -1402,16 +1402,17 @@ function loadVoiceModel() {
   VOICE.loading = (async () => {
     const { KokoroTTS } = await import("https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js");
     const id = "onnx-community/Kokoro-82M-v1.0-ONNX";
-    let tts = null;
-    if (navigator.gpu) { try { tts = await KokoroTTS.from_pretrained(id, { dtype: "fp32", device: "webgpu", progress_callback: progress }); } catch (e) { tts = null; } }
-    if (!tts) tts = await KokoroTTS.from_pretrained(id, { dtype: "q8", device: "wasm", progress_callback: progress });
+    let tts = null, gpuErr = "";
+    if (navigator.gpu) { try { tts = await KokoroTTS.from_pretrained(id, { dtype: "fp32", device: "webgpu", progress_callback: progress }); } catch (e) { tts = null; gpuErr = String(e && e.message || e).slice(0, 60); } }
+    if (!tts) { try { tts = await KokoroTTS.from_pretrained(id, { dtype: "q8", device: "wasm", progress_callback: progress }); } catch (e) { throw new Error("wasm: " + String(e && e.message || e).slice(0, 100) + (gpuErr ? " | gpu: " + gpuErr : "")); } }
+    await tts.generate("Hi.", { voice: "af_heart" }); // warm up so the first real line is fast
     VOICE.tts = tts; VOICE.status = "ready"; VOICE.pct = 100; voiceStatusRender(); return tts;
-  })().catch(err => { console.warn("Voice model failed to load", err); VOICE.status = "failed"; VOICE.loading = null; voiceStatusRender(); });
+  })().catch(err => { console.warn("Voice model failed to load", err); VOICE.err = String((err && (err.message || err)) || "unknown").slice(0, 160); VOICE.status = "failed"; VOICE.loading = null; voiceStatusRender(); });
   return VOICE.loading;
 }
 function voiceStatusText() {
   if (!SITE_MODE) return "";
-  return VOICE.status === "ready" ? "Realistic voices ready." : VOICE.status === "loading" ? `Loading realistic voices… ${VOICE.pct}% (one-time download)` : VOICE.status === "failed" ? "Realistic voices couldn't load on this computer, so the family will use your browser's basic voices." : "";
+  return VOICE.status === "ready" ? "Realistic voices ready." : VOICE.status === "loading" ? `Loading realistic voices… ${VOICE.pct}% (one-time download)` : VOICE.status === "failed" ? "Realistic voices couldn't load on this computer, so the family will use your browser's basic voices." + (VOICE.err ? " (" + VOICE.err + ")" : "") : "";
 }
 function voiceStatusRender() { document.querySelectorAll("[data-voicestatus]").forEach(el => { el.textContent = voiceStatusText(); el.hidden = !el.textContent; }); }
 /* Start making a line's audio as soon as the line arrives, so it's ready when its turn comes. */
