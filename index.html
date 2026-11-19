@@ -231,7 +231,7 @@ body.tool-open.tool-call .app { margin-right: min(760px, 46vw); }
 body.tool-open .rail { display: none; } body.tool-open .app { grid-template-columns: 1fr; }
 @media (max-width: 1100px) { .tooldrawer, .tooldrawer.in-call { width: 100vw; } body.tool-open .app { margin-right: 0; } }
 .td-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--ink); }
-.td-step { color: var(--muted); font-size: 14px; } .td-close { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; color: var(--ink); font-weight: 600; }
+.td-step { color: var(--muted); font-size: 14px; } .td-full { margin-left: auto; font-size: 14px; font-weight: 700; color: var(--accent); text-decoration: none; padding: 6px 10px; } .td-full + .td-close { margin-left: 4px; } .td-close { margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; color: var(--ink); font-weight: 600; }
 .tooldrawer iframe { flex: 1; border: 0; width: 100%; background: #fff; }
 .phonecard { position: relative; width: min(520px, 100%); aspect-ratio: 4 / 3; border-radius: 18px; background: radial-gradient(circle at 50% 35%, #2c3a52, #161c27 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #fff; border: 3px solid transparent; }
 .phonecard.talking { border-color: var(--m-green); }
@@ -1192,7 +1192,7 @@ function openTool(slideId) {
   let d = document.getElementById("toolDrawer");
   if (!d) {
     d = document.createElement("div"); d.id = "toolDrawer"; d.className = "tooldrawer"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Presentation tool");
-    d.innerHTML = `<div class="td-head"><img src="${ASSET_BASE}globe.png" alt="" width="22" height="22"><b>Presentation tool</b><span id="tdStep" class="td-step"></span><button class="td-close" id="tdClose" type="button" aria-label="Close the presentation tool">Close ✕</button></div><iframe id="toolFrame" title="Agency presentation tool"></iframe>`;
+    d.innerHTML = `<div class="td-head"><img src="${ASSET_BASE}globe.png" alt="" width="22" height="22"><b>Presentation tool</b><span id="tdStep" class="td-step"></span><a class="td-full" href="${TOOL_URL}" target="_blank" rel="noopener">Full screen ↗</a><button class="td-close" id="tdClose" type="button" aria-label="Close the presentation tool">Close ✕</button></div><iframe id="toolFrame" title="Agency presentation tool"></iframe>`;
     document.body.appendChild(d);
     d.querySelector("#tdClose").onclick = closeTool;
   }
