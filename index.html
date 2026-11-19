@@ -530,6 +530,26 @@ html.nb-safe .tooldrawer { padding-bottom: 56px; }
 .group-btn .caret { width: 12px; font-size: 12px; }
 .group-btn span:nth-child(2) { flex: 1; }
 .group-btn .gcount { font-size: 12px; letter-spacing: 0; color: #4f5d73; }
+.mgr-card { display: flex; gap: 16px; align-items: center; }
+.mgr-card.big { gap: 20px; }
+.mgr-photo { border-radius: 50%; object-fit: cover; flex: none; background: var(--accent-soft); }
+.mgr-initials { display: grid; place-items: center; color: var(--accent); font-weight: 700; }
+.mgr-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mgr-name { font-weight: 700; font-size: 17px; }
+.mgr-card.big .mgr-name { font-size: 22px; }
+.mgr-links { display: flex; flex-direction: column; gap: 2px; font-size: 14px; margin-top: 4px; }
+.mgr-links a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
+.mgr-links a:hover { text-decoration: underline; }
+.mgr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.pick-card { text-align: left; font: inherit; color: inherit; cursor: pointer; border: 2px solid var(--line); }
+.pick-card:hover { border-color: var(--accent); }
+.fld-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; }
+.fld { display: flex; flex-direction: column; gap: 6px; }
+.fld label { font-weight: 600; font-size: 14px; }
+.fld input, .fld select, .card select { font: inherit; border: 2px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); color: var(--ink); }
+.fld input:focus, .fld select:focus { outline: none; border-color: var(--accent); }
+a.btn { text-decoration: none; }
+.mgr-table a { color: var(--accent); text-decoration: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .todo .btn.small { color: var(--on-accent); }
 </style>
@@ -1507,6 +1527,7 @@ function progressSnapshot() {
     avgScore: last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : 0,
     weak: weakestSkill(), examTele: examPassed("tele"), examZoom: examPassed("zoom"), certified: certified(),
     next: next ? next.title : "",
+    invite: store.invite ? store.invite.token : "",
     lastCall: last ? { family: last.family, format: last.format, total: last.total, pass: last.pass, date: last.date, summary: last.summary } : null
   };
 }
@@ -1876,6 +1897,7 @@ function renderRail() {
   h += `<button class="navbtn main" data-tool="0" type="button"><span class="badge">◫</span><span>Presentation tool</span><span></span></button>`;
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
+  h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>Get help</span><span></span></button>`;
   h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
   const sections = [];
   MODULES.forEach((m, i) => { let g = sections[sections.length - 1]; if (!g || g.name !== m.section) { g = { name: m.section, items: [] }; sections.push(g); } g.items.push([m, i]); });
@@ -1922,12 +1944,14 @@ function render() {
   else if (view.name === "grading") main.innerHTML = gradingView();
   else if (view.name === "results") main.innerHTML = resultsView(view.attempt);
   else if (view.name === "history") main.innerHTML = historyView();
+  else if (view.name === "help") main.innerHTML = helpView();
   else if (view.name === "cast") { main.innerHTML = castView(); bindCast(); }
   main.scrollTop = 0;
 }
 
 function signInView() {
-  return `<div class="page">
+  if (inviteState.loading) return `<div class="page"><img class="hero-logo" src="globe.png" alt=""><h1>Opening your invite…</h1></div>`;
+  return `<div class="page">${inviteState.error ? `<div class="warn" role="alert"><b>Invite link problem</b>${esc(inviteState.error)}</div>` : ""}
     <img class="hero-logo" src="globe.png" alt="">
     <div class="eyebrow">Welcome</div>
     <h1>Learn to sell virtually, then prove it live.</h1>
@@ -2005,6 +2029,7 @@ function homeView() {
   else cta = `<div class="card"><div class="row spread"><div><h2>${n === 0 ? "Start with lesson 1" : "Next up"}</h2><p class="small">${esc(next.section)} · about ${next.minutes} minutes plus the quiz${DRILLS[next.id] ? " and say-it drill" : ""}</p></div><button class="btn" data-go="module" data-id="${next.id}" type="button">${n === 0 ? "Begin" : "Continue"}: ${esc(next.title)}</button></div></div>`;
   return `<div class="page wide">
     ${isManager() ? `<div class="mgr-banner"><span>Manager mode: every practice call and exam is unlocked for you in this tab.</span><button class="linkbtn" data-go="manager" type="button">Open manager view</button></div>` : ""}
+    ${store.invite && !store.welcomed ? `<div class="result-banner pass"><div class="big">Welcome to the team, ${esc(store.invite.first)}!</div><p>${store.manager ? esc(store.manager.name) + " set up your training. " : ""}Work through the lessons in order. Each one unlocks practice calls with an AI family, and you finish by passing one Telesales and one Zoom exam call.</p><div><button class="btn small" type="button" onclick="store.welcomed=true;save();render()">Let's go</button></div></div>` : ""}
     <div class="dash-head"><div><h1>${greet}, ${esc(store.name.split(" ")[0])}</h1><p class="small" style="font-size:15px">Day ${day} · ${certified() ? "Certified" : `Aim to certify by ${target}`}</p></div>
       <button class="btn" data-go="practice" type="button">Start a practice call</button></div>
     ${cta}
@@ -2018,7 +2043,8 @@ function homeView() {
       <div class="card chart"><h2>Last 10 call scores</h2>${scoreChart(last10)}</div>
       <div class="card"><h2>Today's checklist</h2><div>${todayList() || `<p class="small">You're all caught up.</p>`}</div></div>
     </div>
-    <div class="card"><h2>Coach's notes</h2>${coachNotes()}</div>
+    <div class="dash-grid"><div class="card"><h2>Coach's notes</h2>${coachNotes()}</div>
+    ${store.manager ? `<div class="card"><h2>Your manager</h2>${managerCard(store.manager, { actions: true })}<p class="small">Stuck on anything? Call, text or email. You can always find this under Get help.</p></div>` : ""}</div>
   </div>`;
 }
 
@@ -3095,9 +3121,12 @@ function historyView() {
 }
 
 /* =========================================================
-   MANAGER VIEW (reads /api/progress with your MANAGER_CODE)
+   MANAGER VIEW (reads /api/progress and /api/team with your MANAGER_CODE)
    ========================================================= */
-let mgr = { rows: null, error: "", loading: false, filter: "all" };
+let mgr = { rows: null, managers: [], invites: [], error: "", loading: false, filter: "all", tab: "trainees", last: null, editing: null, formErr: "" };
+function meId() { try { return sessionStorage.getItem("vpa_me") || ""; } catch (e) { return ""; } }
+function meOk() { try { return sessionStorage.getItem("vpa_me_ok") === meId() && !!meId(); } catch (e) { return false; } }
+function setMe(id, ok) { try { if (id) sessionStorage.setItem("vpa_me", id); else sessionStorage.removeItem("vpa_me"); if (ok) sessionStorage.setItem("vpa_me_ok", id); else sessionStorage.removeItem("vpa_me_ok"); } catch (e) {} }
 function mgrCode() { try { return sessionStorage.getItem("vpa_mgr") || ""; } catch (e) { return ""; } }
 function mgrStatus(t) {
   if (t.certified) return ["Certified", "cert"];
@@ -3114,65 +3143,262 @@ function ago(iso) {
   const h = Math.round(m / 60); if (h < 24) return h + " hr ago";
   const d = Math.round(h / 24); return d === 1 ? "yesterday" : d + " days ago";
 }
+async function mgrApi(path, opts) {
+  const r = await fetch(path, Object.assign({}, opts, { headers: Object.assign({ "x-manager-code": mgrCode(), "content-type": "application/json" }, (opts || {}).headers) }));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.message || "Something went wrong. Try again."), { status: r.status });
+  return j;
+}
 async function mgrLoad(code) {
   mgr.loading = true; mgr.error = ""; render();
   try {
-    const r = await fetch("/api/progress", { headers: { "x-manager-code": code } });
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 401) { mgr.error = "That code didn't match."; try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} }
-    else if (!r.ok) mgr.error = j.message || "The manager list isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
-    else { try { sessionStorage.setItem("vpa_mgr", code); } catch (e) {} mgr.rows = j.trainees || []; }
+    const h = { headers: { "x-manager-code": code } };
+    const [r1, r2] = await Promise.all([fetch("/api/progress", h), fetch("/api/team", h)]);
+    const j1 = await r1.json().catch(() => ({})), j2 = await r2.json().catch(() => ({}));
+    if (r1.status === 401 || r2.status === 401) { mgr.error = "That code didn't match."; try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} }
+    else if (!r1.ok || !r2.ok) mgr.error = j1.message || j2.message || "The manager view isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
+    else { try { sessionStorage.setItem("vpa_mgr", code); } catch (e) {} mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; }
   } catch (e) { mgr.error = "Couldn't reach the server. The manager view works on your live site, not inside claude.ai."; }
   mgr.loading = false; render();
+}
+function photoSrc(p) { return p && p.charAt(0) === "/" ? (ASSET_BASE ? ASSET_BASE + p.slice(1) : p.slice(1)) : (p || ""); }
+function initials(n) { return String(n || "?").split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase(); }
+function avatar(m, size) {
+  return m.photo ? `<img class="mgr-photo" src="${esc(photoSrc(m.photo))}" alt="" width="${size}" height="${size}" style="width:${size}px;height:${size}px">`
+    : `<span class="mgr-photo mgr-initials" style="width:${size}px;height:${size}px;font-size:${Math.round(size / 2.6)}px" aria-hidden="true">${esc(initials(m.name))}</span>`;
+}
+function telHref(p) { return "tel:" + String(p || "").replace(/[^\d+]/g, ""); }
+function smsHref(p, body) { return "sms:" + String(p || "").replace(/[^\d+]/g, "") + (body ? "?&body=" + encodeURIComponent(body) : ""); }
+function managerCard(m, opts) {
+  opts = opts || {};
+  return `<div class="mgr-card ${opts.big ? "big" : ""}">${avatar(m, opts.big ? 96 : 64)}<div class="mgr-info">
+    <div class="mgr-name">${esc(m.name)}</div>${m.position ? `<div class="small">${esc(m.position)}</div>` : ""}
+    ${opts.plain ? `<div class="mgr-links"><span>${esc(m.phone || "")}</span><span>${esc(m.email || "")}</span></div>` : `<div class="mgr-links">${m.phone ? `<a href="${telHref(m.phone)}">📞 ${esc(m.phone)}</a>` : ""}${m.email ? `<a href="mailto:${esc(m.email)}">✉️ ${esc(m.email)}</a>` : ""}</div>`}
+    ${opts.actions ? `<div class="row" style="margin-top:6px">${m.phone ? `<a class="btn small" href="${telHref(m.phone)}">Call</a><a class="btn small secondary" href="${smsHref(m.phone)}">Text</a>` : ""}${m.email ? `<a class="btn small secondary" href="mailto:${esc(m.email)}?subject=${encodeURIComponent("Training question")}">Email</a>` : ""}</div>` : ""}
+  </div></div>`;
+}
+function inviteLink(token) { return location.origin + location.pathname + "?invite=" + encodeURIComponent(token); }
+function inviteText(inv) {
+  const m = mgr.managers.find(x => x.id === inv.managerId);
+  return `Hi ${inv.first}, welcome to the team! Here's your personal link to start your Virtual Presentation Academy training: ${inviteLink(inv.token)}${m ? `\n\nIf you get stuck, reach out to ${m.name}${m.phone ? " at " + m.phone : ""}.` : ""}`;
+}
+function inviteShare(inv) {
+  const subj = "Your training invite: Virtual Presentation Academy";
+  return `<div class="row"><button class="btn small" type="button" data-icopy="${esc(inv.token)}">Copy link</button>
+    ${inv.phone ? `<a class="btn small secondary" href="${smsHref(inv.phone, inviteText(inv))}">Text it</a>` : ""}
+    ${inv.email ? `<a class="btn small secondary" href="mailto:${esc(inv.email)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(inviteText(inv))}">Email it</a>` : ""}
+    <span class="small" data-icopied="${esc(inv.token)}" role="status"></span></div>`;
+}
+function mgrTabs() {
+  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["invite", "Invite an agent"], ["managers", "Managers"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
+}
+const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
+function inviteTab() {
+  let h = `<div class="card"><h2>Invite a new agent</h2><p class="small">They get a personal link. When they open it, the course knows who they are and shows their manager's contact card.</p>
+    <div class="fld-grid">${field("invFirst", "First name", "text", "", true, "off")}${field("invLast", "Last name", "text", "", true, "off")}${field("invPhone", "Phone", "tel", "", true, "off")}${field("invEmail", "Email", "email", "", true, "off")}</div>
+    <div class="fld"><label for="invMgr">Their manager</label><select id="invMgr">${mgr.managers.map(m => `<option value="${esc(m.id)}" ${m.id === meId() ? "selected" : ""}>${esc(m.name)}${m.position ? " · " + esc(m.position) : ""}</option>`).join("")}</select></div>
+    ${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}
+    <div class="row"><button class="btn" id="invCreate" type="button">Create invite</button><button class="linkbtn" data-mtab="managers" type="button">Add another manager</button></div></div>`;
+  if (mgr.last) h += `<div class="card" style="border:2px solid var(--good)"><h2>Invite ready for ${esc(mgr.last.first)} ${esc(mgr.last.last)}</h2><p class="small" style="word-break:break-all">${esc(inviteLink(mgr.last.token))}</p>${inviteShare(mgr.last)}<p class="small">Text and Email open your phone's or computer's own apps with the message filled in, so it comes from you.</p></div>`;
+  const pending = mgr.invites;
+  if (pending.length) h += `<div class="card table-wrap"><h2>Sent invites</h2><table class="hist mgr-table"><thead><tr><th scope="col">Agent</th><th scope="col">Contact</th><th scope="col">Manager</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${pending.map(inv => {
+    const m = mgr.managers.find(x => x.id === inv.managerId);
+    return `<tr><td><b>${esc(inv.first)} ${esc(inv.last)}</b><div class="small">Sent ${esc(ago(inv.createdAt))}</div></td><td>${inv.phone ? `<div>${esc(inv.phone)}</div>` : ""}${inv.email ? `<div class="small">${esc(inv.email)}</div>` : ""}</td><td>${m ? esc(m.name) : "–"}</td>
+      <td>${inv.acceptedAt ? `<span class="status on">Started ${esc(ago(inv.acceptedAt))}</span>` : `<span class="status behind">Not started</span>`}</td>
+      <td><div class="row" style="flex-wrap:nowrap"><button class="linkbtn" data-icopy="${esc(inv.token)}" type="button">Copy link</button><button class="linkbtn" data-iremove="${esc(inv.token)}" data-iname="${esc(inv.first + " " + inv.last)}" type="button">Remove</button></div><span class="small" data-icopied="${esc(inv.token)}" role="status"></span></td></tr>`;
+  }).join("")}</tbody></table></div>`;
+  return h;
+}
+function managerForm(e, mode) {
+  return `<div class="row" style="align-items:center">${avatar({ name: (e && e.name) || "", photo: (e && e.photo) || "" }, 72)}<div><label class="btn small secondary" for="mPhoto" style="cursor:pointer">${e && e.photo ? "Change photo" : "Upload photo"}</label><input id="mPhoto" type="file" accept="image/*" class="sr-only"></div></div>
+    <div class="fld-grid">${field("mName", "Name", "text", e && e.name, true, mode === "confirm" ? "name" : "off")}${field("mPos", "Position", "text", e && e.position, true, mode === "confirm" ? "organization-title" : "off")}${field("mPhone", "Phone", "tel", e && e.phone, true, mode === "confirm" ? "tel" : "off")}${field("mEmail", "Email", "email", e && e.email, true, mode === "confirm" ? "email" : "off")}</div>
+    ${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}`;
+}
+function pickView() {
+  return `<div class="page wide"><div class="eyebrow">Manager</div><h1>Who's signing in?</h1><p class="lead">Pick yourself so your invites go out under your name.</p>
+    <div class="mgr-grid">${mgr.managers.map(m => `<button class="card pick-card" data-mpick="${esc(m.id)}" type="button">${managerCard(m, { plain: true })}</button>`).join("")}
+    <button class="card pick-card" data-mpick="new" type="button"><div class="mgr-card"><span class="mgr-photo mgr-initials" style="width:64px;height:64px;font-size:28px" aria-hidden="true">+</span><div class="mgr-info"><div class="mgr-name">I'm not listed</div><div class="small">Add yourself as a manager</div></div></div></button></div></div>`;
+}
+function confirmView() {
+  const isNew = meId() === "new";
+  return `<div class="page"><div class="eyebrow">Manager</div><h1>${isNew ? "Add your info" : "Confirm your info"}</h1>
+    <p class="lead">New agents you invite see this card when they need help. Make sure it's right.</p>
+    <div class="card">${managerForm(mgr.editing, "confirm")}
+    <div class="row"><button class="btn" id="mConfirm" type="button">${isNew ? "Save and continue" : "Looks good, continue"}</button><button class="linkbtn" id="mSwitch" type="button">Not you? Pick someone else</button></div></div></div>`;
+}
+function managersTab() {
+  const e = mgr.editing;
+  let h = `<div class="mgr-grid">${mgr.managers.map(m => `<div class="card">${managerCard(m)}<div class="row"><button class="btn small secondary" data-medit="${esc(m.id)}" type="button">Edit</button>${mgr.managers.length > 1 ? `<button class="linkbtn" data-mdel="${esc(m.id)}" data-mname="${esc(m.name)}" type="button">Remove</button>` : ""}</div></div>`).join("")}</div>`;
+  h += `<div class="card"><h2>${e && e.id ? "Edit " + esc(e.name) : "Add a manager"}</h2><p class="small">New agents see this card on their dashboard and on the Get help page. Anyone you add here can sign in with the same manager code.</p>
+    ${managerForm(e, "edit")}
+    <div class="row"><button class="btn" id="mSave" type="button">${e && e.id ? "Save changes" : "Add manager"}</button>${e ? `<button class="btn secondary" id="mCancel" type="button">Cancel</button>` : ""}</div></div>`;
+  return h;
+}
+function traineesTab() {
+  const byInvite = {}; mgr.invites.forEach(i => byInvite[i.token] = i);
+  const rows = mgr.rows.map(t => Object.assign({}, t, { st: mgrStatus(t), inv: byInvite[t.invite] }));
+  const count = k => rows.filter(r => r.st[1] === k).length;
+  const notStarted = mgr.invites.filter(i => !i.acceptedAt);
+  const keep = { all: () => true, help: r => r.st[1] === "behind" || r.st[1] === "idle", on: r => r.st[1] === "on", cert: r => r.st[1] === "cert" }[mgr.filter];
+  const shown = rows.filter(keep).sort((a, b) => (b.lastActive || "").localeCompare(a.lastActive || ""));
+  const weakCounts = {}; rows.forEach(r => { if (r.weak) weakCounts[r.weak] = (weakCounts[r.weak] || 0) + 1; });
+  const topWeak = Object.entries(weakCounts).sort((a, b) => b[1] - a[1])[0];
+  const mName = id => { const m = mgr.managers.find(x => x.id === id); return m ? m.name : "–"; };
+  let h = `<div class="stats">
+      <div class="stat"><span class="k">On track</span><span class="v" style="color:var(--good)">${count("on")}</span></div>
+      <div class="stat"><span class="k">Falling behind</span><span class="v" style="color:var(--warn)">${count("behind")}</span></div>
+      <div class="stat"><span class="k">Inactive 2+ days</span><span class="v" style="color:var(--bad)">${count("idle")}</span></div>
+      <div class="stat"><span class="k">Certified</span><span class="v" style="color:var(--accent)">${count("cert")}</span></div>
+      <div class="stat"><span class="k">Invited, not started</span><span class="v">${notStarted.length}</span></div>
+    </div>
+    <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
+  if (!rows.length && !notStarted.length) h += `<div class="card"><h2>Invite your first agent</h2><p>Trainees show up here after they open their invite link or sign in on your site.</p><div><button class="btn" data-mtab="invite" type="button">Invite an agent</button></div></div>`;
+  else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
+      <td><b>${esc(r.name)}</b>${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
+      <td>${r.inv ? esc(mName(r.inv.managerId)) : "–"}</td>
+      <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
+      <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td><td>${esc(r.weak || "–")}</td>
+      <td>${r.lastCall ? `${esc(r.lastCall.family)} · ${fmtLabel(r.lastCall.format)} · <b>${r.lastCall.total}</b> <span class="pill ${r.lastCall.pass ? "pass" : "fail"}">${r.lastCall.pass ? "Pass" : "No pass"}</span>` : "–"}</td>
+      <td>${esc(ago(r.lastActive || r.savedAt))}</td><td><span class="status ${r.st[1]}">${r.st[0]}</span></td>
+      <td><button class="linkbtn" data-mremove="${esc(r.uid)}" data-mname="${esc(r.name)}" type="button">Remove</button></td></tr>`).join("")}
+      ${mgr.filter === "all" || mgr.filter === "help" ? notStarted.map(i => `<tr><td><b>${esc(i.first)} ${esc(i.last)}</b>${i.phone ? `<div class="small"><a href="${telHref(i.phone)}">${esc(i.phone)}</a></div>` : ""}</td><td>${esc(mName(i.managerId))}</td><td colspan="6" class="small">Invited ${esc(ago(i.createdAt))}. Hasn't opened the link yet.</td><td><span class="status behind">Not started</span></td><td><button class="linkbtn" data-icopy="${esc(i.token)}" type="button">Copy link</button><span class="small" data-icopied="${esc(i.token)}" role="status"></span></td></tr>`).join("") : ""}
+      </tbody></table></div>`;
+  if (topWeak && topWeak[1] >= 2) h += `<div class="note w"><b>Team pattern</b>${topWeak[1]} of ${rows.length} trainees are weakest at ${esc(topWeak[0])}. Worth a group role-play on it.</div>`;
+  return h;
 }
 function managerView() {
   if (!mgrCode() || !mgr.rows) {
     if (mgrCode() && !mgr.rows && !mgr.loading && !mgr.error) setTimeout(() => mgrLoad(mgrCode()), 0);
     return `<div class="page"><div class="eyebrow">Manager</div><h1>Manager view</h1>
-      <p class="lead">See every trainee's progress, call scores and weak spots. Enter the manager code you set in Netlify.</p>
+      <p class="lead">Invite new agents and see every trainee's progress, call scores and weak spots. Enter the manager code you set in Netlify.</p>
       <div class="card"><label for="mgrCodeIn">Manager code</label><input type="password" id="mgrCodeIn" autocomplete="current-password" style="font:inherit;border:2px solid var(--line);border-radius:10px;padding:11px 14px">
       ${mgr.error ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.error)}</p>` : ""}
       <div class="row"><button class="btn" id="mgrGo" type="button" ${mgr.loading ? "disabled" : ""}>${mgr.loading ? "Checking…" : "Open manager view"}</button>${store.name ? `<button class="btn secondary" data-go="home" type="button">Back to my course</button>` : ""}</div></div></div>`;
   }
-  const rows = mgr.rows.map(t => Object.assign({}, t, { st: mgrStatus(t) }));
-  const count = k => rows.filter(r => r.st[1] === k).length;
-  const callsWeek = rows.reduce((a, r) => a + (r.calls || 0), 0);
-  const keep = { all: () => true, help: r => r.st[1] === "behind" || r.st[1] === "idle", on: r => r.st[1] === "on", cert: r => r.st[1] === "cert" }[mgr.filter];
-  const shown = rows.filter(keep).sort((a, b) => (b.lastActive || "").localeCompare(a.lastActive || ""));
-  const weakCounts = {}; rows.forEach(r => { if (r.weak) weakCounts[r.weak] = (weakCounts[r.weak] || 0) + 1; });
-  const topWeak = Object.entries(weakCounts).sort((a, b) => b[1] - a[1])[0];
-  let h = `<div class="page wide"><div class="dash-head"><div><h1>Your trainees</h1><p class="small" style="font-size:15px">${rows.length} trainee${rows.length === 1 ? "" : "s"} · updates whenever they save progress</p></div>
-    <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
-    <div class="stats">
-      <div class="stat"><span class="k">On track</span><span class="v" style="color:var(--good)">${count("on")}</span></div>
-      <div class="stat"><span class="k">Falling behind</span><span class="v" style="color:var(--warn)">${count("behind")}</span></div>
-      <div class="stat"><span class="k">Inactive 2+ days</span><span class="v" style="color:var(--bad)">${count("idle")}</span></div>
-      <div class="stat"><span class="k">Certified</span><span class="v" style="color:var(--accent)">${count("cert")}</span></div>
-      <div class="stat"><span class="k">Practice calls (all)</span><span class="v">${callsWeek}</span></div>
-    </div>
-    <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
-  if (!rows.length) h += `<div class="card"><h2>No trainees yet</h2><p>Trainees show up here after they sign in to the course on your site and complete anything. Share your course link with new hires to get started.</p></div>`;
-  else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
-      <td><b>${esc(r.name)}</b>${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
-      <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
-      <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td><td>${esc(r.weak || "–")}</td>
-      <td>${r.lastCall ? `${esc(r.lastCall.family)} · ${fmtLabel(r.lastCall.format)} · <b>${r.lastCall.total}</b> <span class="pill ${r.lastCall.pass ? "pass" : "fail"}">${r.lastCall.pass ? "Pass" : "No pass"}</span>` : "–"}</td>
-      <td>${esc(ago(r.lastActive || r.savedAt))}</td><td><span class="status ${r.st[1]}">${r.st[0]}</span></td>
-      <td><button class="linkbtn" data-mremove="${esc(r.uid)}" data-mname="${esc(r.name)}" type="button">Remove</button></td></tr>`).join("")}</tbody></table></div>`;
-  if (topWeak && topWeak[1] >= 2) h += `<div class="note w"><b>Team pattern</b>${topWeak[1]} of ${rows.length} trainees are weakest at ${esc(topWeak[0])}. Worth a group role-play on it.</div>`;
+  if (!meId() || !mgr.managers.some(m => m.id === meId()) && meId() !== "new") return pickView();
+  if (!meOk()) return confirmView();
+  const me = mgr.managers.find(m => m.id === meId());
+  let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${mgr.invites.filter(i => !i.acceptedAt).length} invite${mgr.invites.filter(i => !i.acceptedAt).length === 1 ? "" : "s"} waiting</p></div>
+    <div class="row"><button class="btn secondary" id="mSwitch" type="button">Switch manager</button><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
+    ${mgrTabs()}`;
+  h += mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser tab so you can test them.</p></div>`;
   return h;
+}
+function resizePhoto(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(img.width, img.height), c = document.createElement("canvas"); c.width = c.height = 320;
+      c.getContext("2d").drawImage(img, (img.width - s) / 2, Math.max(0, (img.height - s) / 2 - s * 0.08), s, s, 0, 0, 320, 320);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", 0.85)); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("That file isn't a photo we can read.")); };
+    img.src = url;
+  });
 }
 function afterManagerRender() {
   const go = $("#mgrGo"), inp = $("#mgrCodeIn");
   if (go && inp) { const f = () => { const v = inp.value.trim(); if (v) mgrLoad(v); else inp.focus(); }; go.onclick = f; inp.onkeydown = e => { if (e.key === "Enter") f(); }; inp.focus(); }
   const rf = $("#mgrRefresh"); if (rf) rf.onclick = () => mgrLoad(mgrCode());
-  const out = $("#mgrOut"); if (out) out.onclick = () => { try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} mgr = { rows: null, error: "", loading: false, filter: "all" }; render(); };
+  const out = $("#mgrOut"); if (out) out.onclick = () => { try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} setMe("", false); mgr = { rows: null, managers: [], invites: [], error: "", loading: false, filter: "all", tab: "trainees", last: null, editing: null, formErr: "" }; render(); };
+  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; render(); });
   document.querySelectorAll("[data-mfilter]").forEach(b => b.onclick = () => { mgr.filter = b.dataset.mfilter; render(); });
   document.querySelectorAll("[data-mremove]").forEach(b => b.onclick = () => confirmModal("Remove " + b.dataset.mname + "?", "This takes them off your manager list. If they keep training, they'll show up again the next time they save progress.", "Remove", async () => {
     try { await fetch("/api/progress?uid=" + encodeURIComponent(b.dataset.mremove), { method: "DELETE", headers: { "x-manager-code": mgrCode() } }); } catch (e) {}
     mgrLoad(mgrCode());
   }));
+  document.querySelectorAll("[data-icopy]").forEach(b => b.onclick = () => {
+    const tok = b.dataset.icopy, msg = document.querySelector(`[data-icopied="${CSS.escape(tok)}"]`);
+    navigator.clipboard.writeText(inviteLink(tok)).then(() => { if (msg) msg.textContent = "Link copied"; }).catch(() => { if (msg) msg.textContent = inviteLink(tok); });
+  });
+  document.querySelectorAll("[data-iremove]").forEach(b => b.onclick = () => confirmModal("Remove the invite for " + b.dataset.iname + "?", "Their link will stop working. Progress they've already made stays on your Trainees list.", "Remove invite", async () => {
+    try { await mgrApi("/api/team/invite?token=" + encodeURIComponent(b.dataset.iremove), { method: "DELETE" }); } catch (e) {}
+    if (mgr.last && mgr.last.token === b.dataset.iremove) mgr.last = null;
+    mgrLoad(mgrCode());
+  }));
+  const ic = $("#invCreate");
+  if (ic) ic.onclick = async () => {
+    const v = id => ($("#" + id).value || "").trim();
+    const body = { first: v("invFirst"), last: v("invLast"), phone: v("invPhone"), email: v("invEmail"), managerId: v("invMgr") };
+    if (!body.first || !body.last) { mgr.formErr = "Enter their first and last name."; render(); return; }
+    if (!body.phone && !body.email) { mgr.formErr = "Add a phone number or an email so you can send the link."; render(); return; }
+    if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { mgr.formErr = "That email doesn't look right."; render(); return; }
+    ic.disabled = true; ic.textContent = "Creating…";
+    try { const j = await mgrApi("/api/team/invite", { method: "POST", body: JSON.stringify(body) }); mgr.last = j.invite; mgr.invites.unshift(j.invite); mgr.formErr = ""; }
+    catch (e) { mgr.formErr = e.message; }
+    render();
+  };
+  const ph = $("#mPhoto");
+  if (ph) ph.onchange = async () => {
+    const f = ph.files && ph.files[0]; if (!f) return;
+    const keep = { name: ($("#mName") || {}).value, position: ($("#mPos") || {}).value, phone: ($("#mPhone") || {}).value, email: ($("#mEmail") || {}).value };
+    try { const data = await resizePhoto(f); mgr.editing = Object.assign({}, mgr.editing || {}, keep, { photo: data }); mgr.formErr = ""; } catch (e) { mgr.formErr = e.message; }
+    render();
+  };
+  const ms = $("#mSave");
+  if (ms) ms.onclick = async () => {
+    const v = id => ($("#" + id).value || "").trim();
+    const body = Object.assign({}, mgr.editing || {}, { name: v("mName"), position: v("mPos"), phone: v("mPhone"), email: v("mEmail") });
+    if (!body.name) { mgr.formErr = "Enter the manager's name."; render(); return; }
+    ms.disabled = true; ms.textContent = "Saving…";
+    try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(body) }); mgr.editing = null; mgr.formErr = ""; await mgrLoad(mgrCode()); }
+    catch (e) { mgr.formErr = e.message; render(); }
+  };
+  document.querySelectorAll("[data-mpick]").forEach(b => b.onclick = () => { const id = b.dataset.mpick; setMe(id, false); mgr.editing = id === "new" ? {} : Object.assign({}, mgr.managers.find(m => m.id === id)); mgr.formErr = ""; render(); });
+  const sw = $("#mSwitch"); if (sw) sw.onclick = () => { setMe("", false); mgr.editing = null; mgr.formErr = ""; render(); };
+  const cf = $("#mConfirm");
+  if (cf) cf.onclick = async () => {
+    const v = id => ($("#" + id).value || "").trim();
+    const body = Object.assign({}, mgr.editing || {}, { name: v("mName"), position: v("mPos"), phone: v("mPhone"), email: v("mEmail"), confirm: true });
+    if (meId() === "new") delete body.id;
+    if (!body.name || !body.phone || !body.email) { mgr.formErr = "Fill in your name, phone and email. New agents use them to reach you."; render(); return; }
+    cf.disabled = true; cf.textContent = "Saving…";
+    try { const j = await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(body) }); setMe(j.manager.id, true); mgr.editing = null; mgr.formErr = ""; await mgrLoad(mgrCode()); }
+    catch (e) { mgr.formErr = e.message; render(); }
+  };
+  const mc = $("#mCancel"); if (mc) mc.onclick = () => { mgr.editing = null; mgr.formErr = ""; render(); };
+  document.querySelectorAll("[data-medit]").forEach(b => b.onclick = () => { mgr.editing = Object.assign({}, mgr.managers.find(m => m.id === b.dataset.medit)); mgr.formErr = ""; render(); const n = $("#mName"); if (n) n.focus(); });
+  document.querySelectorAll("[data-mdel]").forEach(b => b.onclick = () => confirmModal("Remove " + b.dataset.mname + "?", "Agents assigned to this manager will no longer see their contact card.", "Remove manager", async () => {
+    try { await mgrApi("/api/team/manager?id=" + encodeURIComponent(b.dataset.mdel), { method: "DELETE" }); } catch (e) {}
+    mgrLoad(mgrCode());
+  }));
+}
+
+/* ===== AGENT SIDE: invite links and "your manager" ===== */
+let inviteState = { loading: false, error: "" };
+async function handleInvite() {
+  let token = "";
+  try { token = new URLSearchParams(location.search).get("invite") || ""; } catch (e) {}
+  if (token && SYNC_ON) {
+    inviteState.loading = true;
+    try {
+      const r = await fetch("/api/invite?token=" + encodeURIComponent(token));
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(r.status === 404 ? "This invite link isn't valid anymore. Ask your manager to send a new one." : "Couldn't open your invite. Try the link again.");
+      const full = (j.invite.first + " " + j.invite.last).trim();
+      const sameInvite = store.invite && store.invite.token === token;
+      const otherPerson = store.name && store.name.toLowerCase() !== full.toLowerCase() && !sameInvite;
+      if (otherPerson) { const uid = (() => { try { return crypto.randomUUID(); } catch (e) { return "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); } })(); store = { name: "", quiz: {}, drill: {}, reviewLock: {}, attempts: [], uid }; }
+      store.name = full; store.invite = j.invite; store.manager = j.manager || null;
+      if (!store.joinedAt) store.joinedAt = new Date().toISOString();
+      if (!sameInvite) store.welcomed = false;
+      save();
+      try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+      if (view.name !== "cast") view = { name: "home" };
+    } catch (e) { inviteState.error = e.message; }
+    inviteState.loading = false; render();
+  } else if (store.invite && store.invite.token && SYNC_ON) {
+    try { const r = await fetch("/api/invite?token=" + encodeURIComponent(store.invite.token)); if (r.ok) { const j = await r.json(); store.manager = j.manager || null; try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} if (view.name === "home" || view.name === "help") render(); } } catch (e) {}
+  }
+}
+function helpView() {
+  const m = store.manager;
+  return `<div class="page"><div class="eyebrow">Need help?</div><h1>Your manager</h1>
+    ${m ? `<p class="lead">Stuck on a lesson, a practice call or anything else? Reach out. That's what they're here for.</p><div class="card">${managerCard(m, { big: true, actions: true })}</div>`
+      : `<p class="lead">Your manager's contact card shows here once you open the invite link they sent you.</p>`}
+    <div class="card"><h2>Quick fixes</h2><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+      <li>Mic not working on a practice call? Use Chrome on a computer and allow the microphone when asked.</li>
+      <li>A practice call is locked? Finish the lessons named on the card first.</li>
+      <li>Lost your progress? Open the same invite link on the same browser you started in.</li></ul></div></div>`;
 }
 
 /* =========================================================
@@ -3221,6 +3447,7 @@ if ((location.hash || "") === "#cast") view = { name: "cast" };
 window.addEventListener("hashchange", () => { if (location.hash === "#cast" && view.name !== "call") { view = { name: "cast" }; render(); } });
 render();
 initCaps();
+handleInvite();
 </script>
 </body>
 </html>

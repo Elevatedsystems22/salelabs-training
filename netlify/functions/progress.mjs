@@ -36,6 +36,7 @@ function clean(s) {
     examZoom: !!s.examZoom,
     certified: !!s.certified,
     next: str(s.next, 80),
+    invite: /^[A-Za-z0-9_-]{8,64}$/.test(String(s.invite || "")) ? s.invite : "",
     lastCall: s.lastCall && typeof s.lastCall === "object" ? {
       family: str(s.lastCall.family, 60), format: str(s.lastCall.format, 20), total: num(s.lastCall.total, 0, 100),
       pass: !!s.lastCall.pass, date: str(s.lastCall.date, 40), summary: str(s.lastCall.summary, 400)
@@ -51,7 +52,13 @@ export default async (req) => {
     let body; try { body = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
     const s = body && body.snapshot;
     if (!s || !UID.test(String(s.uid || "")) || !String(s.name || "").trim()) return json({ error: "bad_request" }, 400);
-    await db.setJSON(s.uid, clean(s));
+    const rec = clean(s);
+    await db.setJSON(s.uid, rec);
+    if (rec.invite) {
+      const invites = getStore({ name: "invites", consistency: "strong" });
+      const inv = await invites.get(rec.invite, { type: "json" }).catch(() => null);
+      if (inv && !inv.acceptedAt) await invites.setJSON(rec.invite, { ...inv, acceptedAt: new Date().toISOString(), uid: rec.uid });
+    }
     return json({ ok: true });
   }
 
