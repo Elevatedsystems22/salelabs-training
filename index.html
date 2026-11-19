@@ -3196,6 +3196,12 @@ function managerCard(m, opts) {
     ${opts.actions ? `<div class="row" style="margin-top:6px">${m.phone ? `<a class="btn small" href="${telHref(m.phone)}">Call</a><a class="btn small secondary" href="${smsHref(m.phone)}">Text</a>` : ""}${m.email ? `<a class="btn small secondary" href="mailto:${esc(m.email)}?subject=${encodeURIComponent("Training question")}">Email</a>` : ""}</div>` : ""}
   </div></div>`;
 }
+function sentNote(n, who) {
+  if (!n || n.reason === "skipped") return "";
+  if (n.sent) return `<p class="small" style="color:var(--good);font-weight:600" role="status">✓ Text and email sent to ${esc(who)}.</p>`;
+  if (n.reason === "not_set") return `<p class="small" style="color:var(--warn);font-weight:600" role="status">Automatic texts and emails aren't connected yet, so nothing was sent. Use the buttons to send it yourself.</p>`;
+  return `<p class="small" style="color:var(--bad);font-weight:600" role="status">GoHighLevel didn't take the message (${esc(n.reason)}). Use the buttons to send it yourself.</p>`;
+}
 function inviteLink(token) { return location.origin + location.pathname + "?invite=" + encodeURIComponent(token); }
 function inviteText(inv) {
   const m = mgr.managers.find(x => x.id === inv.managerId);
@@ -3218,13 +3224,13 @@ function inviteTab() {
     <div class="fld"><label for="invMgr">Their manager</label><select id="invMgr">${byRank(mgr.managers).map(m => `<option value="${esc(m.id)}" ${m.id === meId() ? "selected" : ""}>${esc(m.name)}${m.position ? " · " + esc(m.position) : ""}</option>`).join("")}</select></div>
     ${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}
     <div class="row"><button class="btn" id="invCreate" type="button">Create invite</button><button class="linkbtn" data-mtab="managers" type="button">Add another manager</button></div></div>`;
-  if (mgr.last) h += `<div class="card" style="border:2px solid var(--good)"><h2>Invite ready for ${esc(mgr.last.first)} ${esc(mgr.last.last)}</h2><p class="small" style="word-break:break-all">${esc(inviteLink(mgr.last.token))}</p>${inviteShare(mgr.last)}<p class="small">Text and Email open your phone's or computer's own apps with the message filled in, so it comes from you.</p></div>`;
+  if (mgr.last) h += `<div class="card" style="border:2px solid var(--good)"><h2>Invite ready for ${esc(mgr.last.first)} ${esc(mgr.last.last)}</h2>${sentNote(mgr.lastNotified, mgr.last.first)}<p class="small" style="word-break:break-all">${esc(inviteLink(mgr.last.token))}</p>${inviteShare(mgr.last)}<p class="small">Text it and Email it open your own phone or email app with the message filled in, if you want to send it personally too.</p></div>`;
   const pending = mgr.invites;
   if (pending.length) h += `<div class="card table-wrap"><h2>Sent invites</h2><table class="hist mgr-table"><thead><tr><th scope="col">Agent</th><th scope="col">Contact</th><th scope="col">Manager</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${pending.map(inv => {
     const m = mgr.managers.find(x => x.id === inv.managerId);
     return `<tr><td><b>${esc(inv.first)} ${esc(inv.last)}</b><div class="small">Sent ${esc(ago(inv.createdAt))}</div></td><td>${inv.phone ? `<div>${esc(inv.phone)}</div>` : ""}${inv.email ? `<div class="small">${esc(inv.email)}</div>` : ""}</td><td>${m ? esc(m.name) : "–"}</td>
       <td>${inv.acceptedAt ? `<span class="status on">Started ${esc(ago(inv.acceptedAt))}</span>` : `<span class="status behind">Not started</span>`}</td>
-      <td><div class="row" style="flex-wrap:nowrap"><button class="linkbtn" data-icopy="${esc(inv.token)}" type="button">Copy link</button><button class="linkbtn" data-iremove="${esc(inv.token)}" data-iname="${esc(inv.first + " " + inv.last)}" type="button">Remove</button></div><span class="small" data-icopied="${esc(inv.token)}" role="status"></span></td></tr>`;
+      <td><div class="row" style="flex-wrap:nowrap"><button class="linkbtn" data-iresend="${esc(inv.token)}" data-iname="${esc(inv.first)}" type="button">Resend</button><button class="linkbtn" data-icopy="${esc(inv.token)}" type="button">Copy link</button><button class="linkbtn" data-iremove="${esc(inv.token)}" data-iname="${esc(inv.first + " " + inv.last)}" type="button">Remove</button></div><span class="small" data-icopied="${esc(inv.token)}" role="status"></span></td></tr>`;
   }).join("")}</tbody></table></div>`;
   return h;
 }
@@ -3281,13 +3287,14 @@ function managersTab() {
   let h = `<div class="mgr-grid">${byRank(mgr.managers).map(m => `<div class="card">${managerCard(m)}
     ${m.reportsTo && mgr.managers.find(x => x.id === m.reportsTo) ? `<p class="small" style="margin:0">Reports to ${esc(mgr.managers.find(x => x.id === m.reportsTo).name)}</p>` : rankOf(m) > 0 ? `<p class="small" style="margin:0;color:var(--warn)">No upline set. Edit to choose who they report to.</p>` : ""}
     <div class="row">${m.admin ? `<span class="status cert">Admin</span>` : ""}${pwStatus(m)}${m.id === meId() ? `<span class="small">You</span>` : ""}</div>
-    ${mgr.pwDone && mgr.pwDone.id === m.id ? `<div class="note g" role="status"><b>Temporary password set</b>Give ${esc(m.name.split(" ")[0])} this password: <code style="font-size:15px;font-weight:700">${esc(mgr.pwDone.temp)}</code><br>They sign in with ${esc(m.email || "their email")} and pick their own password right away.</div>` : ""}
-    ${mgr.pwFor === m.id ? `<div class="fld"><label for="pwTemp">Temporary password for ${esc(m.name)}</label><input id="pwTemp" type="text" value="${esc(tempPassword())}" autocomplete="off"></div><div class="row"><button class="btn small" id="pwTempSave" data-id="${esc(m.id)}" type="button">Save temporary password</button><button class="linkbtn" id="pwTempCancel" type="button">Cancel</button></div>${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}` : ""}
+    ${mgr.pwDone && mgr.pwDone.id === m.id ? `<div class="note g" role="status"><b>Temporary password set</b>Give ${esc(m.name.split(" ")[0])} this password: <code style="font-size:15px;font-weight:700">${esc(mgr.pwDone.temp)}</code><br>They sign in with ${esc(m.email || "their email")} and pick their own password right away.${sentNote(mgr.pwDone.notified, m.name.split(" ")[0])}</div>` : ""}
+    ${mgr.pwFor === m.id ? `<div class="fld"><label for="pwTemp">Temporary password for ${esc(m.name)}</label><input id="pwTemp" type="text" value="${esc(tempPassword())}" autocomplete="off"></div><label class="row small" style="gap:6px;align-items:center"><input type="checkbox" id="pwSend" checked> Text and email it to them</label><div class="row"><button class="btn small" id="pwTempSave" data-id="${esc(m.id)}" type="button">Save temporary password</button><button class="linkbtn" id="pwTempCancel" type="button">Cancel</button></div>${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}` : ""}
     <div class="row">${admin || m.id === meId() ? `<button class="btn small secondary" data-medit="${esc(m.id)}" type="button">Edit</button>` : ""}
       ${admin && m.id !== meId() ? `<button class="btn small secondary" data-mpw="${esc(m.id)}" type="button">${m.hasPassword ? "Reset password" : "Set up password"}</button><button class="linkbtn" data-madmin="${esc(m.id)}" data-on="${m.admin ? "0" : "1"}" type="button">${m.admin ? "Remove admin" : "Make admin"}</button><button class="linkbtn" data-mdel="${esc(m.id)}" data-mname="${esc(m.name)}" type="button">Remove</button>` : ""}</div></div>`).join("")}</div>`;
   h += `<div class="card"><h2>${e && e.id ? "Edit " + esc(e.name) : "Add a manager"}</h2><p class="small">New agents see this card on their dashboard and on their My team page. ${mgr.me && mgr.me.admin ? "After you add someone, use Set up password on their card so they can sign in." : "An admin sets up their password so they can sign in."}</p>
     ${managerForm(e, "edit")}
-    <div class="row"><button class="btn" id="mSave" type="button">${e && e.id ? "Save changes" : "Add manager"}</button>${e ? `<button class="btn secondary" id="mCancel" type="button">Cancel</button>` : ""}${e && e.id && mgr.me && mgr.me.admin && e.id !== meId() ? `<label class="row small" style="gap:6px;align-items:center"><input type="checkbox" id="mAdmin" ${e.admin ? "checked" : ""}> Admin (can set passwords and remove managers)</label>` : ""}</div></div>`;
+    <div class="row"><button class="btn" id="mSave" type="button">${e && e.id ? "Save changes" : "Add manager"}</button>${!(e && e.id) && mgr.me && mgr.me.admin ? `<div class="fld-grid"><div class="fld"><label for="mTemp">Temporary password</label><input id="mTemp" type="text" value="${esc((e && e.temp) || tempPassword())}" autocomplete="off"></div></div><label class="row small" style="gap:6px;align-items:center"><input type="checkbox" id="mSend" checked> Text and email their sign-in link and temporary password</label>` : ""}
+    ${e ? `<button class="btn secondary" id="mCancel" type="button">Cancel</button>` : ""}${e && e.id && mgr.me && mgr.me.admin && e.id !== meId() ? `<label class="row small" style="gap:6px;align-items:center"><input type="checkbox" id="mAdmin" ${e.admin ? "checked" : ""}> Admin (can set passwords and remove managers)</label>` : ""}</div></div>`;
   return h;
 }
 function traineesTab() {
@@ -3389,7 +3396,8 @@ function afterManagerRender() {
     const temp = $("#pwTemp").value.trim(), id = ts.dataset.id;
     if (temp.length < 8) { mgr.formErr = "Use at least 8 characters."; render(); return; }
     ts.disabled = true; ts.textContent = "Saving…";
-    try { const j = await mgrApi("/api/team/password/reset", { method: "POST", body: JSON.stringify({ id, temp }) }); mgr.managers = mgr.managers.map(m => m.id === id ? j.manager : m); mgr.pwFor = null; mgr.pwDone = { id, temp }; mgr.formErr = ""; render(); }
+    const send = !!($("#pwSend") || {}).checked;
+    try { const j = await mgrApi("/api/team/password/reset", { method: "POST", body: JSON.stringify({ id, temp, send }) }); mgr.managers = mgr.managers.map(m => m.id === id ? j.manager : m); mgr.pwFor = null; mgr.pwDone = { id, temp, notified: j.notified }; mgr.formErr = ""; render(); }
     catch (e) { mgr.formErr = e.message; render(); }
   };
   document.querySelectorAll("[data-madmin]").forEach(b => b.onclick = async () => {
@@ -3411,6 +3419,12 @@ function afterManagerRender() {
     if (mgr.last && mgr.last.token === b.dataset.iremove) mgr.last = null;
     mgrLoad();
   }));
+  document.querySelectorAll("[data-iresend]").forEach(b => b.onclick = async () => {
+    const msg = document.querySelector(`[data-icopied="${CSS.escape(b.dataset.iresend)}"]`); b.disabled = true;
+    try { const j = await mgrApi("/api/team/invite/resend", { method: "POST", body: JSON.stringify({ token: b.dataset.iresend }) }); if (msg) msg.textContent = j.notified && j.notified.sent ? "Sent again" : j.notified && j.notified.reason === "not_set" ? "Texting isn't connected yet" : "Couldn't send"; }
+    catch (e) { if (msg) msg.textContent = e.message; }
+    b.disabled = false;
+  });
   const ic = $("#invCreate");
   if (ic) ic.onclick = async () => {
     const v = id => ($("#" + id).value || "").trim();
@@ -3419,7 +3433,7 @@ function afterManagerRender() {
     if (!body.phone && !body.email) { mgr.formErr = "Add a phone number or an email so you can send the link."; render(); return; }
     if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { mgr.formErr = "That email doesn't look right."; render(); return; }
     ic.disabled = true; ic.textContent = "Creating…";
-    try { const j = await mgrApi("/api/team/invite", { method: "POST", body: JSON.stringify(body) }); mgr.last = j.invite; mgr.invites.unshift(j.invite); mgr.formErr = ""; }
+    try { const j = await mgrApi("/api/team/invite", { method: "POST", body: JSON.stringify(body) }); mgr.last = j.invite; mgr.lastNotified = j.notified; mgr.invites.unshift(j.invite); mgr.formErr = ""; }
     catch (e) { mgr.formErr = e.message; }
     render();
   };
@@ -3435,9 +3449,10 @@ function afterManagerRender() {
     const v = id => ($("#" + id).value || "").trim();
     const body = Object.assign({}, mgr.editing || {}, { name: v("mName"), position: v("mPos"), phone: v("mPhone"), email: v("mEmail"), reportsTo: v("mReports") });
     const ad = $("#mAdmin"); if (ad) body.admin = ad.checked;
+    const tp = $("#mTemp"); if (tp) { body.temp = tp.value.trim(); body.send = !!($("#mSend") || {}).checked; if (body.temp && body.temp.length < 8) { mgr.formErr = "Temporary password needs at least 8 characters."; render(); return; } if (body.send && !body.phone && !body.email) { mgr.formErr = "Add a phone or email so we can send their sign-in details."; render(); return; } }
     if (!body.name || !body.position) { mgr.formErr = "Enter the manager's name and choose a rank."; render(); return; }
     ms.disabled = true; ms.textContent = "Saving…";
-    try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(body) }); mgr.editing = null; mgr.formErr = ""; await mgrLoad(); }
+    try { const j = await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(body) }); mgr.editing = null; mgr.formErr = ""; if (body.temp && j.manager && j.manager.hasPassword) mgr.pwDone = { id: j.manager.id, temp: body.temp, notified: j.notified }; await mgrLoad(); }
     catch (e) { mgr.formErr = e.message; render(); }
   };
   const cf = $("#mConfirm");
@@ -3450,7 +3465,7 @@ function afterManagerRender() {
     catch (e) { mgr.formErr = e.message; render(); }
   };
   const rk = $("#mPos");
-  if (rk) rk.onchange = () => { const v = id => ($("#" + id) || {}).value || ""; const e = Object.assign({}, mgr.editing || {}, { name: v("mName"), position: v("mPos"), phone: v("mPhone"), email: v("mEmail") }); delete e.reportsTo; mgr.editing = e; render(); };
+  if (rk) rk.onchange = () => { const v = id => ($("#" + id) || {}).value || ""; const e = Object.assign({}, mgr.editing || {}, { name: v("mName"), position: v("mPos"), phone: v("mPhone"), email: v("mEmail"), temp: v("mTemp") }); delete e.reportsTo; mgr.editing = e; render(); };
   const mc = $("#mCancel"); if (mc) mc.onclick = () => { mgr.editing = null; mgr.formErr = ""; render(); };
   document.querySelectorAll("[data-medit]").forEach(b => b.onclick = () => { if (b.dataset.mgo) mgr.tab = b.dataset.mgo; mgr.editing = Object.assign({}, mgr.managers.find(m => m.id === b.dataset.medit)); mgr.formErr = ""; render(); const n = $("#mName"); if (n) n.focus(); });
   document.querySelectorAll("[data-mdel]").forEach(b => b.onclick = () => confirmModal("Remove " + b.dataset.mname + "?", "Agents assigned to this manager will no longer see their contact card.", "Remove manager", async () => {
@@ -3542,6 +3557,7 @@ document.addEventListener("click", e => {
 });
 
 if ((location.hash || "") === "#cast") view = { name: "cast" };
+if ((location.hash || "") === "#manager") view = { name: "manager" };
 window.addEventListener("hashchange", () => { if (location.hash === "#cast" && view.name !== "call") { view = { name: "cast" }; render(); } });
 render();
 initCaps();

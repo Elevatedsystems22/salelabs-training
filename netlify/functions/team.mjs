@@ -17,6 +17,7 @@ import { getStore } from "@netlify/blobs";
 import { randomBytes } from "node:crypto";
 import { json } from "../lib/guard.mjs";
 import { hashPw, checkPw, safeEq, makeToken, authManager, managersStore, publicMgr } from "../lib/auth.mjs";
+import { notify, agentInviteMsg, managerWelcomeMsg } from "../lib/notify.mjs";
 
 const TOKEN = /^[A-Za-z0-9_-]{8,64}$/;
 const str = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
@@ -52,6 +53,13 @@ export default async (req) => {
   const mgrs = managersStore();
   const invites = getStore({ name: "invites", consistency: "strong" });
   const body = async () => { try { return await req.json(); } catch (e) { return null; } };
+  const inviteUrl = t => url.origin + "/?invite=" + encodeURIComponent(t);
+  const managerUrl = url.origin + "/#manager";
+  const sendInvite = async inv => {
+    const m = inv.managerId ? await mgrs.get(inv.managerId, { type: "json" }).catch(() => null) : null;
+    return notify(agentInviteMsg({ first: inv.first, last: inv.last, phone: inv.phone, email: inv.email, link: inviteUrl(inv.token), manager: m }));
+  };
+  const sendManager = (m, temp, reset) => { const [first, ...rest] = String(m.name || "").split(" "); return notify(managerWelcomeMsg({ first, last: rest.join(" "), phone: m.phone, email: m.email, link: managerUrl, temp, reset })); };
 
   if (path === "/api/invite" && req.method === "GET") {
     const token = url.searchParams.get("token") || "";
@@ -115,7 +123,8 @@ export default async (req) => {
     if (!rec) return json({ error: "not_found" }, 404);
     const next = { ...rec, pwHash: hashPw(b.temp), mustChange: true, v: (rec.v || 0) + 1, fails: 0, lockUntil: "" };
     await mgrs.setJSON(rec.id, next);
-    return json({ manager: publicMgr(next) });
+    const notified = b.send === false ? { sent: false, reason: "skipped" } : await sendManager(next, b.temp, !!rec.pwHash);
+    return json({ manager: publicMgr(next), notified });
   }
 
   if (path === "/api/team/manager" && req.method === "POST") {
@@ -134,8 +143,11 @@ export default async (req) => {
       admin: isAdmin && typeof b.admin === "boolean" && id !== me.id ? b.admin : !!prev.admin,
       reportsTo: b.reportsTo !== undefined ? (str(b.reportsTo, 64) === id ? "" : str(b.reportsTo, 64)) : (prev.reportsTo || ""),
       createdAt: prev.createdAt || new Date().toISOString(), confirmedAt: b.confirm && id === me.id ? new Date().toISOString() : (prev.confirmedAt || ""), v: prev.v || 0 };
+    let notified = null;
+    if (!existing && isAdmin && pwOk(b.temp)) { rec.pwHash = hashPw(b.temp); rec.mustChange = true; }
     await mgrs.setJSON(id, rec);
-    return json({ manager: publicMgr(rec) });
+    if (!existing && rec.pwHash && b.send !== false) notified = await sendManager(rec, b.temp, false);
+    return json({ manager: publicMgr(rec), notified });
   }
 
   if (path === "/api/team/manager" && req.method === "DELETE") {
@@ -153,7 +165,15 @@ export default async (req) => {
     const token = randomBytes(12).toString("base64url");
     const rec = { token, first, last, phone: str(b.phone, 30), email: str(b.email, 120), managerId: str(b.managerId, 64), invitedBy: me.id, createdAt: new Date().toISOString(), acceptedAt: "", uid: "" };
     await invites.setJSON(token, rec);
-    return json({ invite: rec });
+    const notified = b.send === false ? { sent: false, reason: "skipped" } : await sendInvite(rec);
+    return json({ invite: rec, notified });
+  }
+  if (path === "/api/team/invite/resend" && req.method === "POST") {
+    const b = await body(); const t = b && String(b.token || "");
+    if (!TOKEN.test(t)) return json({ error: "bad_request" }, 400);
+    const inv = await invites.get(t, { type: "json" });
+    if (!inv) return json({ error: "not_found" }, 404);
+    return json({ notified: await sendInvite(inv) });
   }
   if (path === "/api/team/invite" && req.method === "DELETE") {
     const token = url.searchParams.get("token") || "";
