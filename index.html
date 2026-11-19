@@ -1610,6 +1610,7 @@ function render() {
   document.querySelector(".app").classList.toggle("in-call", view.name === "call");
   renderRail();
   const main = $("#main");
+  if (view.name === "cast") { main.innerHTML = castView(); bindCast(); return; }
   if (!store.name) { main.innerHTML = signInView(); bindSignIn(); return; }
   if (view.name === "home") main.innerHTML = homeView();
   else if (view.name === "module") main.innerHTML = moduleView(view.id);
@@ -2728,6 +2729,7 @@ document.addEventListener("click", e => {
 });
 
 if ((location.hash || "") === "#cast") view = { name: "cast" };
+window.addEventListener("hashchange", () => { if (location.hash === "#cast" && view.name !== "call") { view = { name: "cast" }; render(); } });
 render();
 initCaps();
 </script>
