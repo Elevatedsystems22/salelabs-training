@@ -2165,7 +2165,7 @@ function startCall(fam, mode, format) {
     buffer: "", partial: "", lastHeard: 0, turnStart: 0, lastActivity: 0, gen: 0, awaiting: false, abort: null, queue: [], familySpeaking: false,
     lastInterjectAt: 0, nudged: false, micOn: false, micMuted: false, speaking: null, voiceMap: {}, started: 0, timer: null, loop: null, ended: false, countdown: 5 };
   if (format === "dial") { rp.dial = true; rp.format = "tele"; }
-  rp.video = SITE_MODE && rp.format === "zoom" && castReady(fam);
+  rp.video = SITE_MODE && castReady(fam); // Zoom shows the video people; phone calls use their real voices with no picture
   const taken = []; fam.speakers.forEach(n => { const v = pickVoice(n, taken); rp.voiceMap[n] = v; if (v) taken.push(v.name); });
   view = { name: "call" }; render();
 }
@@ -2430,7 +2430,7 @@ function callView() {
   if (rp.phase === "lobby") return lobbyView();
   const f = rp.fam; const practice = rp.mode === "practice";
   const initials = (store.name || "You").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  const famTile = `<div class="tile fam-tile ${rp.speaking ? "talking" : ""} ${rp.video ? "is-video" : ""}" id="famTile">${rp.video ? videoTileHTML(f, rp.sharing) : familyTileSVG(f)}<div class="tname" id="famName">${esc(rp.speaking || f.name)}</div>${rp.phase === "countdown" ? countdownOverlay() : ""}</div>`;
+  const famTile = `<div class="tile fam-tile ${rp.speaking ? "talking" : ""} ${rp.video && rp.format === "zoom" ? "is-video" : ""}" id="famTile">${rp.video && rp.format === "zoom" ? videoTileHTML(f, rp.sharing) : familyTileSVG(f)}<div class="tname" id="famName">${esc(rp.speaking || f.name)}</div>${rp.phase === "countdown" ? countdownOverlay() : ""}</div>`;
   const selfTile = `<div class="tile self-tile ${rp.micOn && !rp.micMuted ? "" : "muted"}" id="selfTile"><div class="initials">${esc(initials)}</div><div class="tname">${esc(store.name || "You")} (you)</div></div>`;
   const famInit = f.speakers.map(n => n[0]).join("");
   const phoneCard = `<div class="phonecard ${rp.speaking ? "talking" : ""}" id="famTile"><div class="pc-avatar">${esc(famInit)}</div><div class="pc-name">${esc(f.name)}</div><div class="pc-sub">📞 Phone call · nothing is shared</div><div class="pc-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div><div class="tname" id="famName">${esc(rp.speaking || f.name)}</div>${rp.phase === "countdown" ? countdownOverlay() : ""}</div>`;
