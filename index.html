@@ -1166,6 +1166,21 @@ Health: Ray quit smoking 3 years ago, otherwise healthy. Angie healthy.`,
     objections: ["Ray: \"I already have a $250,000 policy. I'm covered.\" (strong; he pushes back once more after the first rebuttal)", "Ray: \"Can you just email me the info and we'll look at it?\""],
     buyingNotes: "Hard. They buy Option 2 ($198/mo) if the agent uses the needs analysis to show Ray's $250k only covers the house, while income protection and 3 kids' college are still unprotected, and holds firm on the email objection without being pushy. Option 1 at $236 is over max.",
     quote: { opt1: 236, opt2: 198, reduced: 198, rows: [["Final Expense (Opt 1, inflation)", "$30,000 each"], ["Final Expense (Opt 2, today's cost)", "$20,000 each"], ["Income Protection (2 yrs)", "Ray $190,000 / Angie $80,000"], ["Mortgage Protection", "$240,000 on Ray"], ["College Education", "$25,000 each: Sofia, Mateo, Lucas"], ["Accidental Death (no cost)", "$3,000 adults / $1,000 kids"]] }
+  },
+  {
+    id: "boone", name: "Travis Boone", difficulty: "Standard",
+    speakers: ["Travis"], voices: { Travis: "rounded" },
+    leadType: "Pre-Submit", format: "Zoom appointment, 5:45 PM",
+    card: "Travis Boone, 38, Theodore, AL. Started a life insurance quote online about 8 months ago and never finished. Divorced, one son.",
+    profile: `Travis Boone (38), welder at the Austal shipyard, about $58,000/yr. Divorced 3 years. Easygoing, jokes a lot, and deflects serious topics with humor. Gets serious the moment the conversation turns to his son. Loves hunting, and fishing out of Bayou La Batre on his little boat. Started the online quote after a buddy got hurt on the job, then never followed up.
+Son: Wyatt (10), lives with his mom in Semmes. Travis has him every other weekend and pays $650/mo in child support. His brother Cody lives in Grand Bay; his parents live in Irvington.
+Home: owns a small house, mortgage about $118,000, 26 years left, $940/mo.
+Existing coverage: $50,000 group life through Austal. His ex-wife is STILL listed as the beneficiary; he hasn't updated it. Reveal this only if the agent asks who the beneficiary is on his work policy.
+Health: healthy, uses smokeless tobacco (dip) daily, slightly high blood pressure, no medications.`,
+    budget: { comfortable: 85, max: 110 },
+    objections: ["Travis: \"I'm only 38, man. I figured I'd worry about this when I'm older.\"", "Travis: \"I've already got fifty grand through work. Isn't that enough?\"", "Travis: \"Let me shop around a little and I'll get back to you.\""],
+    buyingNotes: "Option 1 ($128) is over his max. He buys Option 2 ($104) once all three objections are handled well, especially when the agent ties it back to Wyatt by name. If the agent catches that his ex-wife is still the beneficiary on his work policy, he warms up a lot.",
+    quote: { opt1: 128, opt2: 104, reduced: 104, rows: [["Final Expense (Opt 1, inflation)", "$30,000"], ["Final Expense (Opt 2, today's cost)", "$20,000"], ["Reduced plan Final Expense", "$15,000"], ["Income Protection (2 yrs)", "$66,000 (after his $50,000 work policy)"], ["Mortgage Protection", "$118,000"], ["College Education", "$25,000 for Wyatt"], ["Accidental Death (no cost)", "$3,000 / $1,000 Wyatt"]] }
   }
 ];
 
@@ -1219,6 +1234,10 @@ const DIAL_FAM = {
     situation: "Earl answers; Linda is in the next room and only speaks if Earl calls her over. Earl is wary of phone calls and assumes it's about money owed. The policy lapsed because it got too expensive on their fixed income.",
     objections: ["Earl: \"Is this a bill collector? We don't owe y'all anything.\"", "Earl: \"We canceled that on purpose. It got too expensive.\""],
     outcome: "If the agent clearly says this is not debt collection and handles the cancellation calmly, Earl answers the questions. Linda is home, so they can start now (decision=now), or Earl books tomorrow afternoon if the agent offers times (decision=booked)." },
+  boone: { lead: "Pre-Submit", ver: "aged", tool: "presubmit", card: "Aged Pre-Submit lead. Travis Boone started a quote online about 8 months ago and never finished. Divorced, son Wyatt (10).",
+    situation: "Travis answers on speaker in his truck, driving home from the shipyard. He barely remembers the quote. Wyatt is with his mom this week.",
+    objections: ["Travis: \"Man, I don't even remember filling that out.\"", "Travis: \"I'm good, I've got insurance through work.\""],
+    outcome: "He's driving and not married, so the right result is a booked time later today or tomorrow evening when he's home (decision=booked). If the agent pushes to do it right now while he's driving, he declines and gets short." },
   delgado: { lead: "Policy Owner", ver: null, tool: "policy", card: "Policy Owner lead. Ray and Angie Delgado have a Liberty National policy and no review in over two years.",
     situation: "Only Ray is on the phone, driving to pick up their daughter. Angie is at home.",
     objections: ["Ray: \"Why do you need to verify anything? Is something wrong with my policy?\"", "Ray: \"We're pretty busy right now.\""],
@@ -1414,10 +1433,16 @@ function webSpeechDict() {
    or pick them on the casting page: add #cast to the course address.
    ========================================================= */
 const VIDEO_CAST = {
-  johnson: { Tasha: { avatarId: "", voiceId: "" }, Marcus: { avatarId: "", voiceId: "" } },
-  brooks: { Danielle: { avatarId: "", voiceId: "" } },
-  whitaker: { Earl: { avatarId: "", voiceId: "" }, Linda: { avatarId: "", voiceId: "" } },
-  delgado: { Ray: { avatarId: "", voiceId: "" }, Angie: { avatarId: "", voiceId: "" } }
+  // Young couple, early 30s (Anam avatars "Mina" and "Marcus"; voices "Ariana" and "Cole")
+  johnson: { Tasha: { avatarId: "65bdc796-f739-47fe-9a48-1134dc3ddae4", voiceId: "8cc7ba7b-4fc0-11f1-84b0-52bacf74fa75" }, Marcus: { avatarId: "c8601ae3-9686-4f1f-8e32-7499b470f6b5", voiceId: "8ebf24c3-4fc0-11f1-84b0-52bacf74fa75" } },
+  // Single woman, 29 (avatar "Talia"; voice "Michelle")
+  brooks: { Danielle: { avatarId: "dd5bec05-78f0-424e-a7c8-576b6aba969e", voiceId: "90919e2e-4fc0-11f1-84b0-52bacf74fa75" } },
+  // Older couple, 60s (avatars "Harold" and "Maria"; voices "Carl" and "Celine")
+  whitaker: { Earl: { avatarId: "a64dd018-7dff-4f86-a623-0230f71fffa6", voiceId: "8cc80e1f-4fc0-11f1-84b0-52bacf74fa75" }, Linda: { avatarId: "a7fe242b-9ab6-43a7-a31b-514d9606bc14", voiceId: "8cc81552-4fc0-11f1-84b0-52bacf74fa75" } },
+  // Middle-aged couple, around 40 (avatars "Pablo" and "Kiara"; voices "Cooper" and "Stephanie")
+  delgado: { Ray: { avatarId: "92b91f2a-4159-411f-b092-3e1b8663f6b9", voiceId: "90c1fb05-4fc0-11f1-84b0-52bacf74fa75" }, Angie: { avatarId: "42675ef1-2342-45d8-9603-9bd92ed45699", voiceId: "8fd0e01e-4fc0-11f1-84b0-52bacf74fa75" } },
+  // Single man, 38 (avatar "Owen"; voice "Joseph")
+  boone: { Travis: { avatarId: "31fcc5e6-f15d-4d56-8b5c-a7061847a218", voiceId: "8ff0da65-4fc0-11f1-84b0-52bacf74fa75" } }
 };
 function castFor(famId) {
   let local = {}; try { local = JSON.parse(localStorage.getItem("vpa_cast") || "{}"); } catch (e) {}
@@ -1840,12 +1865,15 @@ const LOOKS = {
     Linda: { skin: "#eac3a6", hair: "#d8c7a8", style: "bob", shirt: "#9b6fb0", glasses: true } } },
   delgado: { wall: "#aebfb0", people: {
     Ray: { skin: "#c68e63", hair: "#1d1510", style: "short", shirt: "#4a4a4a", mustache: true },
-    Angie: { skin: "#d3a07a", hair: "#3a2418", style: "long", shirt: "#2f8f83" } } }
+    Angie: { skin: "#d3a07a", hair: "#3a2418", style: "long", shirt: "#2f8f83" } } },
+  boone: { wall: "#c2b8a6", people: {
+    Travis: { skin: "#e8bf9f", hair: "#5a3a22", style: "short", shirt: "#2f4a6b", beard: true } } }
 };
 const RECAP = {
   johnson: { insured: "Tasha & Marcus Johnson", existing: "Marcus: $25,000 group life through work. Tasha: none.", fe1: "$30,000 each", fe2: "$15,000 each", income: "Marcus $67,000 (after his $25,000 work policy) · Tasha $64,000", mortgage: "$165,000 on Marcus: pays off the home", college: "$25,000 each for Jaylen and Maya", kids: true },
   brooks: { insured: "Danielle Brooks", existing: "$10,000 through work", fe1: "$30,000", fe2: "$15,000", income: "$62,000 (2 years of income, after her $10,000 work policy)", mortgage: null, housing: "Renting at $1,050/mo: covered by income protection so Aubree keeps her home", college: "$25,000 for Aubree", kids: true },
   whitaker: { insured: "Earl & Linda Whitaker", existing: "None (previous $15,000 policy lapsed)", fe1: "$30,000 each", fe2: "$15,000 each", income: "Linda $36,000 (Earl's pension partly continues)", mortgage: "$28,000: pays off the home", college: null, kids: false },
+  boone: { insured: "Travis Boone", existing: "$50,000 group life through Austal (his ex-wife is still the beneficiary)", fe1: "$30,000", fe2: "$15,000", income: "$66,000 (2 years of income, after his $50,000 work policy)", mortgage: "$118,000: pays off the home", college: "$25,000 for Wyatt", kids: true },
   delgado: { insured: "Ray & Angie Delgado", existing: "Ray: $250,000 term, 12 years left. Angie: $10,000 Globe Life whole life.", fe1: "Ray $30,000 · Angie $20,000 (after her $10,000 Globe Life policy)", fe2: "$15,000 each", income: "Ray $190,000 · Angie $80,000", mortgage: "$240,000 needed, already covered by Ray's $250,000 term", college: "$25,000 each for Sofia, Mateo and Lucas", kids: true }
 };
 const NOTES = [
@@ -1940,6 +1968,13 @@ const EAPP = {
     income: [["Spouse : Linda Whitaker", 36000, 0]],
     mortgage: [["Primary : Earl Whitaker", 28000, 0]], mortgageNote: "",
     college: [], collegeNote: "No children at home. Children's Education not needed." },
+  boone: { city: "Theodore", zip: "36582", addr: "5520 Bellingrath Rd",
+    people: [{ role: "Primary", first: "Travis", last: "Boone", dob: "05/14/1988", g: "M" }],
+    kids: [{ first: "Wyatt", last: "Boone", dob: "08/02/2016", g: "M" }],
+    fe: [["Primary : Travis Boone", 30000, 0]],
+    income: [["Primary : Travis Boone", 116000, 50000]],
+    mortgage: [["Primary : Travis Boone", 118000, 0]], mortgageNote: "",
+    college: [["Primary : Wyatt Boone (Child)", 25000, 0]], collegeNote: "" },
   delgado: { city: "Daphne", zip: "36526", addr: "1907 Main St",
     people: [{ role: "Primary", first: "Ray", last: "Delgado", dob: "04/11/1985", g: "M" }, { role: "Spouse", first: "Angie", last: "Delgado", dob: "10/02/1987", g: "F" }],
     kids: [{ first: "Sofia", last: "Delgado", dob: "03/03/2011", g: "F" }, { first: "Mateo", last: "Delgado", dob: "07/19/2014", g: "M" }, { first: "Lucas", last: "Delgado", dob: "12/12/2017", g: "M" }],
@@ -2102,11 +2137,12 @@ const GREETINGS = {
   johnson: [["Tasha", "Hey! Can you hear us okay? Marcus, come sit down, it's on."]],
   brooks: [["Danielle", "Hi, sorry, can you hear me? Aubree, baby, go play in your room for a little bit, okay?"]],
   whitaker: [["Linda", "Earl, it's working. Hello? Can you hear us alright?"]],
-  delgado: [["Angie", "Hi! Ray's here too. Can you hear us?"], ["Ray", "Hey."]]
+  delgado: [["Angie", "Hi! Ray's here too. Can you hear us?"], ["Ray", "Hey."]],
+  boone: [["Travis", "Hey, how's it going? Hang on, let me turn the TV down. Alright, I can hear you."]]
 };
-const TELE_GREETINGS = { johnson: [["Tasha", "Hello?"]], brooks: [["Danielle", "Hello, this is Danielle."]], whitaker: [["Linda", "Hello, Whitaker residence."]], delgado: [["Angie", "Hello?"]] };
+const TELE_GREETINGS = { johnson: [["Tasha", "Hello?"]], brooks: [["Danielle", "Hello, this is Danielle."]], whitaker: [["Linda", "Hello, Whitaker residence."]], delgado: [["Angie", "Hello?"]], boone: [["Travis", "Yeah, this is Travis."]] };
 const FEMALE = { Tasha: 1, Danielle: 1, Linda: 1, Angie: 1 };
-const VOICE_TUNE = { Tasha: { pitch: 1.05, rate: 1.02 }, Marcus: { pitch: 0.9, rate: 0.98 }, Danielle: { pitch: 1.0, rate: 0.95 }, Earl: { pitch: 0.82, rate: 0.9 }, Linda: { pitch: 1.0, rate: 0.93 }, Ray: { pitch: 0.92, rate: 1.06 }, Angie: { pitch: 1.08, rate: 1.0 } };
+const VOICE_TUNE = { Tasha: { pitch: 1.05, rate: 1.02 }, Marcus: { pitch: 0.9, rate: 0.98 }, Danielle: { pitch: 1.0, rate: 0.95 }, Earl: { pitch: 0.82, rate: 0.9 }, Linda: { pitch: 1.0, rate: 0.93 }, Ray: { pitch: 0.92, rate: 1.06 }, Angie: { pitch: 1.08, rate: 1.0 }, Travis: { pitch: 0.9, rate: 1.02 } };
 const PAUSES = { short: 1200, normal: 1800, long: 2600 };
 const synth = (typeof window !== "undefined" && window.speechSynthesis) ? window.speechSynthesis : null;
 let browserVoices = [];
