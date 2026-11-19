@@ -6,17 +6,17 @@
 <title>Virtual Presentation Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* Layout: left module rail + main work area; role-play is a 2-column call screen (conversation | presenter tools). */
 :root {
-  --ink: #13233a;
-  --muted: #5d6b80;
-  --bg: #f5f7fb;
+  --ink: #0f1b2d;
+  --muted: #4f5d73;
+  --bg: #f3f6fa;
   --surface: #ffffff;
-  --line: #e4e9f0;
-  --accent: #0d4f8b;
-  --accent-soft: #eaf1f9;
+  --line: #dde3ec;
+  --accent: #0b4fb3;
+  --accent-soft: #eaf1fc;
   --green: #36964a;
   --good: #2f8f45;
   --good-soft: #e7f4ea;
@@ -26,8 +26,8 @@
   --bad: #c0392b;
   --bad-soft: #fbe7e4;
   --on-accent: #ffffff;
-  --font-display: "Figtree", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -454,6 +454,75 @@ body.tool-open .rail { display: none; } body.tool-open .app { grid-template-colu
 /* Hosted on Netlify: keep controls clear of the "Powered by Netlify" badge in the bottom-right corner. */
 html.nb-safe .mbar { padding-bottom: 60px; }
 html.nb-safe .tooldrawer { padding-bottom: 56px; }
+/* ===== Mission Control look ===== */
+.rail { background: #0f1b2d; border-right: 0; color: #dce4ef; }
+.brand { border-bottom: 1px solid #22344f; }
+.brand .name { color: #ffffff; }
+.brand .sub, .progress-label { color: #9fb0c8; }
+.progress { background: #22344f; }
+.progress > div { background: #5cc48a; }
+.rail .group { color: #7f90aa; }
+.navbtn { color: #dce4ef; }
+.navbtn:hover:not(:disabled) { background: #1d2f4a; }
+.navbtn.active { background: #1d2f4a; color: #ffffff; }
+.navbtn:disabled { color: #6f7f98; opacity: 1; }
+.rail .badge { border-color: #2e4466; color: #9fb0c8; }
+.navbtn.done .badge { background: #2e9d63; border-color: #2e9d63; color: #fff; }
+.navbtn.active .badge { border-color: #5cc48a; color: #ffffff; }
+.rail .score-chip { color: #5cc48a; }
+.rail .lock { color: #7f90aa; }
+.navbtn.main { font-weight: 600; padding: 11px 10px; }
+.navbtn .count { font-size: 12px; font-weight: 700; color: #9fb0c8; font-variant-numeric: tabular-nums; }
+.rail .who { border-top: 1px solid #22344f; color: #9fb0c8; }
+.rail .linkbtn { color: #8db8ff; }
+.rail .menu-toggle { background: transparent; color: #ffffff; border-color: #5c7699; }
+.page.wide { max-width: 1140px; }
+.dash-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px; }
+.dash-head h1 { font-size: 28px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
+.stat .k { font-size: 13px; color: var(--muted); font-weight: 600; }
+.stat .v { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 15px; color: var(--muted); font-weight: 600; }
+.stat .s { font-size: 13px; color: var(--muted); }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .dash-grid { grid-template-columns: 1fr; } }
+.chart svg { width: 100%; height: auto; display: block; }
+.todo { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.todo:last-child { border-bottom: 0; }
+.todo .box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #9aa8bc; flex: none; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800; }
+.todo.done .box { background: var(--good); border-color: var(--good); }
+.todo.done .t { color: var(--muted); text-decoration: line-through; }
+.todo.locked .box { border-style: dashed; }
+.todo.locked .t { color: var(--muted); }
+.todo .t { flex: 1; }
+.todo .btn.small { padding: 6px 12px; font-size: 13px; }
+.note { border-radius: 10px; padding: 12px 14px; font-size: 15px; line-height: 1.5; }
+.note b { display: block; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 2px; }
+.note.g { background: var(--good-soft); }
+.note.w { background: var(--warn-soft); }
+.note.n { background: var(--bg); border: 1px solid var(--line); }
+.fam .best { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin-top: auto; }
+.fam.locked { background: var(--bg); border-style: dashed; cursor: default; }
+.fam.locked:hover { border-color: var(--line); }
+.fam.locked h3, .fam.locked .small { color: var(--muted); }
+.lockline { font-size: 13px; font-weight: 700; color: var(--warn); }
+.fam .btn.small { align-self: flex-start; }
+.ring-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.ring-row svg { flex: none; }
+.status { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.status.on { background: var(--good-soft); color: var(--good); }
+.status.behind { background: var(--warn-soft); color: var(--warn); }
+.status.idle { background: var(--bad-soft); color: var(--bad); }
+.status.cert { background: var(--accent-soft); color: var(--accent); }
+.minibar { display: inline-block; width: 70px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 8px; }
+.minibar > span { display: block; height: 100%; background: var(--accent); }
+.table-wrap { overflow-x: auto; }
+.mgr-table { min-width: 760px; }
+.mgr-table td { vertical-align: middle; }
+.mgr-banner { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.todo .btn.small { color: var(--on-accent); }
 </style>
 </head>
 <body>
@@ -464,7 +533,7 @@ html.nb-safe .tooldrawer { padding-bottom: 56px; }
       <div class="sub">New agent certification</div></div></div>
       <div class="progress"><div id="progFill" style="width:0%"></div></div>
       <div class="progress-label" id="progLabel"></div>
-      <button class="btn small secondary menu-toggle" id="menuToggle" type="button">Show modules</button>
+      <button class="btn small secondary menu-toggle" id="menuToggle" type="button">Menu</button>
     </div>
     <nav id="nav" aria-label="Course modules"></nav>
     <div class="who"><span id="whoName">Not signed in</span><button class="linkbtn" id="switchUser" type="button">Change</button></div>
@@ -1347,7 +1416,7 @@ function dialPresenter(f) {
 const STORE_KEY = "vpa_v2";
 let store = { name: "", quiz: {}, drill: {}, reviewLock: {}, attempts: [] };
 try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); if (s) store = Object.assign(store, s); } catch (e) {}
-function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+function save() { store.lastActive = new Date().toISOString(); try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} if (typeof scheduleSync === "function") scheduleSync(); }
 /* Manager notifications. Once the course runs on your own site, set NOTIFY_WEBHOOK to a GoHighLevel
    "Inbound Webhook" workflow URL (or a Firebase function). Every event below is posted there; the workflow
    texts/emails the manager. Pages hosted on claude.ai can't reach outside sites, so this stays off here. */
@@ -1380,9 +1449,68 @@ const TEMP_UNLOCK = true;
 const PREVIEW = TEMP_UNLOCK || (location.hash || "") === "#manager-preview";
 function practiceUnlocked() { return PREVIEW || passedCount() >= MODULES.length - 3; }
 function moduleUnlocked(i) { return PREVIEW || i === 0 || moduleDone(MODULES[i - 1].id); }
-function examUnlocked() { return PREVIEW || passedCount() === MODULES.length; }
+function examUnlocked() { return PREVIEW || isManager() || passedCount() === MODULES.length; }
 function examPassed(fmt) { return store.attempts.some(a => a.mode === "exam" && a.pass && (a.format || "zoom") === fmt); }
 function certified() { return examPassed("tele") && examPassed("zoom"); }
+/* ===== CALL LOCKS (AI calls cost money, so each call waits for its lessons) =====
+   First call: Dialing Basics + that lead type's call lesson.
+   Telesales / Zoom: that lead type's call lesson + that lead type's presentation lesson.
+   These locks stay on even in preview mode. Signing in to the manager view lifts them for you. */
+const LEAD_LESSONS = {
+  "ADP Referral": { call: "c02", present: "s06" },
+  "Pre-Submit": { call: "c03", present: "s06" },
+  "Globe Lapsed": { call: "c04", present: "s06" },
+  "Policy Owner": { call: "c05", present: "s05" }
+};
+function isManager() { try { return !!sessionStorage.getItem("vpa_mgr"); } catch (e) { return false; } }
+function callNeeds(fam, format) {
+  const l = LEAD_LESSONS[fam.leadType] || {};
+  const need = format === "dial" ? ["c01", l.call] : [l.call, l.present];
+  return need.filter(id => id && MODULES.some(m => m.id === id) && !moduleDone(id));
+}
+function callOpen(fam, format) { return isManager() || callNeeds(fam, format).length === 0; }
+function modTitle(id) { const m = MODULES.find(x => x.id === id); return m ? m.title : id; }
+function bestScore(fam, format) {
+  const xs = store.attempts.filter(a => a.family === fam.name && (a.format || "zoom") === format).map(a => a.total);
+  return xs.length ? Math.max(...xs) : null;
+}
+
+/* ===== PROGRESS SYNC for the manager view (no AI cost) ===== */
+if (!store.uid) { try { store.uid = crypto.randomUUID(); } catch (e) { store.uid = "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); } try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+const SYNC_ON = /^https?:$/.test(location.protocol) && !/claude\.ai$|claudeusercontent\.com$/.test(location.hostname);
+function weakestSkill() {
+  const sums = {};
+  store.attempts.slice(-10).forEach(a => (a.cats || []).forEach(c => { const k = c.label; sums[k] = sums[k] || [0, 0]; sums[k][0] += c.score; sums[k][1] += c.max; }));
+  let worst = "", low = 2;
+  Object.entries(sums).forEach(([k, [sc, mx]]) => { if (mx && sc / mx < low) { low = sc / mx; worst = k; } });
+  return worst;
+}
+function progressSnapshot() {
+  const qs = Object.values(store.quiz || {});
+  const last10 = store.attempts.slice(-10);
+  const last = store.attempts[store.attempts.length - 1];
+  const next = MODULES.find(m => !moduleDone(m.id));
+  return {
+    uid: store.uid, name: store.name, joinedAt: store.joinedAt || "", lastActive: store.lastActive || new Date().toISOString(),
+    lessons: passedCount(), lessonsTotal: MODULES.length,
+    quizAvg: qs.length ? Math.round(qs.reduce((a, b) => a + b, 0) / qs.length) : 0,
+    calls: store.callCount || store.attempts.length,
+    avgScore: last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : 0,
+    weak: weakestSkill(), examTele: examPassed("tele"), examZoom: examPassed("zoom"), certified: certified(),
+    next: next ? next.title : "",
+    lastCall: last ? { family: last.family, format: last.format, total: last.total, pass: last.pass, date: last.date, summary: last.summary } : null
+  };
+}
+let syncTimer = null;
+function scheduleSync() {
+  if (!SYNC_ON || !store.name) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    try { fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ snapshot: progressSnapshot() }), keepalive: true }).catch(() => {}); } catch (e) {}
+  }, 2000);
+}
+if (store.name) setTimeout(scheduleSync, 1500);
+
 
 /* Claude capabilities (artifact runtime) */
 let sampleFn = null, ttsApi = null, dictApi = null;
@@ -1728,23 +1856,27 @@ function wireDict() {
 function renderRail() {
   const n = passedCount();
   $("#progFill").style.width = (n / MODULES.length * 100) + "%";
-  $("#progLabel").textContent = PREVIEW ? `Preview mode: all unlocked · ${n} of ${MODULES.length} completed` : certified() ? "Certified. All modules passed." : `${n} of ${MODULES.length} modules passed`;
-  $("#whoName").textContent = store.name ? store.name : "Not signed in";
-  let h = `<button class="navbtn ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Course home</span><span></span></button>`;
-  h += `<button class="navbtn" data-tool="0" type="button"><span class="badge">▤</span><span>Presentation tool</span><span></span></button>`;
+  $("#progLabel").textContent = PREVIEW ? `Preview mode: lessons unlocked · ${n} of ${MODULES.length} passed` : certified() ? "Certified. All lessons passed." : `${n} of ${MODULES.length} lessons passed`;
+  $("#whoName").textContent = store.name ? store.name : (isManager() ? "Manager" : "Not signed in");
+  const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
+  const inLesson = ["module", "quiz", "drill"].includes(view.name);
+  const callsTotal = store.callCount || store.attempts.length;
+  let h = `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Dashboard</span><span></span></button>`;
+  h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></button>`;
+  h += `<button class="navbtn main ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button"><span class="badge">▶</span><span>Practice calls</span><span class="count">${callsTotal || ""}</span></button>`;
+  h += `<button class="navbtn main" data-tool="0" type="button"><span class="badge">◫</span><span>Presentation tool</span><span></span></button>`;
+  h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
+  h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
+  h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
   let lastSection = "";
   MODULES.forEach((m, i) => {
     if (m.section !== lastSection) { h += `<div class="group">${esc(m.section)}</div>`; lastSection = m.section; }
     const done = moduleDone(m.id); const un = moduleUnlocked(i);
     const total = DRILLS[m.id] ? 2 : 1; const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0);
-    const active = (view.name === "module" || view.name === "quiz" || view.name === "drill") && view.id === m.id;
+    const active = inLesson && view.id === m.id;
     h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
   });
-  h += `<div class="group">Final exam</div>`;
-  h += `<button class="navbtn ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button" ${practiceUnlocked() ? "" : "disabled"}><span class="badge">▶</span><span>Practice with a family</span>${practiceUnlocked() ? "<span></span>" : `<span class="lock">After Benefits</span>`}</button>`;
-  h += `<button class="navbtn ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Live AI family exam</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
-  h += `<button class="navbtn ${view.name === "history" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My attempts</span><span class="score-chip">${store.attempts.length || ""}</span></button>`;
   $("#nav").innerHTML = h;
 }
 
@@ -1756,6 +1888,7 @@ function render() {
   renderRail();
   const main = $("#main");
   if (view.name === "cast") { main.innerHTML = castView(); bindCast(); return; }
+  if (view.name === "manager") { main.innerHTML = managerView(); afterManagerRender(); main.scrollTop = 0; return; }
   if (!store.name) { main.innerHTML = signInView(); bindSignIn(); return; }
   if (view.name === "home") main.innerHTML = homeView();
   else if (view.name === "module") main.innerHTML = moduleView(view.id);
@@ -1781,6 +1914,7 @@ function signInView() {
       <input type="text" id="nameInput" placeholder="e.g. Jordan Williams" autocomplete="name">
       <div><button class="btn" id="startBtn" type="button">Start the course</button></div>
     </div>
+    <p class="small">Manager? <button class="linkbtn" data-go="manager" type="button">Open the manager view</button></p>
   </div>`;
 }
 function bindSignIn() {
@@ -1788,30 +1922,83 @@ function bindSignIn() {
   $("#startBtn").onclick = go; $("#nameInput").onkeydown = e => { if (e.key === "Enter") go(); };
 }
 
+function scoreRing(total, pass) {
+  const C = 314.16, col = pass ? "var(--good)" : total >= PASS_EXAM - 15 ? "var(--warn)" : "var(--bad)";
+  return `<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Score ${total} out of 100"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--line)" stroke-width="12"/><circle cx="60" cy="60" r="50" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(total / 100 * C).toFixed(1)} ${C}" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" font-family="Inter, sans-serif" font-size="30" font-weight="700" fill="currentColor">${total}</text></svg>`;
+}
+function scoreChart(attempts) {
+  if (!attempts.length) return `<p class="small">Your last 10 call scores show up here after your first practice call.</p>`;
+  const W = 420, H = 170, top = 10, base = 140, bw = 28, gap = (W - 30 - bw * 10) / 9;
+  const y = v => base - (v / 100) * (base - top);
+  let g = `<line x1="24" x2="${W}" y1="${y(PASS_EXAM)}" y2="${y(PASS_EXAM)}" stroke="var(--good)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="0" y="${y(PASS_EXAM) + 4}" font-size="11" fill="var(--muted)">${PASS_EXAM}</text>`;
+  attempts.forEach((a, i) => {
+    const x = 30 + i * (bw + gap), last = i === attempts.length - 1;
+    g += `<rect x="${x.toFixed(1)}" y="${y(a.total).toFixed(1)}" width="${bw}" height="${(base - y(a.total)).toFixed(1)}" rx="4" fill="${last ? "var(--accent)" : "#b9ccEB"}"><title>${esc(a.family)} · ${fmtLabel(a.format)} · ${a.total}</title></rect>`;
+    g += `<text x="${(x + bw / 2).toFixed(1)}" y="${base + 16}" font-size="11" text-anchor="middle" fill="var(--muted)">${a.total}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Last ${attempts.length} call scores: ${attempts.map(a => a.total).join(", ")}. Pass line is ${PASS_EXAM}.">${g}</svg>`;
+}
+function todayList() {
+  const items = [], today = new Date().toDateString();
+  Object.entries(store.doneNotified || {}).forEach(([id, at]) => { if (new Date(at).toDateString() === today) items.push({ done: true, t: `Lesson: ${modTitle(id)}` }); });
+  MODULES.filter(m => !moduleDone(m.id)).slice(0, 2).forEach(m => {
+    const i = MODULES.indexOf(m), un = moduleUnlocked(i);
+    if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
+    else items.push({ t: `Lesson: ${m.title}`, btn: un ? `<button class="btn small" data-go="module" data-id="${m.id}" type="button">Open</button>` : "", locked: !un });
+  });
+  const tried = new Set(store.attempts.map(a => a.family + "|" + a.format));
+  const open = FAMILIES.filter(f => callOpen(f, "dial") && !tried.has(f.name + "|dial"));
+  if (open[0]) items.push({ t: `First-call practice: ${open[0].name}`, btn: `<button class="btn small" data-go="practice" data-pf="dial" type="button">Practice</button>` });
+  const zoomOpen = FAMILIES.filter(f => callOpen(f, "zoom"));
+  if (zoomOpen.length && practiceUnlocked()) { const f = zoomOpen.slice().sort((a, b) => (bestScore(a, "zoom") || 0) - (bestScore(b, "zoom") || 0))[0]; items.push({ t: `Zoom practice: ${f.name}`, btn: `<button class="btn small" data-go="practice" data-pf="zoom" type="button">Practice</button>` }); }
+  const lockedFam = FAMILIES.find(f => !callOpen(f, "dial"));
+  if (lockedFam && items.length < 6) items.push({ locked: true, t: `Unlocks next: call ${lockedFam.name} after ${callNeeds(lockedFam, "dial").map(modTitle).join(" and ")}` });
+  return items.slice(0, 6).map(it => `<div class="todo ${it.done ? "done" : ""} ${it.locked ? "locked" : ""}"><span class="box" aria-hidden="true">${it.done ? "✓" : ""}</span><span class="t">${it.done ? '<span class="sr-only">Done: </span>' : ""}${esc(it.t)}</span>${it.btn || ""}</div>`).join("");
+}
+function coachNotes() {
+  const a = store.attempts[store.attempts.length - 1];
+  if (!a) return `<div class="note n"><b>No calls yet</b>Finish a lead-type lesson to unlock your first practice call. After each call, your coach's notes land here.</div>`;
+  const weak = (a.cats || []).slice().sort((x, y) => x.score / x.max - y.score / y.max)[0];
+  let h = `<p class="small">From your ${fmtLabel(a.format)}${a.format === "dial" ? "" : " call"} with ${esc(a.family)} · ${a.total}/100</p>`;
+  if (a.strengths && a.strengths[0]) h += `<div class="note g"><b>Strength</b>${esc(a.strengths[0])}</div>`;
+  if (weak) h += `<div class="note w"><b>Work on: ${esc(weak.label)}</b>${esc(weak.feedback || (a.moments[0] && a.moments[0].better) || "")}</div>`;
+  if (a.plan && a.plan[0]) h += `<div class="note n"><b>Next rep</b>${esc(a.plan[0])}</div>`;
+  return h + `<button class="linkbtn" type="button" onclick="view={name:'results',attempt:store.attempts[store.attempts.length-1]};render()">See the full report</button>`;
+}
 function homeView() {
   const n = passedCount();
   const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
-  const totalMin = MODULES.reduce((a, m) => a + m.minutes, 0);
   const lastExam = store.attempts.filter(a => a.mode === "exam").slice(-1)[0];
+  const joined = store.joinedAt ? new Date(store.joinedAt) : new Date();
+  const day = Math.max(1, Math.floor((Date.now() - joined.getTime()) / 864e5) + 1);
+  const target = new Date(joined.getTime() + 13 * 864e5).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const hr = new Date().getHours(), greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  const qs = Object.values(store.quiz || {}), quizAvg = qs.length ? Math.round(qs.reduce((a, b) => a + b, 0) / qs.length) : null;
+  const last10 = store.attempts.slice(-10), avg = last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : null;
+  const callsTotal = store.callCount || store.attempts.length;
   let cta;
-  if (certified()) cta = `<div class="result-banner pass"><div class="big">Certified</div><p>You passed the live AI family exam in both formats. Keep practicing with the harder families to stay sharp.</p><div class="row"><button class="btn" data-go="practice" type="button">Practice again</button><button class="btn secondary" data-go="history" type="button">See my attempts</button></div></div>`;
-  else if (passedCount() === MODULES.length) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>All ${MODULES.length} modules are passed. ${lastExam ? (examPassed("tele") ? "Telesales exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") + "Pass both a Telesales and a Zoom exam to get certified." : "You'll take two exams: one Telesales call and one Zoom call. Warm up with a practice family first, or go straight in."}</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
-  else cta = `<div class="card"><h2>${n === 0 ? "Start with Module 1" : "Pick up where you left off"}</h2><p>Next up: <b>${esc(next.title)}</b>, about ${next.minutes} minutes plus the quiz and say-it drill.</p><div><button class="btn" data-go="module" data-id="${next.id}" type="button">${n === 0 ? "Begin" : "Continue"}: ${esc(next.title)}</button></div></div>`;
-  return `<div class="page">
-    <div class="eyebrow">Hi, ${esc(store.name.split(" ")[0])}</div>
-    <h1>Virtual Presentation Certification</h1>
-    <p class="lead">About ${totalMin} minutes of lessons, ${MODULES.reduce((a, m) => a + m.quiz.length, 0)} quiz questions, and one live appointment with an AI family. Go at your own pace; your progress saves in this browser.</p>
+  if (certified()) cta = `<div class="result-banner pass"><div class="big">Certified</div><p>You passed the live exam in both formats. Keep practicing with the Hard families to stay sharp.</p></div>`;
+  else if (n === MODULES.length) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>${lastExam ? (examPassed("tele") ? "Telesales exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") : ""}Pass one Telesales call and one Zoom call to get certified.</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
+  else cta = `<div class="card"><div class="row spread"><div><h2>${n === 0 ? "Start with lesson 1" : "Next up"}</h2><p class="small">${esc(next.section)} · about ${next.minutes} minutes plus the quiz${DRILLS[next.id] ? " and say-it drill" : ""}</p></div><button class="btn" data-go="module" data-id="${next.id}" type="button">${n === 0 ? "Begin" : "Continue"}: ${esc(next.title)}</button></div></div>`;
+  return `<div class="page wide">
+    ${isManager() ? `<div class="mgr-banner"><span>Manager mode: every practice call and exam is unlocked for you in this tab.</span><button class="linkbtn" data-go="manager" type="button">Open manager view</button></div>` : ""}
+    <div class="dash-head"><div><h1>${greet}, ${esc(store.name.split(" ")[0])}</h1><p class="small" style="font-size:15px">Day ${day} · ${certified() ? "Certified" : `Aim to certify by ${target}`}</p></div>
+      <button class="btn" data-go="practice" type="button">Start a practice call</button></div>
     ${cta}
-    <div class="card">
-      <h2>How you pass</h2>
-      <ul class="lesson" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-        <li>${MODULES.length} short modules, about 3 to 5 minutes each. Every module ends with a <b>quiz</b> (${PASS_QUIZ}%+, 5 questions drawn at random with shuffled answers), and most add a <b>say-it drill</b>, where you deliver a key line from memory and it's checked point by point.</li><li>If you fail a quiz you won't see the answers. You have to reopen the lesson before you can retake it.</li>
-        <li>The final exam is two live calls with randomly chosen AI families: one <b>Telesales</b> call and one <b>Zoom</b> call. They respond like real clients and raise real objections.</li>
-        <li>You're graded on 9 parts of the presentation. To pass you need <b>${PASS_EXAM}+ out of 100</b>, <b>the family must buy</b>, and <b>no compliance issues</b>.</li>
-      </ul>
+    <div class="stats">
+      <div class="stat"><span class="k">Lessons passed</span><span class="v">${n}<small>/${MODULES.length}</small></span></div>
+      <div class="stat"><span class="k">Quiz average</span><span class="v">${quizAvg == null ? "–" : quizAvg + "%"}</span><span class="s">Pass is ${PASS_QUIZ}%</span></div>
+      <div class="stat"><span class="k">Practice calls</span><span class="v">${callsTotal}</span></div>
+      <div class="stat"><span class="k">Avg call score</span><span class="v">${avg == null ? "–" : avg}</span><span class="s">Last ${last10.length || 10} calls · pass is ${PASS_EXAM}</span></div>
     </div>
+    <div class="dash-grid">
+      <div class="card chart"><h2>Last 10 call scores</h2>${scoreChart(last10)}</div>
+      <div class="card"><h2>Today's checklist</h2><div>${todayList() || `<p class="small">You're all caught up.</p>`}</div></div>
+    </div>
+    <div class="card"><h2>Coach's notes</h2>${coachNotes()}</div>
   </div>`;
 }
+
 
 function blockHTML(b) {
   if (b.h) return `<h2>${b.h}</h2>`;
@@ -1948,27 +2135,45 @@ Output ONLY JSON, no markdown:
 }
 
 let practiceFormat = "zoom";
+function lockedCard(f, format, need) {
+  const first = need[0], i = MODULES.findIndex(m => m.id === first);
+  const go = moduleUnlocked(i) ? `<button class="btn small secondary" data-go="module" data-id="${first}" type="button">Open ${esc(modTitle(first))}</button>` : "";
+  return `<div class="fam locked"><span class="pill ${f.difficulty === "Hard" ? "hard" : ""}">${f.difficulty}</span><h3>${esc(f.name)}</h3><span class="meta">${esc(f.leadType)}</span>
+    <span class="lockline">🔒 Locked: finish ${need.map(id => esc(modTitle(id))).join(" and ")} first</span>${go}</div>`;
+}
 function familyPickView(mode) {
   if (SITE_MODE) setTimeout(loadVoiceModel, 0);
   const exam = mode === "exam";
   const intro = exam
     ? `<p class="lead">To get certified you pass two live calls: one <b>Telesales</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
-    : `<p class="lead">Pick a format and a family. In practice you'll see a live "temperature" meter showing how warm the family is, plus a rebuttal cheat sheet. Practice calls don't count toward certification.</p>`;
-  let h = `<div class="page"><div class="eyebrow">${exam ? "Final exam" : "Practice"}</div><h1>${exam ? "Live AI family exam" : "Practice with an AI family"}</h1>${intro}`;
+    : `<p class="lead">Talk out loud to an AI family. They push back, and you get a score with coaching when you hang up. Each family unlocks once you finish the lessons for their lead type.</p>`;
+  let h = `<div class="page wide"><div class="eyebrow">${exam ? "Final exam" : "Practice"}</div><h1>${exam ? "Live AI family exam" : "Practice calls"}</h1>${intro}`;
+  if (isManager()) h += `<div class="mgr-banner"><span>Manager mode: all calls unlocked in this tab.</span></div>`;
   if (SITE_MODE) h += `<p class="small" data-voicestatus ${voiceStatusText() ? "" : "hidden"}>${esc(voiceStatusText())}</p>`;
   if (!sampleFn) h += `<div class="warn"><b>AI family unavailable here</b>The AI family runs through Claude. Open this page on claude.ai while signed in, then allow it when asked.</div>`;
-  h += `<div class="card"><h2>How the call works</h2><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-    <li><b>First call:</b> practice dialing the lead. They don't know you're calling. Use your dial script, handle their pushback, and start the presentation now or book the appointment.</li>
-    <li><b>Just talk.</b> After a 5-second countdown the family picks up (Telesales) or joins on camera (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble, and with headphones you can talk over them.</li>
-    <li><b>Telesales:</b> nothing is shared, so describe every slide out loud. Mark where you are in the Presenter panel so your quote unlocks at Medical Questions. If you say "as you can see," the family will tell you they can't see anything.</li>
-    <li><b>Zoom:</b> share your screen when rapport is done, and move through the slides with Next and Prev. The family sees each slide you share.</li>
-    <li>Press <b>Script</b> any time to open your presentation tool at your step, already filled in with this family's names.</li>
-    <li>Prefer typing, or no mic? Press <b>Type</b>. The call ends when the family decides, or when you press End call.</li></ul></div>`;
   if (exam) {
-    h += `<div class="fam-grid">${[["tele", "📞", "Telesales exam", "Phone only. No screen is shared."], ["zoom", "📹", "Zoom exam", "On video, sharing your screen."]].map(([f, ic, t, d]) => `<div class="fam"><span class="pill ${examPassed(f) ? "pass" : ""}">${examPassed(f) ? "Passed" : "Not passed yet"}</span><h3>${ic} ${t}</h3><span class="small">${d}</span><button class="btn small" data-exam="${f}" type="button" ${sampleFn ? "" : "disabled"}>${examPassed(f) ? "Take it again" : "Start with a random family"}</button></div>`).join("")}</div>`;
+    h += `<div class="fam-grid">${[["tele", "📞", "Telesales exam", "Phone only. No screen is shared."], ["zoom", "📹", "Zoom exam", "On video, sharing your screen."]].map(([f, ic, t, d]) => {
+      const pool = FAMILIES.filter(x => callOpen(x, f));
+      return `<div class="fam"><span class="pill ${examPassed(f) ? "pass" : ""}">${examPassed(f) ? "Passed" : "Not passed yet"}</span><h3>${ic} ${t}</h3><span class="small">${d}</span>${pool.length ? "" : `<span class="lockline">🔒 Finish your lead-type lessons first</span>`}<button class="btn small" data-exam="${f}" type="button" ${sampleFn && pool.length ? "" : "disabled"}>${examPassed(f) ? "Take it again" : "Start with a random family"}</button></div>`;
+    }).join("")}</div>`;
   } else {
-    h += `<div class="row"><span class="small"><b>Format:</b></span>${[["dial", "☎️ First call"], ["zoom", "📹 Zoom"], ["tele", "📞 Telesales"]].map(([f, l]) => `<button class="chip ${practiceFormat === f ? "on" : ""}" data-pformat="${f}" type="button" aria-pressed="${practiceFormat === f}">${l}</button>`).join("")}</div>`;
-    h += `<div class="fam-grid">${FAMILIES.map(f => `<button class="fam" data-fam="${f.id}" type="button" ${sampleFn ? "" : "disabled"}><span class="pill ${f.difficulty === "Hard" ? "hard" : ""}">${f.difficulty}</span><h3>${esc(f.name)}</h3><span class="meta">${esc(f.leadType)} · ${practiceFormat === "dial" ? "First call: book it or start now" : practiceFormat === "tele" ? "Telesales call" : "Zoom appointment"}</span><span class="small">${esc(practiceFormat === "dial" ? DIAL_FAM[f.id].card : f.card)}</span></button>`).join("")}</div>`;
+    const presLocked = !practiceUnlocked() && practiceFormat !== "dial";
+    h += `<div class="row"><span class="small"><b>Format:</b></span>${[["dial", "☎️ First call"], ["tele", "📞 Telesales"], ["zoom", "📹 Zoom"]].map(([f, l]) => `<button class="chip ${practiceFormat === f ? "on" : ""}" data-pformat="${f}" type="button" aria-pressed="${practiceFormat === f}">${l}</button>`).join("")}</div>`;
+    h += `<p class="small">${practiceFormat === "dial" ? "First call: they don't know you're calling. Use your dial script and book the appointment or start now." : practiceFormat === "tele" ? "Telesales: nothing is shared, so describe every slide out loud." : "Zoom: share your screen when rapport is done and move through the slides."}</p>`;
+    if (presLocked && !isManager()) h += `<div class="warn"><b>Presentation calls unlock later</b>Telesales and Zoom practice opens after you pass the lessons through ${esc(MODULES[MODULES.length - 4].title)}. First-call practice opens as soon as you finish each lead type's call lesson.</div>`;
+    h += `<div class="fam-grid">${FAMILIES.map(f => {
+      const need = isManager() ? [] : callNeeds(f, practiceFormat);
+      if (need.length) return lockedCard(f, practiceFormat, need);
+      const best = bestScore(f, practiceFormat);
+      const card = practiceFormat === "dial" ? DIAL_FAM[f.id].card : f.card;
+      return `<button class="fam" data-fam="${f.id}" type="button" ${sampleFn && !(presLocked && !isManager()) ? "" : "disabled"}><span class="pill ${f.difficulty === "Hard" ? "hard" : ""}">${f.difficulty}</span><h3>${esc(f.name)}</h3><span class="meta">${esc(f.leadType)} · ${fmtLabel(practiceFormat)}</span><span class="small">${esc(card)}</span><span class="best">${best == null ? "Not called yet" : `Your best: ${best}`}</span></button>`;
+    }).join("")}</div>`;
+    h += `<details class="card"><summary><b>How the call works</b></summary><ul style="margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+      <li><b>Just talk.</b> After a 5-second countdown the family picks up (Telesales) or joins (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble.</li>
+      <li><b>Telesales:</b> mark where you are in the Presenter panel so your quote unlocks at Medical Questions. If you say "as you can see," they'll tell you they can't see anything.</li>
+      <li><b>Zoom:</b> share your screen when rapport is done, and move through the slides with Next and Prev.</li>
+      <li>Press <b>Script</b> any time to open your presentation tool at your step, already filled in with this family's names.</li>
+      <li>Prefer typing, or no mic? Press <b>Type</b>. The call ends when the family decides, or when you press End call.</li></ul></details>`;
   }
   return h + `</div>`;
 }
@@ -2292,6 +2497,7 @@ function pickVoice(name, taken) {
 }
 
 function startCall(fam, mode, format) {
+  if (!callOpen(fam, format) || (mode !== "exam" && format !== "dial" && !practiceUnlocked() && !isManager())) { view = { name: mode === "exam" ? "exam" : "practice" }; render(); return; }
   rp = { fam, mode, format: format || "zoom", phase: "lobby", msgs: [], shared: [], current: null, sharing: false, quoteShown: false, mood: 45, decision: "none", decisionNote: "",
     sound: true, headphones: true, pause: "normal", typing: !dictApi, panel: window.innerWidth > 1100 ? "presenter" : null,
     buffer: "", partial: "", lastHeard: 0, turnStart: 0, lastActivity: 0, gen: 0, awaiting: false, abort: null, queue: [], familySpeaking: false,
@@ -2772,6 +2978,7 @@ async function finishCall() {
     summary: g.summary || "", plan: g.coaching_plan || [], duration: rp.duration, transcript: transcriptText()
   };
   const wasCert = certified();
+  store.callCount = (store.callCount || store.attempts.length) + 1;
   store.attempts.push(attempt); if (store.attempts.length > 30) store.attempts = store.attempts.slice(-30); save();
   notify(attempt.mode === "exam" ? "exam_result" : "practice_result", { format: attempt.format, family: attempt.family, score: attempt.total, passed: attempt.pass, outcome: attempt.decision });
   if (!wasCert && certified()) notify("certified", { family: attempt.family, score: attempt.total });
@@ -2832,7 +3039,7 @@ function resultsView(a) {
   let h = `<div class="page">
     <div class="eyebrow">${a.mode === "exam" ? "Final exam result" : "Practice result"} · ${fmtLabel(a.format)} · ${esc(a.family)} · ${new Date(a.date).toLocaleDateString()}</div>
     <div class="result-banner ${a.pass ? "pass" : "fail"}">
-      <div class="row spread"><div class="big">${verdict}</div><div class="big">${a.total}/100</div></div>
+      <div class="ring-row">${scoreRing(a.total, a.pass)}<div><div class="big">${verdict}</div><p class="small">${fmtLabel(a.format)} · ${esc(a.family)} · ${Math.max(1, Math.round((a.duration || 0) / 60))} min · pass is ${PASS_EXAM}+</p></div></div>
       <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "Telesales" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "Telesales"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
       <p>${esc(a.summary)}</p>
     </div>`;
@@ -2865,16 +3072,98 @@ function historyView() {
 }
 
 /* =========================================================
+   MANAGER VIEW (reads /api/progress with your MANAGER_CODE)
+   ========================================================= */
+let mgr = { rows: null, error: "", loading: false, filter: "all" };
+function mgrCode() { try { return sessionStorage.getItem("vpa_mgr") || ""; } catch (e) { return ""; } }
+function mgrStatus(t) {
+  if (t.certified) return ["Certified", "cert"];
+  const idle = (Date.now() - new Date(t.lastActive || t.savedAt).getTime()) / 864e5;
+  if (idle >= 2) return ["Inactive", "idle"];
+  const day = Math.max(1, Math.floor((Date.now() - new Date(t.joinedAt || t.savedAt).getTime()) / 864e5) + 1);
+  const expected = Math.min(t.lessonsTotal, Math.floor(day * t.lessonsTotal / 10));
+  return t.lessons + 4 < expected ? ["Behind", "behind"] : ["On track", "on"];
+}
+function ago(iso) {
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (!isFinite(m)) return "–";
+  if (m < 60) return m <= 1 ? "just now" : m + " min ago";
+  const h = Math.round(m / 60); if (h < 24) return h + " hr ago";
+  const d = Math.round(h / 24); return d === 1 ? "yesterday" : d + " days ago";
+}
+async function mgrLoad(code) {
+  mgr.loading = true; mgr.error = ""; render();
+  try {
+    const r = await fetch("/api/progress", { headers: { "x-manager-code": code } });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) { mgr.error = "That code didn't match."; try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} }
+    else if (!r.ok) mgr.error = j.message || "The manager list isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
+    else { try { sessionStorage.setItem("vpa_mgr", code); } catch (e) {} mgr.rows = j.trainees || []; }
+  } catch (e) { mgr.error = "Couldn't reach the server. The manager view works on your live site, not inside claude.ai."; }
+  mgr.loading = false; render();
+}
+function managerView() {
+  if (!mgrCode() || !mgr.rows) {
+    if (mgrCode() && !mgr.rows && !mgr.loading && !mgr.error) setTimeout(() => mgrLoad(mgrCode()), 0);
+    return `<div class="page"><div class="eyebrow">Manager</div><h1>Manager view</h1>
+      <p class="lead">See every trainee's progress, call scores and weak spots. Enter the manager code you set in Netlify.</p>
+      <div class="card"><label for="mgrCodeIn">Manager code</label><input type="password" id="mgrCodeIn" autocomplete="current-password" style="font:inherit;border:2px solid var(--line);border-radius:10px;padding:11px 14px">
+      ${mgr.error ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.error)}</p>` : ""}
+      <div class="row"><button class="btn" id="mgrGo" type="button" ${mgr.loading ? "disabled" : ""}>${mgr.loading ? "Checking…" : "Open manager view"}</button>${store.name ? `<button class="btn secondary" data-go="home" type="button">Back to my course</button>` : ""}</div></div></div>`;
+  }
+  const rows = mgr.rows.map(t => Object.assign({}, t, { st: mgrStatus(t) }));
+  const count = k => rows.filter(r => r.st[1] === k).length;
+  const callsWeek = rows.reduce((a, r) => a + (r.calls || 0), 0);
+  const keep = { all: () => true, help: r => r.st[1] === "behind" || r.st[1] === "idle", on: r => r.st[1] === "on", cert: r => r.st[1] === "cert" }[mgr.filter];
+  const shown = rows.filter(keep).sort((a, b) => (b.lastActive || "").localeCompare(a.lastActive || ""));
+  const weakCounts = {}; rows.forEach(r => { if (r.weak) weakCounts[r.weak] = (weakCounts[r.weak] || 0) + 1; });
+  const topWeak = Object.entries(weakCounts).sort((a, b) => b[1] - a[1])[0];
+  let h = `<div class="page wide"><div class="dash-head"><div><h1>Your trainees</h1><p class="small" style="font-size:15px">${rows.length} trainee${rows.length === 1 ? "" : "s"} · updates whenever they save progress</p></div>
+    <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
+    <div class="stats">
+      <div class="stat"><span class="k">On track</span><span class="v" style="color:var(--good)">${count("on")}</span></div>
+      <div class="stat"><span class="k">Falling behind</span><span class="v" style="color:var(--warn)">${count("behind")}</span></div>
+      <div class="stat"><span class="k">Inactive 2+ days</span><span class="v" style="color:var(--bad)">${count("idle")}</span></div>
+      <div class="stat"><span class="k">Certified</span><span class="v" style="color:var(--accent)">${count("cert")}</span></div>
+      <div class="stat"><span class="k">Practice calls (all)</span><span class="v">${callsWeek}</span></div>
+    </div>
+    <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
+  if (!rows.length) h += `<div class="card"><h2>No trainees yet</h2><p>Trainees show up here after they sign in to the course on your site and complete anything. Share your course link with new hires to get started.</p></div>`;
+  else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
+      <td><b>${esc(r.name)}</b>${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
+      <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
+      <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td><td>${esc(r.weak || "–")}</td>
+      <td>${r.lastCall ? `${esc(r.lastCall.family)} · ${fmtLabel(r.lastCall.format)} · <b>${r.lastCall.total}</b> <span class="pill ${r.lastCall.pass ? "pass" : "fail"}">${r.lastCall.pass ? "Pass" : "No pass"}</span>` : "–"}</td>
+      <td>${esc(ago(r.lastActive || r.savedAt))}</td><td><span class="status ${r.st[1]}">${r.st[0]}</span></td>
+      <td><button class="linkbtn" data-mremove="${esc(r.uid)}" data-mname="${esc(r.name)}" type="button">Remove</button></td></tr>`).join("")}</tbody></table></div>`;
+  if (topWeak && topWeak[1] >= 2) h += `<div class="note w"><b>Team pattern</b>${topWeak[1]} of ${rows.length} trainees are weakest at ${esc(topWeak[0])}. Worth a group role-play on it.</div>`;
+  h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser tab so you can test them.</p></div>`;
+  return h;
+}
+function afterManagerRender() {
+  const go = $("#mgrGo"), inp = $("#mgrCodeIn");
+  if (go && inp) { const f = () => { const v = inp.value.trim(); if (v) mgrLoad(v); else inp.focus(); }; go.onclick = f; inp.onkeydown = e => { if (e.key === "Enter") f(); }; inp.focus(); }
+  const rf = $("#mgrRefresh"); if (rf) rf.onclick = () => mgrLoad(mgrCode());
+  const out = $("#mgrOut"); if (out) out.onclick = () => { try { sessionStorage.removeItem("vpa_mgr"); } catch (e) {} mgr = { rows: null, error: "", loading: false, filter: "all" }; render(); };
+  document.querySelectorAll("[data-mfilter]").forEach(b => b.onclick = () => { mgr.filter = b.dataset.mfilter; render(); });
+  document.querySelectorAll("[data-mremove]").forEach(b => b.onclick = () => confirmModal("Remove " + b.dataset.mname + "?", "This takes them off your manager list. If they keep training, they'll show up again the next time they save progress.", "Remove", async () => {
+    try { await fetch("/api/progress?uid=" + encodeURIComponent(b.dataset.mremove), { method: "DELETE", headers: { "x-manager-code": mgrCode() } }); } catch (e) {}
+    mgrLoad(mgrCode());
+  }));
+}
+
+/* =========================================================
    EVENTS
    ========================================================= */
 document.addEventListener("click", e => {
   const tt = e.target.closest("[data-tool]"); if (tt) { openTool(/^\d+$/.test(tt.dataset.tool) ? +tt.dataset.tool : tt.dataset.tool); return; }
   const t = e.target.closest("[data-go],[data-q],[data-fam],[data-open],[data-exam],[data-pformat],#submitQuiz,#copyResult,#switchUser,#menuToggle,#checkDrill,#retryDrill");
   if (!t) return;
-  if (t.id === "menuToggle") { const r = $("#rail"); r.classList.toggle("open"); t.textContent = r.classList.contains("open") ? "Hide modules" : "Show modules"; return; }
+  if (t.id === "menuToggle") { const r = $("#rail"); r.classList.toggle("open"); t.textContent = r.classList.contains("open") ? "Close menu" : "Menu"; return; }
   if (t.id === "switchUser") { confirmModal("Change name?", "Progress is saved in this browser under the current name. Changing the name keeps the progress but relabels it.", "Change name", () => { store.name = ""; save(); render(); }); return; }
   if (t.dataset.go) {
     if (view.name === "call" && rp && !rp.ended) { confirmModal("Leave the call?", "Leaving now abandons this call without a grade.", "Leave call", () => { stopLive(); rp = null; view = { name: t.dataset.go, id: t.dataset.id }; render(); }); return; }
+    if (t.dataset.pf) practiceFormat = t.dataset.pf;
     if (t.dataset.go === "quiz") quizState = null;
     if (t.dataset.go === "drill") drillState = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
@@ -2896,7 +3185,7 @@ document.addEventListener("click", e => {
   if (t.id === "checkDrill") { checkDrill(); return; }
   if (t.id === "retryDrill") { drillState.result = null; drillState.text = ""; render(); const di = $("#drillInput"); if (di) di.focus(); return; }
   if (t.dataset.fam) { startCall(FAMILIES.find(f => f.id === t.dataset.fam), "practice", practiceFormat); return; }
-  if (t.dataset.exam) { startCall(FAMILIES[Math.floor(Math.random() * FAMILIES.length)], "exam", t.dataset.exam); return; }
+  if (t.dataset.exam) { const pool = FAMILIES.filter(f => callOpen(f, t.dataset.exam)); if (!pool.length) { render(); return; } startCall(pool[Math.floor(Math.random() * pool.length)], "exam", t.dataset.exam); return; }
   if (t.dataset.pformat) { practiceFormat = t.dataset.pformat; render(); return; }
   if (t.dataset.open) { const a = store.attempts.find(x => String(x.id) === t.dataset.open); if (a) { view = { name: "results", attempt: a }; render(); } return; }
   if (t.id === "copyResult") {
