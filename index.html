@@ -1877,6 +1877,7 @@ function renderRail() {
   MODULES.forEach((m, i) => { let g = sections[sections.length - 1]; if (!g || g.name !== m.section) { g = { name: m.section, items: [] }; sections.push(g); } g.items.push([m, i]); });
   const curId = inLesson ? view.id : next.id;
   store.railOpen = store.railOpen || {};
+  if (inLesson) {
   sections.forEach((g, gi) => {
     const doneN = g.items.filter(([m]) => moduleDone(m.id)).length;
     const hasCur = g.items.some(([m]) => m.id === curId);
@@ -1892,6 +1893,7 @@ function renderRail() {
     h += `</div>`;
   });
   h += `<div class="row" style="padding:6px 8px;gap:12px"><button class="linkbtn" type="button" data-railall="1">Expand all</button><button class="linkbtn" type="button" data-railall="0">Collapse all</button></div>`;
+  }
   $("#nav").innerHTML = h;
   document.querySelectorAll("[data-railsec]").forEach(b => b.onclick = e => { e.stopPropagation(); const k = b.dataset.railsec, open = b.getAttribute("aria-expanded") !== "true"; store.railOpen[k] = open; try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (er) {} renderRail(); const nb = document.querySelector(`[data-railsec="${CSS.escape(k)}"]`); if (nb) nb.focus(); });
   document.querySelectorAll("[data-railall]").forEach(b => b.onclick = e => { e.stopPropagation(); const v = b.dataset.railall === "1"; sections.forEach(g => store.railOpen[g.name] = v); try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (er) {} renderRail(); });
