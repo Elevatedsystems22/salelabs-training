@@ -1052,6 +1052,32 @@ html.framed .globe-life-presentation .presentation-container { height: calc(100v
   .glp-landing h1 { font-size: 27px; }
 }
 
+/* ===== Call tracking strip + log window ===== */
+.cl-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 18px; background: #eef5fd; border-bottom: 1px solid #d3e3f5; font-family: "Inter", system-ui, sans-serif; }
+.cl-stats { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; color: #3f5470; }
+.cl-stats b { color: #0f1b2d; font-size: 16px; font-variant-numeric: tabular-nums; margin-right: 3px; }
+.cl-warn { color: #8f5200; font-weight: 600; }
+.cl-actions { display: flex; gap: 8px; }
+.cl-strip button { font: inherit; font-size: 14px; font-weight: 700; border-radius: 999px; padding: 8px 16px; cursor: pointer; min-height: 38px; }
+.cl-log { background: #0b4fb3; color: #fff; border: 1.5px solid #0b4fb3; }
+.cl-log:hover { background: #083a85; }
+.cl-log kbd { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.35); color: #fff; }
+.cl-undo { background: #fff; color: #3f5470; border: 1.5px solid #d3e3f5; }
+.cl-undo:hover { background: #f3f6fa; }
+.cl-modal { position: absolute; inset: 0; z-index: 80; background: rgba(15,27,45,.45); display: grid; place-items: center; padding: 20px; }
+.cl-modal[hidden] { display: none; }
+.cl-card { background: #fff; border-radius: 16px; padding: 26px; width: min(520px, 100%); box-shadow: 0 20px 60px rgba(15,27,45,.25); font-family: "Inter", system-ui, sans-serif; }
+.cl-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #217a3b; }
+.cl-card h2, .globe-life-presentation .cl-card h2 { font-size: 22px; margin: 6px 0 4px; color: #0f1b2d; background: none; border: 0; padding: 0; border-radius: 0; }
+.cl-card p { margin: 0 0 14px; color: #4f5d73; }
+.cl-opts { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.cl-opts button { font: inherit; font-size: 16px; font-weight: 700; text-align: left; padding: 14px 16px; border-radius: 12px; border: 2px solid #dde3ec; background: #fff; color: #0f1b2d; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+.cl-opts button:hover, .cl-opts button:focus-visible { border-color: #0b4fb3; background: #eaf1fc; outline: none; }
+.cl-opts button.good { border-color: #217a3b; }
+.cl-opts button.good:hover, .cl-opts button.good:focus-visible { background: #e7f4ea; }
+.cl-foot { margin-top: 14px; }
+.cl-link { font: inherit; font-weight: 600; color: #0b4fb3; background: none; border: 0; cursor: pointer; padding: 6px 0; }
+
     </style>
 </head>
 <body>
@@ -2135,6 +2161,135 @@ window.addEventListener("hashchange", dialFromHash);
         if (h === "#dial" || h === "#present") try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
+})();
+
+/* ---------- Call tracking on the Make a call screen (saved to the agent's Academy account) ---------- */
+(function () {
+    const API = "/api/calls", ON = /^https?:$/.test(location.protocol);
+    const Q = "glp_call_queue";
+    const st = { today: { total: 0, contacts: 0, appts: 0, callbacks: 0 }, hour: 0, curHour: null, loggedFor: null, modal: null };
+    function who() { try { const s = JSON.parse(localStorage.getItem("vpa_v2") || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} return null; }
+    function chHour() { return +new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "2-digit", hourCycle: "h23" }).format(new Date()); }
+    const queue = () => { try { return JSON.parse(localStorage.getItem(Q) || "[]"); } catch (e) { return []; } };
+    const setQueue = q => { try { localStorage.setItem(Q, JSON.stringify(q.slice(-300))); } catch (e) {} };
+    async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new Error("http " + r.status); return r.json(); }
+    async function flush() { const q = queue(); if (!q.length || !ON) return; const rest = []; for (const it of q) { try { await post("", it); } catch (e) { rest.push(it); } } setQueue(rest); }
+    async function refresh() {
+        const w = who();
+        if (w && ON) try {
+            const j = await (await fetch(API + "/me?uid=" + encodeURIComponent(w.uid))).json();
+            const d = j.days[j.date] || { total: 0, contacts: 0, appts: 0, callbacks: 0 };
+            st.today = d; st.curHour = j.hour; st.hour = d.byHour && d.byHour[j.hour] ? d.byHour[j.hour].t : 0;
+        } catch (e) {}
+        render();
+    }
+    function leadName() { try { return (DIAL_LEADS[dialState().lead] || {}).name || "Other"; } catch (e) { return "Other"; } }
+    function callId() { try { return dialState().start || null; } catch (e) { return null; } }
+    function logCall(contact, appt, extra) {
+        const w = who(), call = Object.assign({ t: Date.now(), lead: leadName(), contact: !!contact, appt: contact ? appt : "no" }, extra || {});
+        const h = chHour(); if (st.curHour !== h) { st.curHour = h; st.hour = 0; }
+        st.today.total++; st.hour++; if (call.contact) st.today.contacts++; if (call.appt === "yes") st.today.appts++; if (call.appt === "callback") st.today.callbacks++;
+        st.loggedFor = callId() || ("manual-" + call.t);
+        render();
+        if (!w) { flash("Logged on this screen only. Sign in to the Academy on this computer to save your numbers."); return; }
+        const item = { uid: w.uid, name: w.name, invite: w.invite, call };
+        if (!ON) return;
+        post("", item).then(j => { if (j && j.today) { st.today = j.today; st.hour = j.today.byHour && j.today.byHour[j.hour] ? j.today.byHour[j.hour].t : st.hour; render(); } }).catch(() => { const q = queue(); q.push(item); setQueue(q); });
+        const txt = !call.contact ? "No contact" : call.appt === "yes" ? (call.now ? "Presentation started" : "Appointment set") : call.appt === "callback" ? "Callback" : "Spoke, no appointment";
+        flash("Logged: " + txt + " · " + st.today.total + " call" + (st.today.total === 1 ? "" : "s") + " today");
+        try { window.dispatchEvent(new CustomEvent("glp-call-logged", { detail: call })); } catch (e) {}
+    }
+    async function undo() {
+        const w = who(); if (!w || !ON) return flash("Nothing to undo.");
+        try { const j = await post("/undo", { uid: w.uid }); st.today = j.today; st.hour = Math.max(0, st.hour - 1); st.loggedFor = null; render(); flash("Removed your last logged call."); }
+        catch (e) { flash("Nothing to undo."); }
+    }
+
+    /* ----- UI ----- */
+    function ensure() {
+        const cm = document.getElementById("cm"); if (!cm) return false;
+        if (!document.getElementById("clStrip")) {
+            const s = document.createElement("div"); s.id = "clStrip"; s.className = "cl-strip";
+            const top = cm.querySelector(".cm-top"); if (top) top.after(s); else cm.prepend(s);
+            s.addEventListener("click", e => { const b = e.target.closest("[data-cl]"); if (!b) return; if (b.dataset.cl === "log") openModal(); if (b.dataset.cl === "undo") undo(); });
+        }
+        if (!document.getElementById("clModal")) {
+            const m = document.createElement("div"); m.id = "clModal"; m.className = "cl-modal"; m.hidden = true; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-labelledby", "clTitle");
+            cm.appendChild(m);
+            m.addEventListener("click", e => { if (e.target === m) closeModal(); const b = e.target.closest("[data-cla]"); if (b) choose(b.dataset.cla); });
+        }
+        return true;
+    }
+    function render() {
+        if (!ensure()) return;
+        const t = st.today, w = who(), dpa = t.appts ? (t.total / t.appts).toFixed(1) : "–";
+        document.getElementById("clStrip").innerHTML = `
+            <div class="cl-stats" aria-live="polite">
+                <span><b>${t.total}</b> call${t.total === 1 ? "" : "s"} today</span><span><b>${st.hour}</b> this hour</span><span><b>${t.contacts}</b> spoke to</span><span><b>${t.appts}</b> appts</span><span><b>${dpa}</b> dials/appt</span>
+                ${w ? "" : `<span class="cl-warn">Not saving: sign in to the Academy on this computer</span>`}
+            </div>
+            <div class="cl-actions"><button type="button" data-cl="undo" class="cl-undo" title="Remove the last call you logged">Undo</button><button type="button" data-cl="log" class="cl-log">Log call <kbd>L</kbd></button></div>`;
+    }
+    function modalHtml() {
+        const step = st.modal.step, prompt = st.modal.after ? "Before the next lead: how did that call go?" : "How did the call go?";
+        if (step === 1) return `<div class="cl-card"><div class="cl-eyebrow">${esc(leadName())}</div><h2 id="clTitle">${prompt}</h2><p>Did you talk to someone?</p>
+            <div class="cl-opts"><button type="button" data-cla="spoke"><kbd>1</kbd> Yes, we talked</button><button type="button" data-cla="nocontact"><kbd>2</kbd> No answer or voicemail</button></div>
+            <div class="cl-foot"><button type="button" data-cla="cancel" class="cl-link">${st.modal.after ? "Skip logging" : "Cancel"}</button></div></div>`;
+        return `<div class="cl-card"><div class="cl-eyebrow">${esc(leadName())} · Spoke to them</div><h2 id="clTitle">What happened?</h2>
+            <div class="cl-opts"><button type="button" data-cla="yes" class="good"><kbd>1</kbd> Appointment set</button><button type="button" data-cla="callback"><kbd>2</kbd> Callback</button><button type="button" data-cla="no"><kbd>3</kbd> No appointment</button></div>
+            <div class="cl-foot"><button type="button" data-cla="back" class="cl-link">← Back</button></div></div>`;
+    }
+    function openModal(after) {
+        if (!ensure()) return;
+        st.modal = { step: 1, after: after || null, prev: document.activeElement };
+        const m = document.getElementById("clModal"); m.innerHTML = modalHtml(); m.hidden = false;
+        const f = m.querySelector(".cl-opts button"); if (f) f.focus();
+    }
+    function closeModal(runAfter) {
+        const m = document.getElementById("clModal"); if (m) m.hidden = true;
+        const md = st.modal; st.modal = null;
+        if (runAfter && md && md.after) md.after(); else if (md && md.prev && md.prev.focus) try { md.prev.focus(); } catch (e) {}
+    }
+    function choose(a) {
+        if (!st.modal) return;
+        if (a === "cancel") return closeModal(true);
+        if (a === "back") { st.modal.step = 1; document.getElementById("clModal").innerHTML = modalHtml(); return; }
+        if (a === "spoke") { st.modal.step = 2; const m = document.getElementById("clModal"); m.innerHTML = modalHtml(); const f = m.querySelector(".cl-opts button"); if (f) f.focus(); return; }
+        if (a === "nocontact") { logCall(false, "no"); return closeModal(true); }
+        if (["yes", "callback", "no"].includes(a)) { logCall(true, a); return closeModal(true); }
+    }
+
+    /* Hook the existing call flow */
+    document.addEventListener("click", e => {
+        const b = e.target.closest && e.target.closest("#cm [data-dial]"); if (!b) return;
+        const a = b.dataset.dial, id = callId();
+        if (a === "saveappt" && st.loggedFor !== id) logCall(true, "yes");
+        else if (a === "present" && st.loggedFor !== id) logCall(true, "yes", { now: true });
+        else if (a === "restart" && id && st.loggedFor !== id && !b.dataset.clSkip) {
+            e.preventDefault(); e.stopImmediatePropagation();
+            openModal(() => { b.dataset.clSkip = "1"; b.click(); delete b.dataset.clSkip; });
+        }
+    }, true);
+    window.addEventListener("keydown", e => {
+        const m = document.getElementById("clModal");
+        if (m && !m.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); return closeModal(false); }
+            if (/^[1-3]$/.test(e.key)) { const btns = m.querySelectorAll(".cl-opts button"); const b = btns[+e.key - 1]; if (b) { e.preventDefault(); e.stopImmediatePropagation(); b.click(); } return; }
+            if (e.key === "Tab") { const f = [...m.querySelectorAll("button")]; const i = f.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); } }
+            e.stopImmediatePropagation(); return;
+        }
+        const cm = document.getElementById("cm");
+        if (cm && !cm.hidden && (e.key === "l" || e.key === "L") && !/input|textarea|select/i.test(document.activeElement.tagName) && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); e.stopImmediatePropagation(); openModal(); }
+    }, true);
+
+    function init() {
+        if (!document.getElementById("cm")) { try { if (typeof cmBuild === "function") cmBuild(); } catch (e) {} }
+        render(); flush().then(refresh);
+        window.addEventListener("online", () => flush().then(refresh));
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else setTimeout(init, 0);
+    window.glpCalls = { refresh, log: logCall };
 })();
 
     </script>
