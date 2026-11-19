@@ -429,6 +429,8 @@ body.tool-open .rail { display: none; } body.tool-open .app { grid-template-colu
 .vslot, .vslot video { width: 100%; height: 100%; }
 .vslot video { object-fit: cover; display: block; }
 .vcell .tname { position: absolute; left: 8px; bottom: 8px; }
+.vstatus { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: #cfd8e6; font-size: 14px; }
+.vstatus[hidden] { display: none; }
 .fam-tile.is-video { padding: 0; }
 .fam-tile.is-video > .tname { display: none; }
 .castrow { display: flex; gap: 16px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -1464,21 +1466,30 @@ async function startVideoFamily(fam) {
   try { VID.ctx = VID.ctx || new (window.AudioContext || window.webkitAudioContext)(); VID.ctx.resume(); } catch (e) {}
   const sdk = await loadAnam(); const cast = castFor(fam.id);
   await Promise.all(fam.speakers.map(async name => {
-    const r = await fetch("/api/anam/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, avatarId: cast[name].avatarId, voiceId: cast[name].voiceId }) });
-    if (!r.ok) throw new Error("token " + r.status + " " + (await r.text()).slice(0, 200));
-    const { sessionToken } = await r.json();
     const el = document.createElement("video"); el.id = "vid_" + name; el.autoplay = true; el.playsInline = true; el.className = "vperson";
     vidDock().appendChild(el);
+    const p = { name, el, client: null, level: 0, lastLoud: 0, analyser: null, status: "Connecting video…" };
+    VID.people[name] = p; vidStatus(name, "Connecting video…");
+    el.addEventListener("playing", () => vidStatus(name, ""));
+    const r = await fetch("/api/anam/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, avatarId: cast[name].avatarId, voiceId: cast[name].voiceId }) });
+    if (!r.ok) { const t = (await r.text()).slice(0, 300); vidStatus(name, "Video error " + r.status + ": " + t); throw new Error("token " + r.status + " " + t); }
+    const { sessionToken } = await r.json();
+    vidStatus(name, "Starting " + name + "'s video…");
     const client = sdk.createClient(sessionToken, { disableInputAudio: true });
-    const p = { name, el, client, level: 0, lastLoud: 0, analyser: null };
-    VID.people[name] = p;
+    p.client = client;
+    try {
+      const EV0 = sdk.AnamEvent || {};
+      client.addListener(EV0.CONNECTION_CLOSED || "CONNECTION_CLOSED", (reason, details) => { vidStatus(name, "Video disconnected: " + (reason || "") + (details ? " " + details : "")); });
+      client.addListener(EV0.VIDEO_PLAY_STARTED || "VIDEO_PLAY_STARTED", () => vidStatus(name, ""));
+      client.addListener(EV0.SERVER_WARNING || "SERVER_WARNING", m => console.warn("Anam:", m));
+    } catch (e) {}
     try {
       const EV = sdk.AnamEvent || {};
       client.addListener(EV.AUDIO_STREAM_STARTED || "AUDIO_STREAM_STARTED", stream => {
         try { const src = VID.ctx.createMediaStreamSource(stream); const an = VID.ctx.createAnalyser(); an.fftSize = 512; src.connect(an); p.analyser = an; } catch (e) {}
       });
     } catch (e) {}
-    await client.streamToVideoElement(el.id);
+    await Promise.race([client.streamToVideoElement(el.id), new Promise((_, rej) => setTimeout(() => rej(new Error("video took too long to start")), 25000))]);
   }));
   clearInterval(VID.meter); VID.meter = setInterval(vidMeter, 80);
 }
@@ -1509,6 +1520,11 @@ function videoSay(name, text) {
   });
 }
 function videoMute(name) { const p = VID.people[name]; if (p) p.el.muted = true; }
+function vidStatus(name, text) {
+  const p = VID.people[name]; if (p) p.status = text;
+  const el = document.querySelector('[data-vstatus="' + name + '"]'); if (el) { el.textContent = text; el.hidden = !text; }
+  if (text) console.log("[video]", name, text);
+}
 function mountVideos() {
   document.querySelectorAll("[data-vslot]").forEach(slot => {
     const p = VID.people[slot.dataset.vslot]; if (!p) return;
@@ -1521,7 +1537,7 @@ function stopVideoFamily() {
   VID.people = {};
 }
 function videoTileHTML(fam, compact) {
-  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
+  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="vstatus" data-vstatus="${esc(n)}" ${VID.people[n] && VID.people[n].status ? "" : "hidden"}>${esc((VID.people[n] && VID.people[n].status) || "")}</div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
 }
 
 /* =========================================================
