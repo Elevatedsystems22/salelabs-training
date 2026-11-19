@@ -2129,6 +2129,10 @@ window.addEventListener("hashchange", dialFromHash);
         sync();
         if (start) start.addEventListener("click", () => { const t = document.getElementById("togglePresentationBtn"); if (t && cont.style.display !== "block") t.click(); });
         if (dial) dial.addEventListener("click", () => { const b = document.getElementById("dialBtn"); if (b) b.click(); });
+        const h = location.hash;
+        if (h === "#dial") setTimeout(() => { const b = document.getElementById("dialBtn"); if (b) b.click(); }, 50);
+        else if (h === "#present") setTimeout(() => { if (start) start.click(); }, 50);
+        if (h === "#dial" || h === "#present") try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire); else wire();
 })();

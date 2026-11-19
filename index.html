@@ -555,8 +555,19 @@ a.btn { text-decoration: none; }
 .upline li { position: relative; margin-bottom: 26px; }
 .upline li:not(:last-child)::after { content: ""; position: absolute; left: 50px; bottom: -27px; height: 26px; border-left: 2px dashed var(--line); }
 .up-label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.ws-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.ws-tile { display: flex; flex-direction: column; gap: 8px; padding: 24px; border-radius: 14px; background: var(--surface); border: 2px solid var(--line); text-decoration: none; color: var(--ink); transition: border-color .15s, box-shadow .15s; }
+.ws-tile:hover { border-color: var(--accent); box-shadow: 0 6px 20px rgba(15,27,45,.08); }
+.ws-tile.primary { border-color: var(--accent); background: var(--accent-soft); }
+.ws-tile .ic { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--surface); border: 1px solid var(--line); }
+.ws-tile b { font-size: 20px; }
+.ws-tile span { font-size: 15px; line-height: 1.5; color: var(--muted); }
+.ws-tile .go { font-weight: 700; color: var(--accent); margin-top: 4px; }
+a.navbtn { text-decoration: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .todo .btn.small { color: var(--on-accent); }
+.todo .btn.small.secondary { color: var(--accent); }
+.todo .box.ic { border: 0; background: var(--accent-soft); color: var(--accent); font-size: 12px; width: 28px; height: 28px; border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -1896,13 +1907,26 @@ function renderRail() {
   const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
   const inLesson = ["module", "quiz", "drill"].includes(view.name);
   const callsTotal = store.callCount || store.attempts.length;
-  let h = `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Dashboard</span><span></span></button>`;
+  const cert = certified();
+  let h = "";
+  if (cert) {
+    h += `<button class="navbtn main ${view.name === "home" && !view.academy ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Workspace</span><span></span></button>`;
+    h += `<a class="navbtn main" href="${TOOL_URL}#dial" target="_blank" rel="noopener"><span class="badge">📞</span><span>Make a call</span><span class="count">↗</span></a>`;
+    h += `<a class="navbtn main" href="${TOOL_URL}#present" target="_blank" rel="noopener"><span class="badge">◫</span><span>Presentation</span><span class="count">↗</span></a>`;
+    h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
+    h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
+    h += `<div class="group">Keep training</div>`;
+    h += `<button class="navbtn main ${view.name === "home" && view.academy ? "active" : ""}" data-go="home" data-academy="1" type="button"><span class="badge">★</span><span>Academy dashboard</span><span></span></button>`;
+  } else
+  h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Dashboard</span><span></span></button>`;
   h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></button>`;
   h += `<button class="navbtn main ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button"><span class="badge">▶</span><span>Practice calls</span><span class="count">${callsTotal || ""}</span></button>`;
-  h += `<button class="navbtn main" data-tool="0" type="button"><span class="badge">◫</span><span>Presentation tool</span><span></span></button>`;
+  if (!cert) h += `<button class="navbtn main" data-tool="0" type="button"><span class="badge">◫</span><span>Presentation tool</span><span></span></button>`;
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
+  if (!cert) {
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
   h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
+  }
   h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
   const sections = [];
   MODULES.forEach((m, i) => { let g = sections[sections.length - 1]; if (!g || g.name !== m.section) { g = { name: m.section, items: [] }; sections.push(g); } g.items.push([m, i]); });
@@ -2017,7 +2041,44 @@ function coachNotes() {
   if (a.plan && a.plan[0]) h += `<div class="note n"><b>Next rep</b>${esc(a.plan[0])}</div>`;
   return h + `<button class="linkbtn" type="button" onclick="view={name:'results',attempt:store.attempts[store.attempts.length-1]};render()">See the full report</button>`;
 }
+function appts() { try { return JSON.parse(localStorage.getItem("glp_appts") || "[]"); } catch (e) { return []; } }
+function certifiedOn() {
+  const ex = store.attempts.filter(a => a.mode === "exam" && a.pass).map(a => a.date).sort();
+  return ex.length ? new Date(ex[ex.length - 1]) : null;
+}
+function workspaceView() {
+  const first = esc(store.name.split(" ")[0]);
+  const hr = new Date().getHours(), greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  const ap = appts(), weekAgo = Date.now() - 7 * 864e5;
+  const apWeek = ap.filter(a => Date.parse(a.at) > weekAgo).length;
+  const prac = store.attempts.filter(a => a.mode !== "exam"), last10 = prac.slice(-10);
+  const avg = last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : null;
+  const cOn = certifiedOn();
+  const tile = (href, ic, title, body, cls) => `<a class="ws-tile ${cls || ""}" href="${href}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${body}</span><span class="go">Open full screen ↗</span></a>`;
+  return `<div class="page wide">
+    <div class="dash-head"><div><div class="eyebrow">Certified agent</div><h1>${greet}, ${first}</h1><p class="small" style="font-size:15px">${cOn ? "Certified " + cOn.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) + " · " : ""}Your call tools are below. The Academy is always here when you want a refresher.</p></div></div>
+    <div class="ws-grid">
+      ${tile(TOOL_URL + "#dial", "📞", "Make a call", "Pick the lead type and dial. Opening lines, their likely answers and every rebuttal, one tap at a time.", "primary")}
+      ${tile(TOOL_URL + "#present", "🖥️", "Start a presentation", "Present by phone or on Zoom with the client slides on their screen and your script on yours.", "")}
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="k">Appointments booked</span><span class="v">${apWeek}</span><span class="s">Last 7 days · ${ap.length} saved in total</span></div>
+      <div class="stat"><span class="k">Practice calls</span><span class="v">${store.callCount || store.attempts.length}</span><span class="s">Includes your exams</span></div>
+      <div class="stat"><span class="k">Avg practice score</span><span class="v">${avg == null ? "–" : avg}</span><span class="s">Last ${last10.length === 1 ? "practice call" : (last10.length || 10) + " practice calls"}</span></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card"><h2>Upcoming appointments</h2>${ap.length ? `<div>${ap.slice(0, 6).map(a => `<div class="todo"><span class="box ic" aria-hidden="true">📅</span><span class="t"><b>${esc(a.client || "Client")}${a.spouse ? " &amp; " + esc(a.spouse) : ""}</b><span class="small" style="display:block">${esc(a.lead || "")}${a.format ? " · " + (a.format === "zoom" ? "Zoom" : "Phone") : ""}${a.time ? " · " + esc(a.time) : ""}</span></span></div>`).join("")}</div><p class="small">Appointments you save on the Make a call screen show up here, on this computer.</p>` : `<p class="small">When you book an appointment on the Make a call screen, it shows up here.</p>`}</div>
+      <div class="card"><h2>Keep sharp</h2><p class="small">Everything from training is still open to you.</p>
+        <div class="todo"><span class="box ic" aria-hidden="true">▶</span><span class="t">Practice a call with an AI family</span><button class="btn small" data-go="practice" type="button">Practice</button></div>
+        <div class="todo"><span class="box ic" aria-hidden="true">▤</span><span class="t">Refresh a lesson or rebuttal</span><button class="btn small secondary" data-go="module" data-id="${MODULES[0].id}" type="button">Lessons</button></div>
+        <div class="todo"><span class="box ic" aria-hidden="true">≡</span><span class="t">Review your past call scores</span><button class="btn small secondary" data-go="history" type="button">My results</button></div>
+      </div>
+    </div>
+    ${store.attempts.length ? `<div class="card"><h2>Last practice call</h2>${coachNotes()}</div>` : ""}
+  </div>`;
+}
 function homeView() {
+  if (certified() && !view.academy) return workspaceView();
   const n = passedCount();
   const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
   const lastExam = store.attempts.filter(a => a.mode === "exam").slice(-1)[0];
@@ -3526,6 +3587,7 @@ document.addEventListener("click", e => {
   if (t.dataset.go) {
     if (view.name === "call" && rp && !rp.ended) { confirmModal("Leave the call?", "Leaving now abandons this call without a grade.", "Leave call", () => { stopLive(); rp = null; view = { name: t.dataset.go, id: t.dataset.id }; render(); }); return; }
     if (t.dataset.pf) practiceFormat = t.dataset.pf;
+    if (t.dataset.go === "home" && t.dataset.academy) { view = { name: "home", academy: true }; render(); return; }
     if (t.dataset.go === "quiz") quizState = null;
     if (t.dataset.go === "drill") drillState = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
