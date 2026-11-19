@@ -17,7 +17,7 @@ export function agentInviteMsg({ first, last, phone, email, link, manager }) {
   const sms = `Hi ${first}, welcome to the team! Start your Virtual Presentation Academy training here: ${link}${manager ? `\n\nQuestions? Text ${manager.name.split(" ")[0]}${manager.phone ? " at " + manager.phone : ""}.` : ""}`;
   return {
     event: "agent_invite", role: "agent", first_name: first, last_name: last, full_name: `${first} ${last}`, phone, email, link,
-    manager_name: manager ? manager.name : "", manager_phone: manager ? manager.phone : "", manager_email: manager ? manager.email : "",
+    manager_name: manager ? manager.name : "", manager_position: manager ? manager.position : "", manager_phone: manager ? manager.phone : "", manager_email: manager ? manager.email : "",
     sms_text: sms,
     email_subject: "Welcome to the team: start your training",
     email_body: `Hi ${first},\n\nWelcome to the team! Your training is ready in the Virtual Presentation Academy. It's self-paced: short lessons, quizzes, and practice calls with an AI family, ending in a live certification exam.\n\nStart here (this link is just for you):\n${link}\n\nUse Chrome on a computer with a headset for the practice calls.${m}\n\nSee you inside!`
