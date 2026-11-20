@@ -1060,6 +1060,22 @@ html.framed .globe-life-presentation .glp-home { display: none; }
 .glp-choice.acad { text-decoration: none; color: inherit; }
 .glp-choice.acad .ic { background: #fff4e5; }
 
+.glp-links { display: flex; flex-wrap: wrap; gap: 18px; margin: 22px 0 0; }
+.glp-links a { font-weight: 700; font-size: 15px; color: var(--accent); text-decoration: none; }
+.glp-links a:hover { text-decoration: underline; }
+html.framed .glp-links { display: none; }
+html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locked .globe-life-presentation .glp-acad, html.glp-locked #glpLanding, html.glp-locked #presentationContainer, html.glp-locked #navButtons { display: none !important; }
+.glp-lock { min-height: calc(100vh - 60px); display: grid; place-items: center; padding: 24px; }
+.glp-lock[hidden] { display: none; }
+.glp-lock-card { max-width: 620px; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 36px; text-align: left; }
+.glp-lock-card .ic { width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-size: 26px; background: var(--warn-soft); margin-bottom: 14px; }
+.glp-lock-card .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); }
+.glp-lock-card h1 { font-size: 28px; margin: 8px 0 10px; color: var(--ink); border: 0; padding: 0; }
+.glp-lock-card h1::after { display: none; }
+.glp-lock-card .lead { color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0 0 22px; }
+.glp-lock-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.glp-lock-actions .toggle-btn { text-decoration: none; display: inline-flex !important; }
+
 /* ===== Call tracking strip + log window ===== */
 .cl-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 18px; background: #eef5fd; border-bottom: 1px solid #d3e3f5; font-family: "Inter", system-ui, sans-serif; }
 .cl-stats { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; color: #3f5470; }
@@ -1108,9 +1124,9 @@ html.framed .globe-life-presentation .glp-home { display: none; }
     <div class="globe-life-presentation" id="glp">
         <!-- Start Button -->
         <div class="glp-topbar">
-            <a class="glp-home" href="index.html" aria-label="Back to home">← Home</a>
+            <a class="glp-home" href="index.html#home" aria-label="Back to home">← Home</a>
             <a class="glp-home glp-acad" href="index.html#academy">🎓 Train</a>
-            <div class="glp-brand"><img src="globe.png" alt=""><div><b>Presentation tool</b><span>Virtual Presentation Academy</span></div></div>
+            <div class="glp-brand"><img src="globe.png" alt=""><div><b>Call Clinic &amp; Presentation</b><span id="glpBrandSub">Live</span></div></div>
             <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
         </div>
 
@@ -1123,7 +1139,13 @@ html.framed .globe-life-presentation .glp-home { display: none; }
                 <button class="glp-choice call" type="button" id="landingDial"><span class="ic" aria-hidden="true">📞</span><b>Make the call</b><span>You haven't reached them yet. Get the opening for their lead type, the rebuttals, and book the appointment or start now.</span><span class="go">Start dialing →</span></button>
                 <button class="glp-choice" type="button" id="landingStart"><span class="ic" aria-hidden="true">🖥️</span><b>Start the presentation</b><span>They're ready. Present by phone or on Zoom, with the client slides on their screen and your script on yours.</span><span class="go">Start presenting →</span></button>
             </div>
+            <p class="glp-links" id="glpLinks"><a href="index.html#numbers">📊 My numbers</a><a href="index.html#standings">🏆 Standings</a><a href="index.html#docs">📄 Documents</a><a href="index.html#help">👥 My team</a></p>
             <p class="glp-keys">Tip: during the presentation, use the ← and → arrow keys to move between steps.</p>
+        </section>
+        <section class="glp-lock" id="glpLock" hidden>
+            <div class="glp-lock-card"><span class="ic" aria-hidden="true">🔒</span><div class="eyebrow">Locked until you're certified</div><h1>Finish training to unlock the live Call Clinic</h1>
+            <p class="lead" id="glpLockText">Pass all lessons, then one Telesales and one Zoom exam call. Until then, use the presentation preview inside the Academy to learn it.</p>
+            <div class="glp-lock-actions"><a class="toggle-btn" href="index.html#academy">🎓 Go to training</a><a class="glp-home" href="index.html#home">← Home</a></div></div>
         </section>
 
         <!-- Main Presentation Container -->
@@ -2172,7 +2194,21 @@ window.addEventListener("hashchange", dialFromHash);
 /* ---------- Academy look: landing screen and framed mode ---------- */
 (function () {
     try { if (window.top !== window.self) document.documentElement.classList.add("framed"); } catch (e) { document.documentElement.classList.add("framed"); }
+    function access() {
+        let st = null; try { st = JSON.parse(localStorage.getItem("vpa_v2") || "null"); } catch (e) {}
+        const mgr = (() => { try { return !!localStorage.getItem("vpa_mgr_tok"); } catch (e) { return false; } })();
+        const pass = f => !!(st && (st.attempts || []).some(a => a.mode === "exam" && a.pass && (a.format || "zoom") === f));
+        return { signedIn: !!(st && st.name), cert: pass("tele") && pass("zoom"), mgr };
+    }
     function wire() {
+        const framed = document.documentElement.classList.contains("framed"), ac = access();
+        if (framed) { const sub = document.getElementById("glpBrandSub"); if (sub) sub.textContent = "Preview"; }
+        else if (!ac.cert && !ac.mgr) {
+            document.documentElement.classList.add("glp-locked");
+            const lock = document.getElementById("glpLock"); if (lock) lock.hidden = false;
+            const txt = document.getElementById("glpLockText"); if (txt && !ac.signedIn) txt.textContent = "Sign in to the Academy first. Once you pass all lessons and both exam calls, this opens for you.";
+            return;
+        }
         const landing = document.getElementById("glpLanding"), cont = document.getElementById("presentationContainer");
         const start = document.getElementById("landingStart"), dial = document.getElementById("landingDial");
         if (!landing || !cont) return;
@@ -2355,6 +2391,7 @@ window.addEventListener("hashchange", dialFromHash);
     }, true);
 
     function init() {
+        if (document.documentElement.classList.contains("framed")) return; /* training preview: no live call tracking */
         if (!document.getElementById("cm")) { try { if (typeof cmBuild === "function") cmBuild(); } catch (e) {} }
         render(); tickClinic(); flush().then(refresh);
         window.addEventListener("online", () => flush().then(refresh));
