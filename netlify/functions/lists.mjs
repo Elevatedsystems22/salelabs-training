@@ -5,6 +5,8 @@
    POST /api/lists/sched                   {uid, name, invite, date, rows:[{name,address,phone,notes}], stats:{...}}
    GET  /api/lists/team/first25            managers: every agent's First 25
    GET  /api/lists/team/sched?date=        managers: every agent's schedule sheet for a day
+   POST /api/lists/refs  {uid,name,invite,id,client,lead,refs:[{name,rel,phone,city}]}   referrals typed in on a live presentation
+   GET  /api/lists/refs?uid=   an agent's referral sets      GET /api/lists/team/refs   managers: all referral sets
    Stored in Netlify Blobs "lists". */
 import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
@@ -59,9 +61,23 @@ export default async (req) => {
     await db.setJSON(`sched/${b.date}/${b.uid}`, rec);
     return json(rec);
   }
+  if (path === "/api/lists/refs" && req.method === "POST") {
+    if (!allowed(req)) return json({ error: "forbidden" }, 403);
+    const b = await body(); if (!b || !UID.test(String(b.uid || "")) || !/^[A-Za-z0-9_-]{4,40}$/.test(String(b.id || ""))) return json({ error: "bad_request" }, 400);
+    const key = `refs/${b.uid}/${b.id}`, prev = (await db.get(key, { type: "json" })) || {};
+    const refs = (Array.isArray(b.refs) ? b.refs : []).slice(0, 40).map(r => ({ name: str(r && r.name, 80), rel: str(r && r.rel, 40), phone: str(r && r.phone, 30), city: str(r && r.city, 60), at: Number(r && r.at) || Date.now() })).filter(r => r.name);
+    const rec = { uid: b.uid, id: b.id, name: str(b.name, 80), invite: str(b.invite, 64), client: str(b.client, 120), lead: str(b.lead, 40), refs, createdAt: prev.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
+    await db.setJSON(key, rec);
+    return json({ ok: true, count: refs.length });
+  }
+  if (path === "/api/lists/refs" && req.method === "GET") {
+    const uid = url.searchParams.get("uid") || ""; if (!UID.test(uid)) return json({ error: "bad_request" }, 400);
+    return json({ sets: await listAll(db, `refs/${uid}/`) });
+  }
   if (path.startsWith("/api/lists/team/")) {
     if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
     if (path === "/api/lists/team/first25") return json({ lists: await listAll(db, "first25/") });
+    if (path === "/api/lists/team/refs") return json({ sets: (await listAll(db, "refs/")).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).slice(0, 300) });
     if (path === "/api/lists/team/sched") {
       const date = url.searchParams.get("date") || ""; if (!DATE.test(date)) return json({ error: "bad_request" }, 400);
       return json({ date, sheets: await listAll(db, `sched/${date}/`) });

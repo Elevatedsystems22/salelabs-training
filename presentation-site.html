@@ -1075,6 +1075,21 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
 .glp-lock-card .lead { color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0 0 22px; }
 .glp-lock-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .glp-lock-actions .toggle-btn { text-decoration: none; display: inline-flex !important; }
+.ref-entry { margin-top: 22px; background: #fff; border: 2px solid var(--accent); border-radius: 14px; padding: 18px 20px; }
+.ref-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.globe-life-presentation .ref-head h3 { margin: 0; font-size: 18px; color: var(--ink); }
+.ref-count { font-weight: 800; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+.globe-life-presentation .ref-hint { margin: 6px 0 12px; color: var(--muted); font-size: 14px; }
+.ref-form { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr 1fr auto; gap: 8px; }
+.ref-form .form-input { padding: 10px 12px; font-size: 15px; margin: 0; }
+.ref-form .save-btn { margin: 0; border-radius: 999px; padding: 10px 18px; color: #fff; font-weight: 700; border: 0; cursor: pointer; }
+.ref-list { margin: 14px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.ref-list li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.ref-list li b { color: var(--ink); margin-right: 8px; }
+.ref-list li span { color: var(--muted); font-size: 14px; }
+.ref-list li button { float: right; }
+.globe-life-presentation .ref-status { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+@media (max-width: 900px) { .ref-form { grid-template-columns: 1fr 1fr; } }
 
 /* ===== Call tracking strip + log window ===== */
 .cl-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 18px; background: #eef5fd; border-bottom: 1px solid #d3e3f5; font-family: "Inter", system-ui, sans-serif; }
@@ -1379,6 +1394,7 @@ const slides = [
         <h1>👥 Step 8: Referral Collection</h1>${img("aKCux6w", "Add Leads screen")}
         <div class="script-block"><p>"${nm("client")}, the company is now allowing you to gift this same no-cost benefit to people in your circle who you think can use it the most. Most of my clients give this to a minimum of 10 people. Let's start with your beneficiary. In the event of your unexpected death, who would handle your final expenses?"</p>
         ${cue("*Enter each name on the Add Leads screen. Use your F.O.R.M. notes below.*", "*Enter each name on the Add Leads screen as they talk. Use your F.O.R.M. notes below.*")}<p>"Who's next?"</p></div>
+        ${typeof refEntryHTML === "function" ? refEntryHTML() : ""}
         <div class="notes-container"><h3 class="notes-title">📋 From your F.O.R.M. notes</h3>${notesReference()}</div>` },
     { id: 13, title: "Word of Thanks", section: "Presentation", content: () => `
         <h1>🙏 Step 9: A Word of Thanks</h1>${img("vb8IWWD", "A Word of Thanks")}
@@ -2399,6 +2415,58 @@ window.addEventListener("hashchange", dialFromHash);
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else setTimeout(init, 0);
     window.glpCalls = { refresh, log: logCall };
+})();
+
+/* ---------- Referral entry on the Referral Collection step (live) ---------- */
+function refEntryHTML() {
+    if (document.documentElement.classList.contains("framed")) return "";
+    const list = S.referrals || [], d = S.refDraft || {};
+    return `<div class="ref-entry" id="refEntry">
+        <div class="ref-head"><h3>Type in their referrals</h3><span class="ref-count">${list.length} of 10${list.length >= 10 ? " ✓" : ""}</span></div>
+        <p class="ref-hint">${list.length ? "Who's next?" : `Start with ${esc(S.client || "the client")}'s beneficiary, then use names from your F.O.R.M. notes.`}</p>
+        <div class="ref-form">
+            <input class="form-input" data-tref="name" placeholder="Name" aria-label="Referral name" value="${esc(d.name || "")}">
+            <input class="form-input" data-tref="rel" placeholder="${list.length ? "Relationship (sister, coworker…)" : "Relationship (beneficiary)"}" aria-label="Relationship" value="${esc(d.rel || "")}">
+            <input class="form-input" data-tref="phone" type="tel" placeholder="Phone" aria-label="Phone" value="${esc(d.phone || "")}">
+            <input class="form-input" data-tref="city" placeholder="City" aria-label="City" value="${esc(d.city || "")}">
+            <button type="button" class="save-btn" data-trefadd="1">Add</button>
+        </div>
+        ${list.length ? `<ol class="ref-list">${list.map((r, i) => `<li><b>${esc(r.name)}</b><span>${esc([r.rel, r.phone, r.city].filter(Boolean).join(" · "))}</span><button type="button" class="glp-small" data-trefdel="${i}" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}
+        <p class="ref-status" id="refStatus" role="status">${list.length ? "Saved to your account. Your manager can see these." : ""}</p>
+    </div>`;
+}
+(function () {
+    const ON = /^https?:$/.test(location.protocol);
+    let t = null;
+    function who() { try { const s = JSON.parse(localStorage.getItem("vpa_v2") || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} return null; }
+    function sync() {
+        clearTimeout(t);
+        t = setTimeout(async () => {
+            const w = who(), st = document.getElementById("refStatus");
+            if (!w || !ON) { if (st) st.textContent = "Saved on this computer. Sign in to the Academy to send these to your manager."; return; }
+            S.refId = S.refId || ("r" + Date.now().toString(36));
+            const client = [S.client, S.spouse].filter(Boolean).join(" & ");
+            try {
+                const r = await fetch("/api/lists/refs", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ uid: w.uid, name: w.name, invite: w.invite, id: S.refId, client, lead: (typeof LEAD_TYPES !== "undefined" && LEAD_TYPES[S.leadType]) || "", refs: S.referrals || [] }) });
+                if (st) st.textContent = r.ok ? "Saved to your account. Your manager can see these." : "Couldn't save. Check your connection.";
+            } catch (e) { if (st) st.textContent = "Couldn't save. Check your connection."; }
+        }, 600);
+    }
+    function add() {
+        const d = S.refDraft || {};
+        if (!(d.name || "").trim()) { const n = document.querySelector('[data-tref="name"]'); if (n) n.focus(); return; }
+        S.referrals = S.referrals || [];
+        S.referrals.push({ name: d.name.trim(), rel: (d.rel || "").trim(), phone: (d.phone || "").trim(), city: (d.city || "").trim(), at: Date.now() });
+        S.refDraft = {}; saveSession(); renderSlide(); sync();
+        const n = document.querySelector('[data-tref="name"]'); if (n) n.focus();
+    }
+    document.addEventListener("input", e => { const k = e.target && e.target.dataset && e.target.dataset.tref; if (!k) return; S.refDraft = S.refDraft || {}; S.refDraft[k] = e.target.value; saveSession(); });
+    document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.tref) { e.preventDefault(); add(); } }, true);
+    document.addEventListener("click", e => {
+        if (e.target.closest("[data-trefadd]")) return add();
+        const del = e.target.closest("[data-trefdel]");
+        if (del) { S.referrals.splice(+del.dataset.trefdel, 1); saveSession(); renderSlide(); sync(); }
+    });
 })();
 
     </script>
