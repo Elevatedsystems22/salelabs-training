@@ -625,6 +625,31 @@ tr.me-row td { background: var(--accent-soft); }
 .rp-reflist { margin: 8px 0 0; padding-left: 20px; color: #dfe4ea; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
 .rp-reflist span { color: #a3aab5; }
 .rp-reflist .linkbtn { color: #8db8ff; }
+.rf { display: flex; flex-direction: column; gap: 12px; }
+.rf-top { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr; gap: 10px; }
+.rf-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rf-group { display: flex; flex-direction: column; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.rf-group > b { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.rf-field { min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.rf-field input { min-width: 0; font: inherit; font-weight: 400; font-size: 15px; border: 2px solid var(--line); border-radius: 10px; padding: 8px 11px; background: var(--surface); color: var(--ink); }
+.rf-field input:focus { outline: none; border-color: var(--accent); }
+.rf-say { font-style: normal; font-weight: 500; font-size: 12.5px; color: var(--ink); background: var(--warn-soft, #fff4e0); border-left: 3px solid #d9962b; padding: 4px 8px; border-radius: 6px; }
+.rf-group .btn { align-self: flex-start; margin-top: 4px; }
+.rf-slide { border: 2px solid var(--accent); border-radius: 14px; padding: 14px; margin: 12px 0; background: var(--surface); }
+.rf-slide-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rf-slide-h b { font-size: 17px; color: var(--ink); } .rf-slide-h span { font-weight: 800; color: var(--accent); background: var(--accent-soft, #e6effb); border-radius: 999px; padding: 3px 11px; font-size: 13px; }
+.rf-talk { background: var(--bg); border-radius: 12px; padding: 12px 14px; max-height: 260px; overflow-y: auto; font-size: 14.5px; }
+.rf-talk p { margin: 0 0 6px; } .rf-talk p.me { color: var(--accent); }
+.rf-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 10px; }
+.rf-tabs button { font: inherit; font-size: 13.5px; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.rf-tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.rf-grade { margin: 6px 0; padding-left: 20px; }
+.rf-gname { font-weight: 800; }
+.rf-hint { margin: 0 0 10px; font-size: 13.5px; color: #3d4a5c; }
+.refact-list li { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.slide.rp-slide-refs { aspect-ratio: auto; flex: 1; min-height: 0; overflow-y: auto; max-height: 100%; align-items: stretch !important; justify-content: flex-start !important; text-align: left !important; padding: 16px !important; }
+.rp-slide-refs .rf-group { background: #f3f6fa; } .rp-slide-refs { --bg: #f3f6fa; --surface: #fff; --ink: #0f1b2d; --line: #dde3ec; --accent: #0b4fb3; color: #0f1b2d; background: #fff; }
+@media (max-width: 760px) { .rf-top, .rf-notes { grid-template-columns: 1fr; } }
 .refact { border: 2px solid var(--accent); }
 .refact-notes { background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0 14px; font-size: 14px; }
 .refact-notes ul { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; }
@@ -2207,41 +2232,134 @@ function homeView() {
 }
 
 
-const REF_ACT = {
-  client: "Tasha and Marcus Johnson",
-  notes: ["Married 9 years; Marcus is Tasha's beneficiary", "Tasha's sister Keisha lives in Daphne", "Marcus's mom, Denise, watches the kids after school (Mobile)", "Tasha's coworker Dana at the hospital (night shift)", "Marcus bowls Thursdays with his best friend Andre", "Neighbors the Wilsons just had a baby"],
-  names: ["marcus", "keisha", "denise", "dana", "andre", "wilson"]
-};
-function refActHTML() {
-  const st = store.refAct || { rows: [] }, d = st.draft || {}, rows = st.rows || [];
-  let res = "";
-  if (st.checked) {
-    const used = REF_ACT.names.filter(n => rows.some(r => (r.name + " " + r.rel).toLowerCase().includes(n)));
-    const firstBen = rows[0] && /benef|husband|marcus|spouse/i.test(rows[0].name + " " + rows[0].rel);
-    const withRel = rows.filter(r => r.rel).length;
-    const good = rows.length >= 6 && firstBen && withRel === rows.length;
-    res = `<div class="note ${good ? "g" : "w"}" role="status"><b>${good ? "Nice work" : "Almost there"}</b>
-      ${rows.length} referral${rows.length === 1 ? "" : "s"} typed in${rows.length < 6 ? " (aim for at least 6 here, and 10 on a real call)" : ""}.
-      ${firstBen ? "You started with the beneficiary. " : "Start with the beneficiary (Marcus) first. "}
-      You used ${used.length} of ${REF_ACT.names.length} names from the F.O.R.M. notes${used.length < REF_ACT.names.length ? ". Missed: " + REF_ACT.names.filter(n => !used.includes(n)).map(n => n[0].toUpperCase() + n.slice(1)).join(", ") : ""}.
-      ${withRel < rows.length ? " Add the relationship for every name." : ""}</div>`;
-  }
-  return `<div class="card refact"><div class="eyebrow">Activity</div><h2>Type in the referrals</h2>
-    <p>You just set up the no-cost benefit for <b>${REF_ACT.client}</b>. They agreed to gift it. Using your F.O.R.M. notes, type each referral the way you would on the Add Leads screen: name, relationship, city. Start with the beneficiary.</p>
-    <div class="refact-notes"><b>Your F.O.R.M. notes</b><ul>${REF_ACT.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>
-    <div class="refact-form"><input data-raf="name" placeholder="Name" aria-label="Referral name" value="${esc(d.name || "")}"><input data-raf="rel" placeholder="${rows.length ? "Relationship" : "Relationship (beneficiary)"}" aria-label="Relationship" value="${esc(d.rel || "")}"><input data-raf="city" placeholder="City" aria-label="City" value="${esc(d.city || "")}"><button class="btn small" data-rafadd="1" type="button">Add</button></div>
-    ${rows.length ? `<ol class="refact-list">${rows.map((r, i) => `<li><b>${esc(r.name)}</b> <span>${esc([r.rel, r.city].filter(Boolean).join(" · "))}</span> <button class="linkbtn" data-rafdel="${i}" type="button" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}
-    <div class="row"><button class="btn secondary" data-rafcheck="1" type="button" ${rows.length ? "" : "disabled"}>Check my referrals</button>${rows.length ? `<button class="linkbtn" data-rafreset="1" type="button">Start over</button>` : ""}</div>${res}</div>`;
+const REF_FIELDS = [
+  { k: "name", label: "Name", ph: "First and last name" },
+  { k: "rel", label: "Relationship to client", ph: "Sister, coworker…" },
+  { k: "phone", label: "Phone", ph: "Optional" },
+  { k: "status", label: "Relationship status", ph: "Married, single…", form: "F" },
+  { k: "spouse", label: "Spouse name", ph: "If married or with someone", form: "F" },
+  { k: "kids", label: "Kids", ph: "How many", form: "F" },
+  { k: "kidNames", label: "Kids' names", ph: "Names", form: "F", say: "What are the kids' names so I can also assign them a child safe kit?" },
+  { k: "work", label: "Work", ph: "Where they work", form: "O" },
+  { k: "off", label: "Gets off at", ph: "5:00 PM", form: "O", say: "So I don't catch them at a bad time, what time do they get off?" }
+];
+const GRADED = ["name", "rel", "status", "spouse", "kids", "kidNames", "work", "off"];
+function refSummary(r) { return [r.rel, r.status && (r.status + (r.spouse ? " to " + r.spouse : "")), r.kids && ("kids: " + r.kids + (r.kidNames ? " (" + r.kidNames + ")" : "")), r.work && ("works at " + r.work), r.off && ("off at " + r.off), r.phone].filter(Boolean).join(" · "); }
+// attr: data attribute for inputs; d: draft; first: true when no referrals yet; dark: call-screen styling
+function refFormHTML(attr, d, first, addAttr, addLabel) {
+  const field = f => `<label class="rf-field"><span>${f.label}</span><input data-${attr}="${f.k}" placeholder="${f.k === "rel" && first ? "Beneficiary" : f.ph}" value="${esc(d[f.k] || "")}" ${f.k === "status" ? `list="rfStatusList"` : ""}>${f.say ? `<em class="rf-say">Say: “${esc(f.say)}”</em>` : ""}</label>`;
+  return `<div class="rf"><div class="rf-top">${REF_FIELDS.filter(f => !f.form).map(field).join("")}</div>
+    <div class="rf-notes"><div class="rf-group"><b>F · Family</b>${REF_FIELDS.filter(f => f.form === "F").map(field).join("")}</div><div class="rf-group"><b>O · Occupation</b>${REF_FIELDS.filter(f => f.form === "O").map(field).join("")}<button class="btn small" data-${addAttr}="1" type="button">${addLabel || "Add referral"}</button></div></div>
+    <datalist id="rfStatusList"><option>Married</option><option>Single</option><option>Engaged</option><option>Dating</option><option>Divorced</option><option>Widowed</option></datalist></div>`;
 }
+function refRecord(d) { const r = {}; REF_FIELDS.forEach(f => r[f.k] = (d[f.k] || "").trim()); return r; }
+function refEnterNext(e, attr, add) { const ins = [...document.querySelectorAll(`[data-${attr}]`)].filter(x => x.tagName === "INPUT"), i = ins.indexOf(e.target); if (e.target.dataset[attr === "rpref" ? "rpref" : "raf"] === "off" || i === ins.length - 1) add(); else (ins[i + 1] || ins[0]).focus(); }
+const REF_SCEN = [
+  { client: "Tasha and Marcus Johnson", lead: "ADP",
+    talk: [
+      ["You", "Who's your beneficiary on this?"], ["Tasha", "Marcus, my husband."],
+      ["You", "I'll start with Marcus. Who's next? You mentioned your sister in Daphne."], ["Tasha", "Keisha Brown. She's married to Darnell."],
+      ["You", "Do they have kids?"], ["Tasha", "Two. What do you need their names for?"],
+      ["You", "What are the kids' names so I can also assign them a child safe kit?"], ["Tasha", "Oh nice. Jaylen and Amari."],
+      ["You", "Where does Keisha work?"], ["Tasha", "She's a teller at Regions."],
+      ["You", "So I don't catch her at a bad time, what time does she get off?"], ["Tasha", "Around 5:30."],
+      ["You", "Who else? You said Marcus bowls with Andre."], ["Marcus", "Andre Hill, my best friend. He's single, no kids. Drives for UPS."],
+      ["You", "So I don't catch him at a bad time, what time does he get off?"], ["Marcus", "He's done by 4."]
+    ],
+    key: [
+      { name: "Marcus Johnson", rel: "husband beneficiary", status: "married", spouse: "tasha", kids: "", kidNames: "", work: "", off: "", skip: ["status", "spouse", "kids", "kidNames", "work", "off"] },
+      { name: "Keisha Brown", rel: "sister", status: "married", spouse: "darnell", kids: "2", kidNames: "jaylen amari", work: "regions", off: "5:30" },
+      { name: "Andre Hill", rel: "friend", status: "single", spouse: "", kids: "0", kidNames: "", work: "ups", off: "4" }
+    ] },
+  { client: "Linda Reyes", lead: "Pre-Submit",
+    talk: [
+      ["You", "Who did you put as your beneficiary?"], ["Linda", "My daughter, Monica Reyes. She's divorced, has one boy, Mateo."],
+      ["You", "Where does Monica work?"], ["Linda", "Dollar General on Airport Boulevard. She's the manager."],
+      ["You", "So I don't catch her at a bad time, what time does she get off?"], ["Linda", "Usually 6."],
+      ["You", "Who's next? You mentioned your neighbor helps you with the yard."], ["Linda", "Ray Thompson. He and his wife Gloria live next door. Their kids are grown."],
+      ["You", "How many kids do they have?"], ["Linda", "Three, all moved out."],
+      ["You", "Is Ray still working?"], ["Linda", "He works at the shipyard, Austal."],
+      ["You", "So I don't catch him at a bad time, what time does he get off?"], ["Linda", "He's home by 3:30."],
+      ["You", "And your coworker at church daycare?"], ["Linda", "Brittany Cole. Engaged to a guy named Chris. She has a little girl, Harper."],
+      ["You", "Where does Brittany work during the week?"], ["Linda", "She's a nurse at USA Health, nights. She gets off at 7 in the morning."]
+    ],
+    key: [
+      { name: "Monica Reyes", rel: "daughter beneficiary", status: "divorced", spouse: "", kids: "1", kidNames: "mateo", work: "dollar general", off: "6" },
+      { name: "Ray Thompson", rel: "neighbor", status: "married", spouse: "gloria", kids: "3", kidNames: "", work: "austal shipyard", off: "3:30", skip: ["kidNames"] },
+      { name: "Brittany Cole", rel: "coworker church", status: "engaged", spouse: "chris", kids: "1", kidNames: "harper", work: "usa health nurse", off: "7" }
+    ] },
+  { client: "Derrick and Shay Williams", lead: "Policy Owner",
+    talk: [
+      ["You", "Who's the beneficiary on yours, Derrick?"], ["Derrick", "Shay, my wife."],
+      ["You", "Got it. Who's next? You said your brother just had a baby."], ["Derrick", "Yeah, Terrence Williams. He and his girlfriend Kiara just had a little boy."],
+      ["You", "Congrats! What's the baby's name so I can also assign him a child safe kit?"], ["Derrick", "Josiah."],
+      ["You", "Where does Terrence work?"], ["Derrick", "AM/NS Calvert, the steel mill."],
+      ["You", "So I don't catch him at a bad time, what time does he get off?"], ["Derrick", "He works 6 to 6, so 6 PM."],
+      ["You", "Shay, you mentioned your best friend from school?"], ["Shay", "Ashley Moore. She's married to Brandon, they have two girls, Kennedy and Brooklyn."],
+      ["You", "Where does Ashley work?"], ["Shay", "She teaches at Baker High School."],
+      ["You", "So I don't catch her at a bad time, what time does she get off?"], ["Shay", "School lets out at 3:15, so after that."]
+    ],
+    key: [
+      { name: "Shay Williams", rel: "wife beneficiary", status: "married", spouse: "derrick", kids: "", kidNames: "", work: "", off: "", skip: ["status", "spouse", "kids", "kidNames", "work", "off"] },
+      { name: "Terrence Williams", rel: "brother", status: "dating girlfriend", spouse: "kiara", kids: "1", kidNames: "josiah", work: "am/ns calvert steel", off: "6" },
+      { name: "Ashley Moore", rel: "best friend", status: "married", spouse: "brandon", kids: "2", kidNames: "kennedy brooklyn", work: "baker high teacher", off: "3:15" }
+    ] }
+];
+const RF_LABEL = { name: "Name", rel: "Relationship", status: "Relationship status", spouse: "Spouse name", kids: "Kids", kidNames: "Kids' names", work: "Work", off: "Gets off at" };
+function rfNorm(v) { return String(v || "").toLowerCase().replace(/[^a-z0-9: ]/g, " ").replace(/\s+/g, " ").trim(); }
+function rfMatch(field, typed, want) {
+  const t = rfNorm(typed), w = rfNorm(want);
+  if (field === "kids") { const n = { none: "0", no: "0", zero: "0", one: "1", two: "2", three: "3", four: "4" }; const tv = (t.match(/\d+/) || [n[t.split(" ")[0]] || (t ? "?" : "")])[0]; return w === "0" ? (tv === "0" || /none|no/.test(t)) : tv === w; }
+  if (field === "off") { const d = s => (s.match(/\d+(:\d+)?/) || [""])[0].replace(/:00$/, ""); return !!d(t) && d(t) === d(w); }
+  if (!w) return !t;
+  const words = w.split(" ").filter(x => x.length > 1);
+  if (field === "rel" || field === "status" || field === "work") return words.some(x => t.includes(x));
+  return words.every(x => t.includes(x));
+}
+function gradeRefs(rows, key) {
+  let got = 0, tot = 0; const per = [];
+  key.forEach((k, idx) => {
+    const first = k.name.split(" ")[0].toLowerCase();
+    const r = rows.find(x => rfNorm(x.name).includes(first));
+    const miss = [];
+    GRADED.forEach(f => { if ((k.skip || []).includes(f)) return; tot++; if (r && rfMatch(f, r[f], k[f])) got++; else miss.push(f); });
+    per.push({ name: k.name, found: !!r, miss, order: r ? rows.indexOf(r) : -1 });
+  });
+  return { got, tot, pct: tot ? Math.round(got / tot * 100) : 0, per, benFirst: per[0] && per[0].order === 0 };
+}
+function refActHTML() {
+  const st = store.refAct = store.refAct && store.refAct.scen ? store.refAct : { scen: {}, at: 0 };
+  const i = st.at || 0, sc = REF_SCEN[i], cur = st.scen[i] = st.scen[i] || { rows: [], draft: {} };
+  const done = REF_SCEN.map((_, k) => st.scen[k] && st.scen[k].result);
+  let res = "";
+  if (cur.result) {
+    const g = cur.result;
+    res = `<div class="note ${g.pct >= 80 && g.benFirst ? "g" : "w"}" role="status"><span class="rf-gname">Score: ${g.pct}%</span> (${g.got} of ${g.tot} notes correct)${g.benFirst ? "" : `<br>Start with the beneficiary, ${esc(sc.key[0].name.split(" ")[0])}.`}
+      <ul class="rf-grade">${g.per.map(p => `<li><span class="rf-gname">${esc(p.name)}</span>: ${!p.found ? "not entered" : p.miss.length ? "missing or wrong: " + p.miss.map(f => RF_LABEL[f]).join(", ") : "all notes correct ✓"}</li>`).join("")}</ul>
+      ${g.pct < 80 ? "Fix the notes and check again." : i < REF_SCEN.length - 1 ? "Nice. Move on to the next scenario." : "That's all three."}</div>`;
+  }
+  return `<div class="card refact"><div class="eyebrow">Activity · Scenario ${i + 1} of ${REF_SCEN.length}</div><h2>Type in the referrals</h2>
+    <div class="rf-tabs" role="tablist">${REF_SCEN.map((x, k) => `<button type="button" role="tab" aria-selected="${k === i}" class="${k === i ? "on" : ""}" data-rafscen="${k}">${k + 1}. ${esc(x.client)}${done[k] ? ` · ${done[k].pct}%` : ""}</button>`).join("")}</div>
+    <p>You're on the <b>Referral Collection</b> slide with <b>${esc(sc.client)}</b> (${esc(sc.lead)}). Read what they tell you and type each referral with F.O.R.M. notes, the way you'd book the appointment: relationship status, spouse name, kids, kids' names, work, and what time they get off.</p>
+    <div class="rf-talk">${sc.talk.map(([w, t]) => `<p class="${w === "You" ? "me" : ""}"><b>${esc(w)}:</b> ${esc(t)}</p>`).join("")}</div>
+    <div class="rf-slide"><div class="rf-slide-h"><b>Gift This No-Cost Benefit</b><span>${cur.rows.length} of 10</span></div>
+      ${refFormHTML("raf", cur.draft, !cur.rows.length, "rafadd")}
+      ${cur.rows.length ? `<ol class="refact-list">${cur.rows.map((r, k) => `<li><div><b>${esc(r.name)}</b> <span>${esc(refSummary(r))}</span></div> <button class="linkbtn" data-rafdel="${k}" type="button" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}
+    </div>
+    <div class="row"><button class="btn secondary" data-rafcheck="1" type="button" ${cur.rows.length ? "" : "disabled"}>Grade my referrals</button>${cur.rows.length ? `<button class="linkbtn" data-rafreset="1" type="button">Start this one over</button>` : ""}${cur.result && i < REF_SCEN.length - 1 ? `<button class="btn small" data-rafscen="${i + 1}" type="button">Next scenario →</button>` : ""}</div>${res}</div>`;
+}
+function rafCur() { const st = store.refAct; return st.scen[st.at || 0]; }
 function rafRefresh(focusName) { const el = document.querySelector(".refact"); if (el) { el.outerHTML = refActHTML(); if (focusName) { const n = document.querySelector('[data-raf="name"]'); if (n) n.focus(); } } }
-function rafAdd() { const st = store.refAct = store.refAct || { rows: [] }, d = st.draft || {}; if (!(d.name || "").trim()) { const n = document.querySelector('[data-raf="name"]'); if (n) n.focus(); return; } st.rows = st.rows || []; st.rows.push({ name: d.name.trim(), rel: (d.rel || "").trim(), city: (d.city || "").trim() }); st.draft = {}; st.checked = false; save(); rafRefresh(true); }
-document.addEventListener("input", e => { const k = e.target && e.target.dataset && e.target.dataset.raf; if (!k) return; store.refAct = store.refAct || { rows: [] }; store.refAct.draft = store.refAct.draft || {}; store.refAct.draft[k] = e.target.value; });
-document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.raf) { e.preventDefault(); rafAdd(); } });
+function rafAdd() { const c = rafCur(); if (!(c.draft.name || "").trim()) { const n = document.querySelector('[data-raf="name"]'); if (n) n.focus(); return; } c.rows.push(refRecord(c.draft)); c.draft = {}; c.result = null; save(); rafRefresh(true); }
+document.addEventListener("input", e => { const k = e.target && e.target.dataset && e.target.dataset.raf; if (!k || !store.refAct) return; rafCur().draft[k] = e.target.value; });
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.raf) { e.preventDefault(); refEnterNext(e, "raf", rafAdd); } });
 document.addEventListener("click", e => {
+  if (!document.querySelector(".refact")) return;
   if (e.target.closest("[data-rafadd]")) return rafAdd();
-  const del = e.target.closest("[data-rafdel]"); if (del) { store.refAct.rows.splice(+del.dataset.rafdel, 1); store.refAct.checked = false; save(); return rafRefresh(); }
-  if (e.target.closest("[data-rafcheck]")) { store.refAct.checked = true; save(); return rafRefresh(); }
-  if (e.target.closest("[data-rafreset]")) { store.refAct = { rows: [] }; save(); return rafRefresh(true); }
+  const sc = e.target.closest("[data-rafscen]"); if (sc) { store.refAct.at = +sc.dataset.rafscen; save(); return rafRefresh(); }
+  const del = e.target.closest("[data-rafdel]"); if (del) { const c = rafCur(); c.rows.splice(+del.dataset.rafdel, 1); c.result = null; save(); return rafRefresh(); }
+  if (e.target.closest("[data-rafcheck]")) { const c = rafCur(); c.result = gradeRefs(c.rows, REF_SCEN[store.refAct.at || 0].key); save(); return rafRefresh(); }
+  if (e.target.closest("[data-rafreset]")) { store.refAct.scen[store.refAct.at || 0] = { rows: [], draft: {} }; save(); return rafRefresh(true); }
 });
 function blockHTML(b) {
   if (b.refact) return refActHTML();
@@ -2994,7 +3112,7 @@ HOW TO BEHAVE
 - Warm up (raise mood) when the agent builds genuine rapport about family, work, fun and common ground, listens, and uses what you told them. Cool off (lower mood) if they rush to slides, read robotically, interrogate, ignore what you said, talk too long without checking in, or pressure you.
 - A line ending in [interrupted by agent] means the agent talked over you; react like a person would if it keeps happening.
 - Tie-downs and "why is this important to you?": give a real personal answer if warm (mood 55+), a short flat one if cool.
-- REFERRALS: When the agent explains you can gift the no-cost benefit to people in your circle and asks for names (usually starting with your beneficiary), give people from your life ONE AT A TIME: first name and last name, how you know them, and the city they live in. Make them consistent with your household and anything you mentioned during rapport (family, coworkers, friends, church, neighbors). Keep giving names while the agent keeps asking "Who's next?" or uses names you mentioned: up to 8 if warm (mood 55+), only 2 or 3 if cool. Give a phone number only if the agent asks for it (make up a 251 area code number). Speak slowly enough that the agent can type each name.
+- REFERRALS: When the agent explains you can gift the no-cost benefit to people in your circle and asks for names (usually starting with your beneficiary), give people from your life ONE AT A TIME: first and last name and how you know them. Make them consistent with your household and anything you mentioned during rapport (family, coworkers, friends, church, neighbors). For each person you KNOW these details, but only say each one when the agent asks or it comes up naturally: relationship status, spouse or partner's first name, how many kids, the kids' first names, where they work, and what time they get off work. If the agent asks for the kids' names without a reason, hesitate ("Why do you need their names?") until they explain it's for a child safe kit. If they ask what time someone gets off "so I don't catch them at a bad time," answer easily. Keep giving names while the agent keeps asking "Who's next?": up to 6 if warm (mood 55+), only 2 or 3 if cool. Give a phone number only if asked (make up a 251 area code number). Speak slowly enough that the agent can type.
 - At the close (when asked to choose an option or buy), you MUST raise your objections first, one at a time, in this order, even if you like the agent:
 ${(rp.objections || f.objections).map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
 - Move past an objection only when the agent handles it well: acknowledges it, reconnects to needs you already admitted, solves the real concern, and re-asks with a choice. A weak, pushy or ignored rebuttal: repeat or deepen the objection and lower mood.
@@ -3016,20 +3134,22 @@ Final line exactly:  #STATE mood=<0-100> decision=<none|buy_option1|buy_option2|
 }
 
 /* ---- call screen ---- */
+const REF_STEP = STEPS.indexOf("Referral Collection");
 function refsPanelHTML() {
   const list = rp.refs || [], d = rp.refDraft || {};
-  return `<div class="mpanel"><h4>Referrals (${list.length} of 10)</h4><p class="msmall">Type each name the family gives you, like you would on the Add Leads screen. Start with their beneficiary. Grading checks what you typed against what they said.</p>
-    <div class="rp-refform"><input data-rpref="name" placeholder="Name" aria-label="Referral name" value="${esc(d.name || "")}"><input data-rpref="rel" placeholder="${list.length ? "Relationship" : "Relationship (beneficiary)"}" aria-label="Relationship" value="${esc(d.rel || "")}"><input data-rpref="phone" placeholder="Phone (optional)" aria-label="Phone" value="${esc(d.phone || "")}"><input data-rpref="city" placeholder="City" aria-label="City" value="${esc(d.city || "")}"><button class="mbtn-s" data-rpadd="1" type="button">Add referral</button></div>
-    ${list.length ? `<ol class="rp-reflist">${list.map((r, i) => `<li><b>${esc(r.name)}</b> <span>${esc([r.rel, r.phone, r.city].filter(Boolean).join(" · "))}</span> <button class="linkbtn" data-rpdel="${i}" type="button" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}</div>`;
+  return `<div class="rp-refslide"><div class="rf-slide-h"><b>Gift This No-Cost Benefit</b><span>${list.length} of 10</span></div>
+    <p class="rf-hint">${rp.format === "tele" ? "Your screen (the family can't see it)." : "They can see this slide."} Type each referral with F.O.R.M. notes. Grading checks what you typed against what they said.</p>
+    ${refFormHTML("rpref", d, !list.length, "rpadd")}
+    ${list.length ? `<ol class="refact-list">${list.map((r, i) => `<li><div><b>${esc(r.name)}</b> <span>${esc(refSummary(r))}</span></div> <button class="linkbtn" data-rpdel="${i}" type="button" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}</div>`;
 }
 function rpAddRef() {
   const d = rp.refDraft || {};
   if (!(d.name || "").trim()) { const n = document.querySelector('[data-rpref="name"]'); if (n) n.focus(); return; }
-  rp.refs = rp.refs || []; rp.refs.push({ name: d.name.trim(), rel: (d.rel || "").trim(), phone: (d.phone || "").trim(), city: (d.city || "").trim() });
+  rp.refs = rp.refs || []; rp.refs.push(refRecord(d));
   rp.refDraft = {}; rerenderCall(); const n = document.querySelector('[data-rpref="name"]'); if (n) n.focus();
 }
 document.addEventListener("input", e => { const k = e.target && e.target.dataset && e.target.dataset.rpref; if (k && rp) { rp.refDraft = rp.refDraft || {}; rp.refDraft[k] = e.target.value; } });
-document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.rpref && rp) { e.preventDefault(); e.stopPropagation(); rpAddRef(); } }, true);
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.rpref && rp) { e.preventDefault(); e.stopPropagation(); refEnterNext(e, "rpref", rpAddRef); } }, true);
 document.addEventListener("click", e => { if (!rp) return; if (e.target.closest("[data-rpadd]")) return rpAddRef(); const d = e.target.closest("[data-rpdel]"); if (d) { rp.refs.splice(+d.dataset.rpdel, 1); rerenderCall(); } });
 function callView() {
   if (rp.phase === "lobby") return lobbyView();
@@ -3039,7 +3159,12 @@ function callView() {
   const selfTile = `<div class="tile self-tile ${rp.micOn && !rp.micMuted ? "" : "muted"}" id="selfTile"><div class="initials">${esc(initials)}</div><div class="tname">${esc(store.name || "You")} (you)</div></div>`;
   const famInit = f.speakers.map(n => n[0]).join("");
   const phoneCard = `<div class="phonecard ${rp.speaking ? "talking" : ""}" id="famTile"><div class="pc-avatar">${esc(famInit)}</div><div class="pc-name">${esc(f.name)}</div><div class="pc-sub">📞 Phone call · nothing is shared</div><div class="pc-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div><div class="tname" id="famName">${esc(rp.speaking || f.name)}</div>${rp.phase === "countdown" ? countdownOverlay() : ""}</div>`;
-  const stage = rp.format === "tele"
+  const onRefs = !rp.dial && rp.current === REF_STEP && (rp.format === "tele" || rp.sharing);
+  const stage = onRefs && rp.format === "tele"
+    ? `<div class="stage sharing"><div class="share-wrap"><div class="share-label">Your screen · Referral Collection</div><div class="slide rp-slide-refs">${refsPanelHTML()}</div></div><div class="strip">${phoneCard}</div></div>`
+    : onRefs
+    ? `<div class="stage sharing"><div class="share-wrap"><div class="share-label">You are sharing your screen · Referral Collection</div><div class="slide rp-slide-refs">${refsPanelHTML()}</div></div><div class="strip">${famTile}${selfTile}</div></div>`
+    : rp.format === "tele"
     ? `<div class="stage gallery">${phoneCard}</div>`
     : rp.sharing && rp.current != null
     ? `<div class="stage sharing"><div class="share-wrap"><div class="share-label">You are sharing your screen · ${esc(STEPS[rp.current])}</div><div class="slide">${slideHTML(rp.current, f)}</div></div><div class="strip">${famTile}${selfTile}</div></div>`
@@ -3060,7 +3185,7 @@ function callView() {
         <div class="captions" id="captions" aria-live="polite"></div>
         ${rp.typing ? `<div class="typebar"><input type="text" id="agentInput" placeholder="${dictApi ? "Type instead of speaking, then press Enter" : "Voice input isn't available here. Type what you'd say, then press Enter"}" aria-label="Type what you'd say"><button class="mbtn-s" id="sendBtn" type="button">Send</button></div>` : ""}
       </div>
-      ${rp.panel ? `<aside class="mside"><div class="mtabs"><button class="${rp.panel === "presenter" ? "on" : ""}" data-panel="presenter" type="button">Presenter</button>${rp.dial ? "" : `<button class="${rp.panel === "refs" ? "on" : ""}" data-panel="refs" type="button">Referrals${(rp.refs || []).length ? " (" + rp.refs.length + ")" : ""}</button>`}<button class="${rp.panel === "transcript" ? "on" : ""}" data-panel="transcript" type="button">Transcript</button></div><div class="mside-body">${rp.panel === "presenter" ? presenterHTML : rp.panel === "refs" ? refsPanelHTML() : `<div class="mtranscript" id="mtranscript"></div>`}</div></aside>` : ""}
+      ${rp.panel ? `<aside class="mside"><div class="mtabs"><button class="${rp.panel === "presenter" ? "on" : ""}" data-panel="presenter" type="button">Presenter</button><button class="${rp.panel === "transcript" ? "on" : ""}" data-panel="transcript" type="button">Transcript</button></div><div class="mside-body">${rp.panel === "presenter" ? presenterHTML : `<div class="mtranscript" id="mtranscript"></div>`}</div></aside>` : ""}
     </div>
     <div class="mbar">
       <div class="mgroup">
@@ -3073,7 +3198,6 @@ function callView() {
         ${rp.format !== "tele" && rp.sharing ? `<button class="mbtn" id="prevSlide" type="button" ${rp.current > 0 ? "" : "disabled"}><b>‹</b><span>Prev slide</span></button><button class="mbtn" id="nextSlide" type="button" ${rp.current < STEPS.length - 1 ? "" : "disabled"}><b>›</b><span>Next slide</span></button>` : ""}
         <button class="mbtn" id="scriptBtn" type="button">${ICON.notes}<span>Script</span></button>
         <button class="mbtn ${rp.panel === "presenter" ? "act" : ""}" data-panel="presenter" type="button">${ICON.notes}<span>Presenter</span></button>
-        ${rp.dial ? "" : `<button class="mbtn ${rp.panel === "refs" ? "act" : ""}" data-panel="refs" type="button"><b>👥</b><span>Referrals${(rp.refs || []).length ? " " + rp.refs.length : ""}</span></button>`}
         <button class="mbtn ${rp.panel === "transcript" ? "act" : ""}" data-panel="transcript" type="button">${ICON.chat}<span>Transcript</span></button>
       </div>
       <div class="mgroup"><button class="mbtn end" id="endBtn" type="button"><span>End call</span></button></div>
@@ -3236,7 +3360,8 @@ async function finishCall() {
     id: Date.now(), date: new Date().toISOString(), name: store.name, mode: rp.mode, format: rp.dial ? "dial" : rp.format, family: rp.fam.name, difficulty: rp.fam.difficulty,
     decision: rp.decision, decisionNote: rp.decisionNote, total, pass, sale, cats, critical, strengths: g.strengths || [], moments: g.missed_moments || [],
     summary: g.summary || "", plan: g.coaching_plan || [], duration: rp.duration, transcript: transcriptText(),
-    referrals: rp.dial ? undefined : (rp.refs || []).map(r => r.name)
+    referrals: rp.dial ? undefined : (rp.refs || []).map(r => r.name),
+    refNotes: rp.dial || !(rp.refs || []).length ? undefined : Math.round(rp.refs.reduce((n, r) => n + ["status", "spouse", "kids", "kidNames", "work", "off"].filter(k => r[k]).length, 0) / (rp.refs.length * 6) * 100)
   };
   const wasCert = certified();
   store.callCount = (store.callCount || store.attempts.length) + 1;
@@ -3268,8 +3393,8 @@ Quote: Option 1 $${f.quote.opt1}/mo (Final Expense $30,000, inflation built in),
 FORMAT: ${rp.format === "tele" ? "TELESALES (phone only, nothing shared). The agent must describe each slide in words, check in often (\"Does that make sense?\"), say numbers slowly, and must NOT refer to a screen or slide (\"as you can see\"). Score this inside company, benefits and conduct." : "ZOOM (video, screen shared). The agent should build rapport before sharing, share the right slide at the right time, and confirm the family can see it."}
 OUTCOME: ${rp.decision}${rp.decisionNote ? " (" + rp.decisionNote + ")" : ""}. Call length: ${Math.round(rp.duration / 60)} min. ${rp.format === "tele" ? "Steps the agent marked in order" : "Slides shared in order"}: ${rp.shared.map(i => STEPS[i]).join(" > ") || "none"}.
 
-REFERRALS THE AGENT TYPED IN DURING THE CALL (${(rp.refs || []).length}): ${(rp.refs || []).length ? rp.refs.map(r => [r.name, r.rel, r.city].filter(Boolean).join(" / ")).join("; ") : "none"}.
-When scoring the "company" category's referral part, credit asking for referrals the right way (gift the no-cost benefit, minimum of 10, start with the beneficiary, use F.O.R.M. names, "Who's next?") AND actually capturing the names: names the family gave in the transcript that the agent did not type in count as missed. Mention the referral count in your feedback.
+REFERRALS THE AGENT TYPED IN DURING THE CALL (${(rp.refs || []).length}): ${(rp.refs || []).length ? rp.refs.map(r => `${r.name} [relationship: ${r.rel || "-"}; status: ${r.status || "-"}; spouse: ${r.spouse || "-"}; kids: ${r.kids || "-"}; kids' names: ${r.kidNames || "-"}; work: ${r.work || "-"}; off at: ${r.off || "-"}]`).join("; ") : "none"}.
+When scoring the "company" category's referral part, credit asking for referrals the right way (gift the no-cost benefit, minimum of 10, start with the beneficiary, use F.O.R.M. names, "Who's next?") AND actually capturing the names: names the family gave in the transcript that the agent did not type in count as missed. Also grade the F.O.R.M. notes the agent typed for each referral (relationship status, spouse name, kids, kids' names, work, what time they get off) against what the family actually said: missing or wrong notes cost points, and so does not asking for them. Credit asking in F.O.R.M. order and using "What are the kids' names so I can also assign them a child safe kit?" and "So I don't catch them at a bad time, what time do they get off?". In your feedback, give the referral count and name any notes the agent missed.
 
 RUBRIC (score each 0..max; be strict: a step that was skipped scores 0, rushed or partial scores about half):
 ${RUBRIC.map(r => `- ${r.key} (max ${r.max}): ${r.label}. ${r.desc}`).join("\n")}
@@ -3303,7 +3428,7 @@ function resultsView(a) {
   let h = `<div class="page">
     <div class="eyebrow">${a.mode === "exam" ? "Final exam result" : "Practice result"} · ${fmtLabel(a.format)} · ${esc(a.family)} · ${new Date(a.date).toLocaleDateString()}</div>
     <div class="result-banner ${a.pass ? "pass" : "fail"}">
-      <div class="ring-row">${scoreRing(a.total, a.pass)}<div><div class="big">${verdict}</div><p class="small">${fmtLabel(a.format)} · ${esc(a.family)} · ${Math.max(1, Math.round((a.duration || 0) / 60))} min · pass is ${PASS_EXAM}+</p></div></div>${Array.isArray(a.referrals) ? `<p><b>Referrals you typed in: ${a.referrals.length}</b>${a.referrals.length ? " (" + a.referrals.map(esc).join(", ") + ")" : ". Next time, type each name the family gives you in the Referrals panel."}</p>` : ""}
+      <div class="ring-row">${scoreRing(a.total, a.pass)}<div><div class="big">${verdict}</div><p class="small">${fmtLabel(a.format)} · ${esc(a.family)} · ${Math.max(1, Math.round((a.duration || 0) / 60))} min · pass is ${PASS_EXAM}+</p></div></div>${Array.isArray(a.referrals) ? `<p><b>Referrals you typed in: ${a.referrals.length}</b>${a.referrals.length ? " (" + a.referrals.map(esc).join(", ") + ")" : ". Next time, type each name the family gives you on the Referral Collection slide."}${a.refNotes != null && a.referrals.length ? ` · F.O.R.M. notes filled in: ${a.refNotes}%` : ""}</p>` : ""}
       <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "Telesales" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "Telesales"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
       <p>${esc(a.summary)}</p>
     </div>`;
@@ -3522,7 +3647,7 @@ function listsTab() {
     const sets = (mgr.lists.refs || []).filter(x => x.refs && x.refs.length);
     if (!sets.length) return h + `<div class="card"><h2>No referrals yet</h2><p>Referrals agents type in on the Referral Collection step of a live presentation show up here.</p></div>`;
     const total = sets.reduce((a, x) => a + x.refs.length, 0);
-    h += `<p class="small">${total} referral${total === 1 ? "" : "s"} from ${sets.length} presentation${sets.length === 1 ? "" : "s"}.</p><div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Agent</th><th scope="col">Manager</th><th scope="col">Client (sponsor)</th><th scope="col">Lead type</th><th scope="col">Referrals</th><th scope="col">When</th><th scope="col"><span class="sr-only">View</span></th></tr></thead><tbody>${sets.map(x => `<tr><td><b>${esc(x.name || "Agent")}</b></td><td>${esc(mgrName(x))}</td><td>${esc(x.client || "–")}</td><td>${esc(x.lead || "–")}</td><td><b>${x.refs.length}</b></td><td>${esc(ago(x.updatedAt))}</td><td><button class="linkbtn" data-rview="${esc(x.uid + "/" + x.id)}" type="button">${mgr.refOpen === x.uid + "/" + x.id ? "Hide" : "View"}</button></td></tr>${mgr.refOpen === x.uid + "/" + x.id ? `<tr><td colspan="7"><table class="hist"><thead><tr><th>#</th><th>Name</th><th>Relationship</th><th>Phone</th><th>City</th></tr></thead><tbody>${x.refs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.rel)}</td><td>${r.phone ? `<a href="tel:${esc(String(r.phone).replace(/[^\d+]/g, ""))}">${esc(r.phone)}</a>` : ""}</td><td>${esc(r.city)}</td></tr>`).join("")}</tbody></table></td></tr>` : ""}`).join("")}</tbody></table></div>`;
+    h += `<p class="small">${total} referral${total === 1 ? "" : "s"} from ${sets.length} presentation${sets.length === 1 ? "" : "s"}.</p><div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Agent</th><th scope="col">Manager</th><th scope="col">Client (sponsor)</th><th scope="col">Lead type</th><th scope="col">Referrals</th><th scope="col">When</th><th scope="col"><span class="sr-only">View</span></th></tr></thead><tbody>${sets.map(x => `<tr><td><b>${esc(x.name || "Agent")}</b></td><td>${esc(mgrName(x))}</td><td>${esc(x.client || "–")}</td><td>${esc(x.lead || "–")}</td><td><b>${x.refs.length}</b></td><td>${esc(ago(x.updatedAt))}</td><td><button class="linkbtn" data-rview="${esc(x.uid + "/" + x.id)}" type="button">${mgr.refOpen === x.uid + "/" + x.id ? "Hide" : "View"}</button></td></tr>${mgr.refOpen === x.uid + "/" + x.id ? `<tr><td colspan="7"><table class="hist"><thead><tr><th>#</th><th>Name</th><th>Relationship</th><th>Phone</th><th>Status / spouse</th><th>Kids</th><th>Work</th><th>Off at</th></tr></thead><tbody>${x.refs.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.rel)}</td><td>${r.phone ? `<a href="tel:${esc(String(r.phone).replace(/[^\d+]/g, ""))}">${esc(r.phone)}</a>` : ""}</td><td>${esc([r.status, r.spouse].filter(Boolean).join(", ") || r.city || "")}</td><td>${esc([r.kids, r.kidNames].filter(Boolean).join(": "))}</td><td>${esc(r.work || "")}</td><td>${esc(r.off || "")}</td></tr>`).join("")}</tbody></table></td></tr>` : ""}`).join("")}</tbody></table></div>`;
     return h;
   }
   if (sub === "f25") {

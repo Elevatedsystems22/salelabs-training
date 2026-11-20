@@ -1080,9 +1080,18 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
 .globe-life-presentation .ref-head h3 { margin: 0; font-size: 18px; color: var(--ink); }
 .ref-count { font-weight: 800; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
 .globe-life-presentation .ref-hint { margin: 6px 0 12px; color: var(--muted); font-size: 14px; }
-.ref-form { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr 1fr auto; gap: 8px; }
+.ref-form { display: grid; grid-template-columns: 1.3fr 1.2fr 1fr; gap: 10px; }
+.ref-form.notes { grid-template-columns: 1fr 1fr; gap: 14px; }
+.ref-group { display: flex; flex-direction: column; gap: 8px; background: var(--bg, #f3f6fa); border-radius: 12px; padding: 12px; }
+.ref-group > b { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.ref-field { display: flex; flex-direction: column; gap: 3px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.ref-say { font-style: normal; font-weight: 500; font-size: 12.5px; color: #3d4a5c; background: #fff7e6; border-left: 3px solid #e0a43a; padding: 4px 8px; border-radius: 6px; }
+.ref-notes-head { margin: 14px 0 8px; font-weight: 800; font-size: 14px; color: var(--ink); }
+.ref-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ref-list li span { display: block; }
+@media (max-width: 760px) { .ref-form, .ref-form.notes { grid-template-columns: 1fr; } }
 .ref-form .form-input { padding: 10px 12px; font-size: 15px; margin: 0; }
-.ref-form .save-btn { margin: 0; border-radius: 999px; padding: 10px 18px; color: #fff; font-weight: 700; border: 0; cursor: pointer; }
+.ref-form .save-btn { margin: 6px 0 0; align-self: flex-start; border-radius: 999px; padding: 10px 18px; color: #fff; font-weight: 700; border: 0; cursor: pointer; }
 .ref-list { margin: 14px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
 .ref-list li { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .ref-list li b { color: var(--ink); margin-right: 8px; }
@@ -2418,20 +2427,30 @@ window.addEventListener("hashchange", dialFromHash);
 })();
 
 /* ---------- Referral entry on the Referral Collection step (live) ---------- */
+const REF_FIELDS = [
+    { k: "name", label: "Name", ph: "First and last name" },
+    { k: "rel", label: "Relationship to client", ph: "Sister, coworker…" },
+    { k: "phone", label: "Phone", ph: "251-555-0123", type: "tel" },
+    { k: "status", label: "Relationship status", ph: "Married, single…", list: "refStatusList", form: "F" },
+    { k: "spouse", label: "Spouse name", ph: "If married or with someone", form: "F" },
+    { k: "kids", label: "Kids", ph: "How many", form: "F" },
+    { k: "kidNames", label: "Kids' names", ph: "Names", form: "F", say: "What are the kids' names so I can also assign them a child safe kit?" },
+    { k: "work", label: "Work", ph: "Where they work", form: "O" },
+    { k: "off", label: "Gets off at", ph: "5:00 PM", form: "O", say: "So I don't catch them at a bad time, what time do they get off?" }
+];
+function refSummary(r) { return [r.rel, r.status && (r.status + (r.spouse ? " to " + r.spouse : "")), r.kids && ("kids: " + r.kids + (r.kidNames ? " (" + r.kidNames + ")" : "")), r.work && ("works at " + r.work), r.off && ("off at " + r.off), r.phone].filter(Boolean).join(" · "); }
 function refEntryHTML() {
     if (document.documentElement.classList.contains("framed")) return "";
     const list = S.referrals || [], d = S.refDraft || {};
+    const field = f => `<label class="ref-field"><span>${f.label}</span><input class="form-input" data-tref="${f.k}" ${f.type ? `type="${f.type}"` : ""} ${f.list ? `list="${f.list}"` : ""} placeholder="${f.k === "rel" && !list.length ? "Beneficiary" : f.ph}" value="${esc(d[f.k] || "")}">${f.say ? `<em class="ref-say">Say: “${f.say}”</em>` : ""}</label>`;
     return `<div class="ref-entry" id="refEntry">
         <div class="ref-head"><h3>Type in their referrals</h3><span class="ref-count">${list.length} of 10${list.length >= 10 ? " ✓" : ""}</span></div>
-        <p class="ref-hint">${list.length ? "Who's next?" : `Start with ${esc(S.client || "the client")}'s beneficiary, then use names from your F.O.R.M. notes.`}</p>
-        <div class="ref-form">
-            <input class="form-input" data-tref="name" placeholder="Name" aria-label="Referral name" value="${esc(d.name || "")}">
-            <input class="form-input" data-tref="rel" placeholder="${list.length ? "Relationship (sister, coworker…)" : "Relationship (beneficiary)"}" aria-label="Relationship" value="${esc(d.rel || "")}">
-            <input class="form-input" data-tref="phone" type="tel" placeholder="Phone" aria-label="Phone" value="${esc(d.phone || "")}">
-            <input class="form-input" data-tref="city" placeholder="City" aria-label="City" value="${esc(d.city || "")}">
-            <button type="button" class="save-btn" data-trefadd="1">Add</button>
-        </div>
-        ${list.length ? `<ol class="ref-list">${list.map((r, i) => `<li><b>${esc(r.name)}</b><span>${esc([r.rel, r.phone, r.city].filter(Boolean).join(" · "))}</span><button type="button" class="glp-small" data-trefdel="${i}" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}
+        <p class="ref-hint">${list.length ? "Who's next?" : `Start with ${esc(S.client || "the client")}'s beneficiary, then use names from your F.O.R.M. notes.`} Get the notes in F.O.R.M. order so the appointment is easy to book.</p>
+        <div class="ref-form">${REF_FIELDS.filter(f => !f.form).map(field).join("")}</div>
+        <div class="ref-notes-head">F.O.R.M. notes</div>
+        <div class="ref-form notes"><div class="ref-group"><b>Family</b>${REF_FIELDS.filter(f => f.form === "F").map(field).join("")}</div><div class="ref-group"><b>Occupation</b>${REF_FIELDS.filter(f => f.form === "O").map(field).join("")}<button type="button" class="save-btn" data-trefadd="1">Add referral</button></div></div>
+        <datalist id="refStatusList"><option>Married</option><option>Single</option><option>Engaged</option><option>Dating</option><option>Divorced</option><option>Widowed</option></datalist>
+        ${list.length ? `<ol class="ref-list">${list.map((r, i) => `<li><div><b>${esc(r.name)}</b><span>${esc(refSummary(r))}</span></div><button type="button" class="glp-small" data-trefdel="${i}" aria-label="Remove ${esc(r.name)}">Remove</button></li>`).join("")}</ol>` : ""}
         <p class="ref-status" id="refStatus" role="status">${list.length ? "Saved to your account. Your manager can see these." : ""}</p>
     </div>`;
 }
@@ -2456,12 +2475,12 @@ function refEntryHTML() {
         const d = S.refDraft || {};
         if (!(d.name || "").trim()) { const n = document.querySelector('[data-tref="name"]'); if (n) n.focus(); return; }
         S.referrals = S.referrals || [];
-        S.referrals.push({ name: d.name.trim(), rel: (d.rel || "").trim(), phone: (d.phone || "").trim(), city: (d.city || "").trim(), at: Date.now() });
+        const rec = { at: Date.now() }; REF_FIELDS.forEach(f => rec[f.k] = (d[f.k] || "").trim()); S.referrals.push(rec);
         S.refDraft = {}; saveSession(); renderSlide(); sync();
         const n = document.querySelector('[data-tref="name"]'); if (n) n.focus();
     }
     document.addEventListener("input", e => { const k = e.target && e.target.dataset && e.target.dataset.tref; if (!k) return; S.refDraft = S.refDraft || {}; S.refDraft[k] = e.target.value; saveSession(); });
-    document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.tref) { e.preventDefault(); add(); } }, true);
+    document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.dataset && e.target.dataset.tref) { e.preventDefault(); if (e.target.dataset.tref === "off") add(); else { const ins = [...document.querySelectorAll("[data-tref]")], i = ins.indexOf(e.target); (ins[i + 1] || ins[0]).focus(); } } }, true);
     document.addEventListener("click", e => {
         if (e.target.closest("[data-trefadd]")) return add();
         const del = e.target.closest("[data-trefdel]");

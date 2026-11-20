@@ -5,7 +5,7 @@
    POST /api/lists/sched                   {uid, name, invite, date, rows:[{name,address,phone,notes}], stats:{...}}
    GET  /api/lists/team/first25            managers: every agent's First 25
    GET  /api/lists/team/sched?date=        managers: every agent's schedule sheet for a day
-   POST /api/lists/refs  {uid,name,invite,id,client,lead,refs:[{name,rel,phone,city}]}   referrals typed in on a live presentation
+   POST /api/lists/refs  {uid,name,invite,id,client,lead,refs:[{name,rel,phone,status,spouse,kids,kidNames,work,off}]}   referrals typed in on a live presentation
    GET  /api/lists/refs?uid=   an agent's referral sets      GET /api/lists/team/refs   managers: all referral sets
    Stored in Netlify Blobs "lists". */
 import { getStore } from "@netlify/blobs";
@@ -65,7 +65,7 @@ export default async (req) => {
     if (!allowed(req)) return json({ error: "forbidden" }, 403);
     const b = await body(); if (!b || !UID.test(String(b.uid || "")) || !/^[A-Za-z0-9_-]{4,40}$/.test(String(b.id || ""))) return json({ error: "bad_request" }, 400);
     const key = `refs/${b.uid}/${b.id}`, prev = (await db.get(key, { type: "json" })) || {};
-    const refs = (Array.isArray(b.refs) ? b.refs : []).slice(0, 40).map(r => ({ name: str(r && r.name, 80), rel: str(r && r.rel, 40), phone: str(r && r.phone, 30), city: str(r && r.city, 60), at: Number(r && r.at) || Date.now() })).filter(r => r.name);
+    const refs = (Array.isArray(b.refs) ? b.refs : []).slice(0, 40).map(r => ({ name: str(r && r.name, 80), rel: str(r && r.rel, 40), phone: str(r && r.phone, 30), city: str(r && r.city, 60), status: str(r && r.status, 30), spouse: str(r && r.spouse, 60), kids: str(r && r.kids, 20), kidNames: str(r && r.kidNames, 120), work: str(r && r.work, 80), off: str(r && r.off, 30), at: Number(r && r.at) || Date.now() })).filter(r => r.name);
     const rec = { uid: b.uid, id: b.id, name: str(b.name, 80), invite: str(b.invite, 64), client: str(b.client, 120), lead: str(b.lead, 40), refs, createdAt: prev.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() };
     await db.setJSON(key, rec);
     return json({ ok: true, count: refs.length });
