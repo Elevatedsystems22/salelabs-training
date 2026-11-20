@@ -564,6 +564,8 @@ a.btn { text-decoration: none; }
 .ws-tile span { font-size: 15px; line-height: 1.5; color: var(--muted); }
 .ws-tile .go { font-weight: 700; color: var(--accent); margin-top: 4px; }
 a.navbtn { text-decoration: none; }
+tr.me-row td { background: var(--accent-soft); }
+.row.spread { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .todo .btn.small { color: var(--on-accent); }
 .todo .btn.small.secondary { color: var(--accent); }
@@ -1913,9 +1915,11 @@ function renderRail() {
     h += `<button class="navbtn main ${view.name === "home" && !view.academy ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Workspace</span><span></span></button>`;
     h += `<a class="navbtn main" href="${TOOL_URL}#dial" target="_blank" rel="noopener"><span class="badge">📞</span><span>Make a call</span><span class="count">↗</span></a>`;
     h += `<a class="navbtn main" href="${TOOL_URL}#present" target="_blank" rel="noopener"><span class="badge">◫</span><span>Presentation</span><span class="count">↗</span></a>`;
-    h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
+    h += `<button class="navbtn main ${view.name === "numbers" ? "active" : ""}" data-go="numbers" type="button"><span class="badge">#</span><span>My numbers</span><span></span></button>`;
+    h += `<button class="navbtn main ${view.name === "standings" ? "active" : ""}" data-go="standings" type="button"><span class="badge">🏆</span><span>Standings</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
     h += `<div class="group">Keep training</div>`;
+    h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>Practice results</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "home" && view.academy ? "active" : ""}" data-go="home" data-academy="1" type="button"><span class="badge">★</span><span>Academy dashboard</span><span></span></button>`;
   } else
   h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Dashboard</span><span></span></button>`;
@@ -1974,6 +1978,8 @@ function render() {
   else if (view.name === "results") main.innerHTML = resultsView(view.attempt);
   else if (view.name === "history") main.innerHTML = historyView();
   else if (view.name === "help") main.innerHTML = helpView();
+  else if (view.name === "numbers") main.innerHTML = numbersView();
+  else if (view.name === "standings") main.innerHTML = standingsView();
   else if (view.name === "cast") { main.innerHTML = castView(); bindCast(); }
   main.scrollTop = 0;
 }
@@ -2049,11 +2055,9 @@ function certifiedOn() {
 function workspaceView() {
   const first = esc(store.name.split(" ")[0]);
   const hr = new Date().getHours(), greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
-  const ap = appts(), weekAgo = Date.now() - 7 * 864e5;
-  const apWeek = ap.filter(a => Date.parse(a.at) > weekAgo).length;
-  const prac = store.attempts.filter(a => a.mode !== "exam"), last10 = prac.slice(-10);
-  const avg = last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : null;
-  const cOn = certifiedOn();
+  const ap = appts();
+  
+    const cOn = certifiedOn();
   const tile = (href, ic, title, body, cls) => `<a class="ws-tile ${cls || ""}" href="${href}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${body}</span><span class="go">Open full screen ↗</span></a>`;
   return `<div class="page wide">
     <div class="dash-head"><div><div class="eyebrow">Certified agent</div><h1>${greet}, ${first}</h1><p class="small" style="font-size:15px">${cOn ? "Certified " + cOn.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) + " · " : ""}Your call tools are below. The Academy is always here when you want a refresher.</p></div></div>
@@ -2061,11 +2065,7 @@ function workspaceView() {
       ${tile(TOOL_URL + "#dial", "📞", "Make a call", "Pick the lead type and dial. Opening lines, their likely answers and every rebuttal, one tap at a time.", "primary")}
       ${tile(TOOL_URL + "#present", "🖥️", "Start a presentation", "Present by phone or on Zoom with the client slides on their screen and your script on yours.", "")}
     </div>
-    <div class="stats">
-      <div class="stat"><span class="k">Appointments booked</span><span class="v">${apWeek}</span><span class="s">Last 7 days · ${ap.length} saved in total</span></div>
-      <div class="stat"><span class="k">Practice calls</span><span class="v">${store.callCount || store.attempts.length}</span><span class="s">Includes your exams</span></div>
-      <div class="stat"><span class="k">Avg practice score</span><span class="v">${avg == null ? "–" : avg}</span><span class="s">Last ${last10.length === 1 ? "practice call" : (last10.length || 10) + " practice calls"}</span></div>
-    </div>
+    ${(() => { if (!callsData) { loadCalls(); return `<div class="card"><p class="small">${SYNC_ON ? "Loading today's numbers…" : "Your call numbers show on your live site."}</p></div>`; } const t = sumDays(callsData.days, rangeDatesC("today")); return `<div class="row spread"><h2 style="margin:0">Today</h2><button class="linkbtn" data-go="numbers" type="button">See all my numbers</button></div>` + statCards(t, "today"); })()}
     <div class="dash-grid">
       <div class="card"><h2>Upcoming appointments</h2>${ap.length ? `<div>${ap.slice(0, 6).map(a => `<div class="todo"><span class="box ic" aria-hidden="true">📅</span><span class="t"><b>${esc(a.client || "Client")}${a.spouse ? " &amp; " + esc(a.spouse) : ""}</b><span class="small" style="display:block">${esc(a.lead || "")}${a.format ? " · " + (a.format === "zoom" ? "Zoom" : "Phone") : ""}${a.time ? " · " + esc(a.time) : ""}</span></span></div>`).join("")}</div><p class="small">Appointments you save on the Make a call screen show up here, on this computer.</p>` : `<p class="small">When you book an appointment on the Make a call screen, it shows up here.</p>`}</div>
       <div class="card"><h2>Keep sharp</h2><p class="small">Everything from training is still open to you.</p>
@@ -3227,7 +3227,7 @@ async function mgrLoad() {
     const j1 = await r1.json().catch(() => ({})), j2 = await r2.json().catch(() => ({}));
     if (r1.status === 401 || r2.status === 401) { setMgrTok(""); mgrReset("Your sign-in expired. Sign in again."); }
     else if (!r1.ok || !r2.ok) mgr.error = j1.message || j2.message || "The manager view isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
-    else { mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; }
+    else { mgr.calls = null; mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; }
   } catch (e) { mgr.error = "Couldn't reach the server. The manager view works on your live site, not inside claude.ai."; }
   mgr.loading = false; render();
 }
@@ -3276,7 +3276,7 @@ function inviteShare(inv) {
     <span class="small" data-icopied="${esc(inv.token)}" role="status"></span></div>`;
 }
 function mgrTabs() {
-  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["invite", "Invite an agent"], ["managers", "Managers"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
+  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["invite", "Invite an agent"], ["managers", "Managers"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
 function inviteTab() {
@@ -3324,6 +3324,37 @@ function confirmView() {
     <p class="lead">New agents you invite see this card when they need help. Make sure it's right.</p>
     <div class="card">${managerForm(mgr.editing, "confirm")}
     <div class="row"><button class="btn" id="mConfirm" type="button">Looks good, continue</button><button class="linkbtn" id="mgrOut" type="button">Not you? Sign out</button></div></div></div>`;
+}
+function downlineIds() {
+  const me = meId(), ids = new Set(me ? [me] : []);
+  let grew = true;
+  while (grew) { grew = false; mgr.managers.forEach(m => { if (!ids.has(m.id) && m.reportsTo && ids.has(m.reportsTo)) { ids.add(m.id); grew = true; } }); }
+  return ids;
+}
+async function loadTeamCalls() {
+  mgr.callsLoading = true;
+  try { mgr.calls = await mgrApi("/api/calls/team"); } catch (e) { mgr.calls = { error: e.message }; }
+  mgr.callsLoading = false; render();
+}
+function callsTab() {
+  if (!mgr.calls) { if (!mgr.callsLoading) setTimeout(loadTeamCalls, 0); return `<div class="card"><p class="small">Loading call numbers…</p></div>`; }
+  if (mgr.calls.error) return `<div class="warn"><b>Couldn't load calls</b>${esc(mgr.calls.error)}</div>`;
+  const range = mgr.callRange || "today", scope = mgr.callScope || (mgr.me && mgr.me.admin ? "all" : "mine");
+  const dates = range === "today" ? [mgr.calls.date] : range === "week" ? mgr.calls.weekDates : range === "month" ? mgr.calls.monthDates : null;
+  const inv = Object.fromEntries(mgr.invites.map(i => [i.token, i])), mById = Object.fromEntries(mgr.managers.map(m => [m.id, m]));
+  const mine = downlineIds();
+  let rows = mgr.calls.agents.map(a => { const i = inv[a.invite]; const mid = i ? i.managerId : ""; return { name: a.name || "Agent", mid, mname: mById[mid] ? mById[mid].name : "–", updatedAt: a.updatedAt, t: sumDays(a.days, dates) }; });
+  if (scope === "mine") rows = rows.filter(r => mine.has(r.mid));
+  const active = rows.filter(r => r.t.total > 0).sort((a, b) => b.t.appts - a.t.appts || b.t.contacts - a.t.contacts || b.t.total - a.t.total);
+  const tot = active.reduce((x, r) => ({ total: x.total + r.t.total, contacts: x.contacts + r.t.contacts, appts: x.appts + r.t.appts, callbacks: x.callbacks + r.t.callbacks }), { total: 0, contacts: 0, appts: 0, callbacks: 0 });
+  const teams = {}; active.forEach(r => { const k = r.mname; teams[k] = teams[k] || { n: 0, t: 0, c: 0, a: 0 }; teams[k].n++; teams[k].t += r.t.total; teams[k].c += r.t.contacts; teams[k].a += r.t.appts; });
+  const label = { today: "today", week: "this week", month: "this month", all: "all time" }[range];
+  return `<div class="row"><span class="small"><b>Range:</b></span>${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => `<button class="chip ${range === k ? "on" : ""}" data-crange="${k}" type="button" aria-pressed="${range === k}">${l}</button>`).join("")}
+      <span style="width:12px"></span>${[["mine", "My downline"], ["all", "Everyone"]].map(([k, l]) => `<button class="chip ${scope === k ? "on" : ""}" data-cscope="${k}" type="button" aria-pressed="${scope === k}">${l}</button>`).join("")}<button class="linkbtn" data-crefresh="1" type="button">Refresh</button></div>
+    ${statCards(tot, `${active.length} agent${active.length === 1 ? "" : "s"} calling ${label}`)}
+    ${!active.length ? `<div class="card"><h2>No calls logged ${label}</h2><p>Numbers show up here as certified agents log calls on the Make a call screen.</p></div>` : `
+    <div class="card table-wrap"><h2>Agents</h2><table class="hist mgr-table"><thead><tr><th scope="col">#</th><th scope="col">Agent</th><th scope="col">Manager</th><th scope="col">Dials</th><th scope="col">Spoke to</th><th scope="col">Appts</th><th scope="col">Dials/appt</th><th scope="col">Last logged</th></tr></thead><tbody>${active.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.mname)}</td><td>${r.t.total}</td><td>${r.t.contacts} <span class="small">${pct(r.t.contacts, r.t.total)}</span></td><td><b>${r.t.appts}</b> <span class="small">${pct(r.t.appts, r.t.contacts)}</span></td><td>${dpa(r.t)}</td><td>${esc(ago(r.updatedAt))}</td></tr>`).join("")}</tbody></table></div>
+    <div class="card table-wrap"><h2>By team</h2><table class="hist"><thead><tr><th scope="col">Manager</th><th scope="col">Agents calling</th><th scope="col">Dials</th><th scope="col">Spoke to</th><th scope="col">Appts</th></tr></thead><tbody>${Object.entries(teams).sort((a, b) => b[1].a - a[1].a).map(([k, v]) => `<tr><td><b>${esc(k)}</b></td><td>${v.n}</td><td>${v.t}</td><td>${v.c}</td><td><b>${v.a}</b></td></tr>`).join("")}</tbody></table></div>`}`;
 }
 function setPasswordView() {
   return `<div class="page"><div class="eyebrow">Manager</div><h1>Choose your password</h1>
@@ -3411,7 +3442,7 @@ function managerView() {
   let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
     <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
     ${mgrTabs()}`;
-  h += mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : traineesTab();
+  h += mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
   return h;
 }
@@ -3466,6 +3497,9 @@ function afterManagerRender() {
     try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(Object.assign({}, m, { admin: b.dataset.on === "1" })) }); mgrLoad(); } catch (e) { mgr.formErr = e.message; render(); }
   });
   document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; render(); });
+  document.querySelectorAll("[data-crange]").forEach(b => b.onclick = () => { mgr.callRange = b.dataset.crange; render(); });
+  document.querySelectorAll("[data-cscope]").forEach(b => b.onclick = () => { mgr.callScope = b.dataset.cscope; render(); });
+  document.querySelectorAll("[data-crefresh]").forEach(b => b.onclick = () => { mgr.calls = null; render(); });
   document.querySelectorAll("[data-mfilter]").forEach(b => b.onclick = () => { mgr.filter = b.dataset.mfilter; render(); });
   document.querySelectorAll("[data-mremove]").forEach(b => b.onclick = () => confirmModal("Remove " + b.dataset.mname + "?", "This takes them off your manager list. If they keep training, they'll show up again the next time they save progress.", "Remove", async () => {
     try { await mgrApi("/api/progress?uid=" + encodeURIComponent(b.dataset.mremove), { method: "DELETE" }); } catch (e) {}
@@ -3534,6 +3568,110 @@ function afterManagerRender() {
     mgrLoad();
   }));
 }
+
+
+/* =========================================================
+   REAL CALL NUMBERS (from the Make a call screen)
+   ========================================================= */
+let callsData = null, callsLoading = false, numRange = "today", boardRange = "today", boardMode = "agents", boardData = {};
+function chDate(t) { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(t)).map(x => [x.type, x.value])); return `${p.year}-${p.month}-${p.day}`; }
+function rangeDatesC(range) {
+  const now = Date.now(), list = []; for (let i = 0; i < 31; i++) list.push(chDate(now - i * 864e5));
+  if (range === "today") return list.slice(0, 1);
+  if (range === "week") { const wd = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay(); return list.slice(0, ((wd + 6) % 7) + 1); }
+  if (range === "month") { const m = list[0].slice(0, 7); return list.filter(d => d.startsWith(m)); }
+  return null;
+}
+function sumDays(days, dates) {
+  const t = { total: 0, contacts: 0, appts: 0, callbacks: 0, byLead: {}, byHour: {}, sessions: 0 };
+  Object.entries(days || {}).forEach(([d, x]) => {
+    if (dates && !dates.includes(d)) return; if (!x || !x.total) return;
+    t.sessions++; t.total += x.total; t.contacts += x.contacts; t.appts += x.appts; t.callbacks += x.callbacks || 0;
+    [["byLead", x.byLead], ["byHour", x.byHour]].forEach(([k, o]) => Object.entries(o || {}).forEach(([kk, v]) => { const b = t[k][kk] = t[k][kk] || { t: 0, c: 0, a: 0 }; b.t += v.t; b.c += v.c; b.a += v.a; }));
+  });
+  return t;
+}
+const pct = (a, b) => b ? Math.round(a / b * 100) + "%" : "–";
+const dpa = t => t.appts ? (t.total / t.appts).toFixed(1) : "–";
+function hourLabel(h) { h = +h; return (h % 12 || 12) + (h < 12 ? " AM" : " PM"); }
+async function loadCalls(force) {
+  if (!SYNC_ON || !store.uid || callsLoading || (callsData && !force)) return;
+  callsLoading = true;
+  try { const r = await fetch("/api/calls/me?uid=" + encodeURIComponent(store.uid)); if (r.ok) callsData = await r.json(); } catch (e) {}
+  callsLoading = false;
+  if (["home", "numbers"].includes(view.name)) render();
+}
+async function loadBoard(range, force) {
+  if (!SYNC_ON || (boardData[range] && !force)) return;
+  try { const r = await fetch("/api/calls/board?range=" + range + "&uid=" + encodeURIComponent(store.uid || "")); if (r.ok) boardData[range] = await r.json(); } catch (e) {}
+  if (view.name === "standings" || view.name === "home") render();
+}
+function statCards(t, label) {
+  return `<div class="stats">
+    <div class="stat"><span class="k">Calls</span><span class="v">${t.total}</span><span class="s">${label}</span></div>
+    <div class="stat"><span class="k">Spoke to</span><span class="v">${t.contacts}</span><span class="s">${pct(t.contacts, t.total)} contact rate</span></div>
+    <div class="stat"><span class="k">Appointments</span><span class="v">${t.appts}</span><span class="s">${pct(t.appts, t.contacts)} of people spoken to</span></div>
+    <div class="stat"><span class="k">Dials per appointment</span><span class="v">${dpa(t)}</span><span class="s">${t.callbacks} callback${t.callbacks === 1 ? "" : "s"}</span></div>
+  </div>`;
+}
+function breakdownTable(rows, first) {
+  if (!rows.length) return `<p class="small">Nothing logged yet for this range.</p>`;
+  return `<div class="table-wrap"><table class="hist"><thead><tr><th scope="col">${first}</th><th scope="col">Calls</th><th scope="col">Spoke to</th><th scope="col">Appts</th><th scope="col">Dials/appt</th></tr></thead><tbody>${rows.map(([k, v]) => `<tr><td><b>${esc(k)}</b></td><td>${v.t}</td><td>${v.c} <span class="small">${pct(v.c, v.t)}</span></td><td>${v.a}</td><td>${v.a ? (v.t / v.a).toFixed(1) : "–"}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function numbersView() {
+  if (!callsData) { loadCalls(); return `<div class="page wide"><h1>My numbers</h1><p class="lead">${SYNC_ON ? "Loading your numbers…" : "Your numbers show on your live site."}</p></div>`; }
+  const dates = rangeDatesC(numRange), t = sumDays(callsData.days, dates);
+  const label = { today: "today", week: "this week", month: "this month", all: "all time" }[numRange];
+  const leadRows = Object.entries(t.byLead).sort((a, b) => b[1].t - a[1].t);
+  let second;
+  if (numRange === "today") second = `<h2>By hour</h2>${breakdownTable(Object.entries(t.byHour).sort((a, b) => a[0] - b[0]).map(([h, v]) => [hourLabel(h), v]), "Hour")}`;
+  else { const dayRows = Object.entries(callsData.days).filter(([d, x]) => (!dates || dates.includes(d)) && x.total).sort((a, b) => b[0].localeCompare(a[0])).map(([d, x]) => [new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }), { t: x.total, c: x.contacts, a: x.appts }]); second = `<h2>Days worked: ${t.sessions}</h2>${breakdownTable(dayRows, "Day")}`; }
+  return `<div class="page wide"><div class="dash-head"><div><div class="eyebrow">Performance</div><h1>My numbers</h1><p class="small" style="font-size:15px">Every call you log on the Make a call screen adds up here.</p></div>
+    <div class="row"><button class="btn secondary" id="numCopy" type="button">Copy summary</button><button class="btn secondary" id="numCsv" type="button">Download CSV</button><a class="btn" href="${TOOL_URL}#dial" target="_blank" rel="noopener">Make a call ↗</a></div></div>
+    <div class="row" role="tablist" aria-label="Date range">${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => `<button class="chip ${numRange === k ? "on" : ""}" role="tab" aria-selected="${numRange === k}" data-nrange="${k}" type="button">${l}</button>`).join("")}<span class="small" id="numMsg" role="status"></span></div>
+    ${statCards(t, label)}
+    <div class="dash-grid"><div class="card">${second}</div><div class="card"><h2>By lead type</h2>${breakdownTable(leadRows, "Lead type")}</div></div>
+  </div>`;
+}
+function summaryText() {
+  const dates = rangeDatesC(numRange), t = sumDays(callsData.days, dates);
+  const label = { today: "Today", week: "This week", month: "This month", all: "All time" }[numRange];
+  return `${store.name} · ${label}\nCalls: ${t.total}\nSpoke to: ${t.contacts} (${pct(t.contacts, t.total)})\nAppointments: ${t.appts} (${pct(t.appts, t.contacts)} of contacts)\nCallbacks: ${t.callbacks}\nDials per appointment: ${dpa(t)}`;
+}
+async function downloadCsv() {
+  const dates = rangeDatesC(numRange) || Object.keys(callsData.days);
+  const days = dates.filter(d => callsData.days[d] && callsData.days[d].total).sort();
+  const rows = [["Date", "Time (Central)", "Lead type", "Spoke to", "Outcome"]];
+  for (const d of days) {
+    try { const j = await (await fetch(`/api/calls/day?uid=${encodeURIComponent(store.uid)}&date=${d}`)).json();
+      (j.calls || []).forEach(c => rows.push([d, new Date(c.t).toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }), c.lead, c.contact ? "Yes" : "No", !c.contact ? "No contact" : c.appt === "yes" ? (c.now ? "Presentation started" : "Appointment set") : c.appt === "callback" ? "Callback" : "No appointment"])); } catch (e) {}
+  }
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = `calls-${numRange}-${chDate(Date.now())}.csv`; document.body.appendChild(a); a.click(); a.remove();
+}
+function standingsView() {
+  const d = boardData[boardRange]; if (!d) loadBoard(boardRange);
+  let body = !d ? `<p class="lead">${SYNC_ON ? "Loading standings…" : "Standings show on your live site."}</p>` : "";
+  if (d) {
+    const list = boardMode === "agents" ? d.agents : d.teams;
+    body = !list.length ? `<div class="card"><h2>No calls logged yet</h2><p>Standings fill in as agents log calls on the Make a call screen.</p></div>` :
+      `<div class="card table-wrap"><table class="hist"><thead><tr><th scope="col">#</th><th scope="col">${boardMode === "agents" ? "Agent" : "Team (manager)"}</th>${boardMode === "teams" ? `<th scope="col">Agents</th>` : ""}<th scope="col">Dials</th><th scope="col">Spoke to</th><th scope="col">Appts</th></tr></thead><tbody>${list.map((r, i) => `<tr class="${r.me ? "me-row" : ""}"><td><b>${i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</b></td><td><b>${esc(r.name)}</b>${r.me ? ' <span class="pill">You</span>' : ""}${boardMode === "agents" && r.team ? `<div class="small">${esc(r.team)}'s team</div>` : ""}</td>${boardMode === "teams" ? `<td>${r.agents}</td>` : ""}<td>${r.total}</td><td>${r.contacts}</td><td><b>${r.appts}</b></td></tr>`).join("")}</tbody></table></div>`;
+  }
+  return `<div class="page wide"><div class="eyebrow">Live</div><h1>Standings</h1><p class="lead">Ranked by appointments, then people spoken to, then dials.</p>
+    <div class="row"><span class="small"><b>Show:</b></span>${[["agents", "Agents"], ["teams", "Teams"]].map(([k, l]) => `<button class="chip ${boardMode === k ? "on" : ""}" data-bmode="${k}" type="button" aria-pressed="${boardMode === k}">${l}</button>`).join("")}<span style="width:12px"></span>${[["today", "Today"], ["week", "This week"], ["month", "This month"]].map(([k, l]) => `<button class="chip ${boardRange === k ? "on" : ""}" data-brange="${k}" type="button" aria-pressed="${boardRange === k}">${l}</button>`).join("")}<button class="linkbtn" data-brefresh="1" type="button">Refresh</button></div>
+    ${body}</div>`;
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-nrange],[data-bmode],[data-brange],[data-brefresh],#numCopy,#numCsv"); if (!t) return;
+  if (t.dataset.nrange) { numRange = t.dataset.nrange; render(); return; }
+  if (t.dataset.bmode) { boardMode = t.dataset.bmode; render(); return; }
+  if (t.dataset.brange) { boardRange = t.dataset.brange; render(); return; }
+  if (t.dataset.brefresh) { loadBoard(boardRange, true); return; }
+  const msg = $("#numMsg");
+  if (t.id === "numCopy") navigator.clipboard.writeText(summaryText()).then(() => { if (msg) msg.textContent = "Summary copied"; }).catch(() => { if (msg) msg.textContent = "Copy was blocked"; });
+  if (t.id === "numCsv") { if (msg) msg.textContent = "Preparing…"; downloadCsv().then(() => { if (msg) msg.textContent = ""; }); }
+});
+window.addEventListener("focus", () => { if (["home", "numbers"].includes(view.name) && certified()) loadCalls(true); });
 
 /* ===== AGENT SIDE: invite links and "your manager" ===== */
 let inviteState = { loading: false, error: "" };
