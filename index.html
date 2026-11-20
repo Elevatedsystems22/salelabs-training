@@ -1514,6 +1514,7 @@ function notify(event, data) {
 }
 
 let view = { name: "home" };
+const WANT_ACADEMY = location.hash === "#academy";
 try { if (JSON.parse(localStorage.getItem("vpa_v2") || "{}").name && !location.hash && !/[?&]invite=/.test(location.search)) view = { name: "launch" }; } catch (e) {}
 let rp = null; // active role-play
 const $ = (s, r = document) => r.querySelector(s);
@@ -1956,7 +1957,6 @@ function renderRail() {
     h += `<a class="navbtn main" href="${TOOL_URL}#present"><span class="badge">◫</span><span>Presentation</span><span class="count">→</span></a>`;
     h += `<button class="navbtn main ${view.name === "numbers" ? "active" : ""}" data-go="numbers" type="button"><span class="badge">#</span><span>My numbers</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "standings" ? "active" : ""}" data-go="standings" type="button"><span class="badge">🏆</span><span>Standings</span><span></span></button>`;
-    h += `<button class="navbtn main ${["docs", "first25", "sched"].includes(view.name) ? "active" : ""}" data-go="docs" type="button"><span class="badge">📄</span><span>Documents</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
     h += `<div class="group">Keep training</div>`;
     h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>Practice results</span><span></span></button>`;
@@ -1969,7 +1969,6 @@ function renderRail() {
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
   if (!cert) {
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
-  h += `<button class="navbtn main ${["docs", "first25", "sched"].includes(view.name) ? "active" : ""}" data-go="docs" type="button"><span class="badge">📄</span><span>Documents</span><span></span></button>`;
   h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
   }
   h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
@@ -2004,7 +2003,7 @@ function renderRail() {
    ========================================================= */
 function render() {
   document.querySelector(".app").classList.toggle("in-call", view.name === "call");
-  document.querySelector(".app").classList.toggle("launch-mode", view.name === "launch" && !!store.name);
+  document.querySelector(".app").classList.toggle("launch-mode", ["launch", "docs", "first25", "sched"].includes(view.name) && !!store.name);
   renderRail();
   const main = $("#main");
   if (view.name === "cast") { main.innerHTML = castView(); bindCast(); return; }
@@ -2022,9 +2021,9 @@ function render() {
   else if (view.name === "history") main.innerHTML = historyView();
   else if (view.name === "help") main.innerHTML = helpView();
   else if (view.name === "numbers") main.innerHTML = numbersView();
-  else if (view.name === "docs") main.innerHTML = docsView();
-  else if (view.name === "first25") main.innerHTML = first25View();
-  else if (view.name === "sched") main.innerHTML = schedView();
+  else if (view.name === "docs") main.innerHTML = standaloneTop() + docsView();
+  else if (view.name === "first25") main.innerHTML = standaloneTop() + first25View();
+  else if (view.name === "sched") main.innerHTML = standaloneTop() + schedView();
   else if (view.name === "standings") main.innerHTML = standingsView();
   else if (view.name === "cast") { main.innerHTML = castView(); bindCast(); }
   main.scrollTop = 0;
@@ -2122,6 +2121,10 @@ function workspaceView() {
     </div>
     ${store.attempts.length ? `<div class="card"><h2>Last practice call</h2>${coachNotes()}</div>` : ""}
   </div>`;
+}
+function standaloneTop() {
+  return `<div class="lp-top"><div class="lp-brand"><img src="${ASSET_BASE}globe.png" alt="" width="30" height="30"><div><b>Virtual Presentation Academy</b><span>Documents and working sheets</span></div></div>
+    <div class="row"><button class="btn small secondary" data-go="launch" type="button">← Home</button>${view.name !== "docs" ? `<button class="btn small secondary" data-go="docs" type="button">All documents</button>` : ""}<a class="btn small" href="${TOOL_URL}">Call Clinic</a></div></div>`;
 }
 function launchView() {
   const first = esc(store.name.split(" ")[0]), cert = certified(), n = passedCount();
@@ -3943,6 +3946,7 @@ document.addEventListener("click", e => {
 
 if ((location.hash || "") === "#cast") view = { name: "cast" };
 if ((location.hash || "") === "#manager") view = { name: "manager" };
+if (WANT_ACADEMY) { view = certified() ? { name: "home", academy: true } : { name: "home" }; try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
 window.addEventListener("hashchange", () => { if (location.hash === "#cast" && view.name !== "call") { view = { name: "cast" }; render(); } });
 render();
 initCaps();

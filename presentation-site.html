@@ -925,12 +925,12 @@ html, body { margin: 0; background: var(--bg); }
 html.framed .globe-life-presentation .glp-brand { visibility: hidden; }
 
 /* Landing (before starting) */
-.glp-landing { max-width: 920px; margin: 0 auto; padding: 48px 24px; }
+.glp-landing { max-width: 1080px; margin: 0 auto; padding: 48px 24px; }
 .glp-landing .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--good); }
 .glp-landing h1 { font-size: 34px; line-height: 1.15; margin: 8px 0 10px; color: var(--ink); font-weight: 800; }
 .glp-landing h1::after { display: none; }
 .glp-landing .lead { font-size: 17px; line-height: 1.6; color: var(--muted); margin: 0 0 28px; max-width: 640px; }
-.glp-landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.glp-landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .glp-choice { text-align: left; font: inherit; color: inherit; background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 24px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; transition: border-color .15s, box-shadow .15s; }
 .glp-choice:hover { border-color: var(--accent); box-shadow: 0 6px 20px rgba(15,27,45,.08); }
 .glp-choice .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--accent-soft); }
@@ -1056,6 +1056,11 @@ html.framed .globe-life-presentation .presentation-container { height: calc(100v
 .globe-life-presentation .glp-home:hover { background: var(--accent-soft); }
 html.framed .globe-life-presentation .glp-home { display: none; }
 
+.globe-life-presentation .glp-acad { order: -3; }
+.glp-choice.acad { text-decoration: none; color: inherit; }
+.glp-choice.acad .ic { background: #fff4e5; }
+@media (max-width: 760px) { .globe-life-presentation .glp-acad { display: none; } }
+
 /* ===== Call tracking strip + log window ===== */
 .cl-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 18px; background: #eef5fd; border-bottom: 1px solid #d3e3f5; font-family: "Inter", system-ui, sans-serif; }
 .cl-stats { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; color: #3f5470; }
@@ -1096,6 +1101,7 @@ html.framed .globe-life-presentation .glp-home { display: none; }
 .cl-flag.good b { color: #14532d; }
 .cl-goal { margin: 12px 0 0; font-size: 14px; color: #0f1b2d; }
 .cl-card .cl-log { border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; }
+.cl-acad { font-size: 14px; font-weight: 700; border-radius: 999px; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; min-height: 38px; box-sizing: border-box; }
 
     </style>
 </head>
@@ -1104,6 +1110,7 @@ html.framed .globe-life-presentation .glp-home { display: none; }
         <!-- Start Button -->
         <div class="glp-topbar">
             <a class="glp-home" href="index.html" aria-label="Back to home">← Home</a>
+            <a class="glp-home glp-acad" href="index.html#academy">🎓 Training Academy</a>
             <div class="glp-brand"><img src="globe.png" alt=""><div><b>Presentation tool</b><span>Virtual Presentation Academy</span></div></div>
             <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
         </div>
@@ -1115,6 +1122,7 @@ html.framed .globe-life-presentation .glp-home { display: none; }
             <p class="lead">Use this on every real call. It walks you through the script step by step, fills in your client's names, and keeps rebuttals one tap away.</p>
             <div class="glp-landing-grid">
                 <button class="glp-choice call" type="button" id="landingDial"><span class="ic" aria-hidden="true">📞</span><b>Make the call</b><span>You haven't reached them yet. Get the opening for their lead type, the rebuttals, and book the appointment or start now.</span><span class="go">Start dialing →</span></button>
+                <a class="glp-choice acad" href="index.html#academy"><span class="ic" aria-hidden="true">🎓</span><b>Training Academy</b><span>Brush up on a lesson or a rebuttal, or practice a call with an AI family before you dial.</span><span class="go">Open the Academy →</span></a>
                 <button class="glp-choice" type="button" id="landingStart"><span class="ic" aria-hidden="true">🖥️</span><b>Start the presentation</b><span>They're ready. Present by phone or on Zoom, with the client slides on their screen and your script on yours.</span><span class="go">Start presenting →</span></button>
             </div>
             <p class="glp-keys">Tip: during the presentation, use the ← and → arrow keys to move between steps.</p>
@@ -2249,7 +2257,7 @@ window.addEventListener("hashchange", dialFromHash);
                 ${w ? "" : `<span class="cl-warn">Not saving: sign in to the Academy on this computer</span>`}
             </div>
             <div class="cl-clinic" id="clClinic"></div>
-            <div class="cl-actions"><button type="button" data-cl="recap" class="cl-undo" title="See this hour's numbers">Hour recap</button><button type="button" data-cl="undo" class="cl-undo" title="Remove the last call you logged">Undo</button><button type="button" data-cl="log" class="cl-log">Log call <kbd>L</kbd></button></div>`;
+            <div class="cl-actions"><a class="cl-undo cl-acad" href="index.html#academy" title="Open the Training Academy">🎓 Academy</a><button type="button" data-cl="recap" class="cl-undo" title="See this hour's numbers">Hour recap</button><button type="button" data-cl="undo" class="cl-undo" title="Remove the last call you logged">Undo</button><button type="button" data-cl="log" class="cl-log">Log call <kbd>L</kbd></button></div>`;
         afterRender();
     }
     function afterRender() { try { tickClinic(); } catch (e) {} }
