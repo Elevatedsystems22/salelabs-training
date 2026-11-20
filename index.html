@@ -650,6 +650,10 @@ tr.me-row td { background: var(--accent-soft); }
 .slide.rp-slide-refs { aspect-ratio: auto; flex: 1; min-height: 0; overflow-y: auto; max-height: 100%; align-items: stretch !important; justify-content: flex-start !important; text-align: left !important; padding: 16px !important; }
 .rp-slide-refs .rf-group { background: #f3f6fa; } .rp-slide-refs { --bg: #f3f6fa; --surface: #fff; --ink: #0f1b2d; --line: #dde3ec; --accent: #0b4fb3; color: #0f1b2d; background: #fff; }
 @media (max-width: 760px) { .rf-top, .rf-notes { grid-template-columns: 1fr; } }
+.vrow-fam { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.vrow { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.vrow select { min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.vname { font-weight: 700; }
 .refact { border: 2px solid var(--accent); }
 .refact-notes { background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0 14px; font-size: 14px; }
 .refact-notes ul { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; }
@@ -1698,15 +1702,42 @@ function loadVoiceModel() {
 }
 function voiceStatusText() {
   if (!SITE_MODE) return "";
+  if (EL.ok) return "Realistic voices ready.";
+  if (EL.status === "checking") return "Connecting voices…";
   if (hasNaturalVoices()) return "Natural voices ready (built into this browser).";
   return VOICE.status === "ready" ? "Realistic voices ready." : VOICE.status === "loading" ? `Loading realistic voices… ${VOICE.pct}% (one-time download)` : VOICE.status === "failed" ? "Realistic voices couldn't load on this computer, so the family will use your browser's basic voices." + (VOICE.err ? " (" + VOICE.err + ")" : "") : "";
 }
 function voiceStatusRender() { document.querySelectorAll("[data-voicestatus]").forEach(el => { el.textContent = voiceStatusText(); el.hidden = !el.textContent; }); }
+/* ElevenLabs voices (server side, needs ELEVENLABS_API_KEY). Falls back to the in-browser voice when it's off. */
+const SPEAKER_TYPE = { Tasha: "f", Marcus: "m", Danielle: "f", Earl: "mo", Linda: "fo", Ray: "m", Angie: "f", Travis: "m" };
+const EL = { status: "idle", ok: false, cast: {}, p: null };
+function initEleven() {
+  if (!SITE_MODE) return Promise.resolve(false);
+  if (EL.p) return EL.p;
+  EL.status = "checking";
+  const sp = FAMILIES.flatMap(f => f.speakers).map(n => n + ":" + (SPEAKER_TYPE[n] || (FEMALE[n] ? "f" : "m"))).join(",");
+  EL.p = fetch("/api/tts/status?speakers=" + encodeURIComponent(sp)).then(r => r.json()).then(j => { EL.ok = !!(j && j.ok); EL.cast = (j && j.cast) || {}; EL.status = EL.ok ? "ready" : "off"; voiceStatusRender(); return EL.ok; }).catch(() => { EL.status = "off"; EL.ok = false; return false; });
+  return EL.p;
+}
+function elFetch(text, voiceId) {
+  return fetch("/api/tts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, voiceId }) })
+    .then(r => r.ok ? r.blob() : null).then(b => b && b.size > 200 ? URL.createObjectURL(b) : null).catch(() => null);
+}
 /* Start making a line's audio as soon as the line arrives, so it's ready when its turn comes. */
 function prepLine(l) {
-  if (!VOICE.tts || l.audioP) return;
+  if (l.audioP) return;
+  if (EL.ok && EL.cast[l.speaker]) { l.audioP = elFetch(l.text, EL.cast[l.speaker]); return; }
+  if (!VOICE.tts) return;
   const v = KOKORO_VOICES[l.speaker] || { voice: FEMALE[l.speaker] ? "af_heart" : "am_michael", speed: 1 };
   l.audioP = VOICE.tts.generate(l.text, { voice: v.voice, speed: v.speed }).then(a => URL.createObjectURL(a.toBlob())).catch(() => null);
+}
+function synthLine(l, done) {
+  if (!synth || !rp || !rp.sound) { setTimeout(done, 900 + words(l.text) * 320); return; }
+  try {
+    const u = new SpeechSynthesisUtterance(l.text); const v = rp.voiceMap[l.speaker]; const t = VOICE_TUNE[l.speaker] || {};
+    if (v) u.voice = v; u.pitch = t.pitch || 1; u.rate = t.rate || 1; u.lang = "en-US"; u.onend = done; u.onerror = done; synth.speak(u);
+    setTimeout(() => { if (rp && rp.capLine === l && rp.familySpeaking) done(); }, 2500 + words(l.text) * 600);
+  } catch (e) { done(); }
 }
 function playKokoro(l, done) {
   let finished = false; const fin = () => { if (finished) return; finished = true; if (rp && rp.curAudio === au) rp.curAudio = null; done(); };
@@ -1715,7 +1746,7 @@ function playKokoro(l, done) {
   l.audioP.then(url => {
     clearTimeout(wait);
     if (finished || !rp || rp.capLine !== l) return;
-    if (!url) { fin(); return; }
+    if (!url) { synthLine(l, fin); return; }
     au = new Audio(url); rp.curAudio = au;
     au.onended = fin; au.onerror = fin;
     au.play().catch(fin);
@@ -1755,6 +1786,7 @@ function pickDialObjections(fam) {
    Inside claude.ai the course uses Claude's built-in connection. On your own site
    (Netlify) it uses the site's server functions instead:
      /api/claude         family brain, drill grading, call grading
+     /api/tts            family voices (ElevenLabs, needs ELEVENLABS_API_KEY)
      /api/anam/session   video avatars for Zoom calls
    ========================================================= */
 let SITE_MODE = false;
@@ -1919,6 +1951,26 @@ function videoTileHTML(fam, compact) {
    ========================================================= */
 let castCatalog = null;
 function listOf(x) { if (!x) return []; if (Array.isArray(x)) return x; return x.data || x.items || x.avatars || x.voices || x.results || []; }
+let voiceCat = null;
+function voicesTab() {
+  if (!voiceCat) { const sp = FAMILIES.flatMap(f => f.speakers).map(n => n + ":" + (SPEAKER_TYPE[n] || (FEMALE[n] ? "f" : "m"))).join(",");
+    mgrApi("/api/tts/voices?speakers=" + encodeURIComponent(sp)).then(j => { voiceCat = j; mgr.voicePick = Object.assign({}, j.cast || {}); render(); }).catch(e => { voiceCat = { error: String(e.message || e) }; render(); }); return `<p>Loading voices…</p>`; }
+  if (voiceCat.error) return `<div class="warn"><b>Voices aren't connected yet</b>${voiceCat.error === "missing_key" || /ELEVENLABS/.test(voiceCat.error) ? "Add ELEVENLABS_API_KEY in Netlify (Site configuration → Environment variables), then redeploy." : esc(voiceCat.error)}</div>`;
+  const pick = mgr.voicePick = mgr.voicePick || Object.assign({}, voiceCat.cast || {});
+  const vs = (voiceCat.voices || []).slice().sort((a, b) => (a.gender || "").localeCompare(b.gender || "") || a.name.localeCompare(b.name));
+  const lab = v => [v.name, v.gender, v.age && v.age.replace(/_/g, " "), v.accent, v.desc].filter(Boolean).join(" · ");
+  const me = mgr.me || {};
+  return `<div class="card"><h2>Family voices</h2><p class="small">Each person in the practice calls talks with an ElevenLabs voice. Pick a voice, press Play to hear it, then save. Used today: ${Number(voiceCat.usedToday || 0).toLocaleString()} of ${Number(voiceCat.limit || 0).toLocaleString()} characters (about ${Math.round((voiceCat.usedToday || 0) / 3000)} practice calls).</p>
+    ${FAMILIES.map(f => `<div class="vrow-fam"><b>${esc(f.name)}</b>${f.speakers.map(n => `<div class="vrow"><span class="vname">${esc(n)}</span><select data-vpick="${esc(n)}" aria-label="Voice for ${esc(n)}">${vs.map(v => `<option value="${esc(v.id)}" ${pick[n] === v.id ? "selected" : ""}>${esc(lab(v))}</option>`).join("")}</select><button class="btn small secondary" data-vplay="${esc(n)}" type="button">Play</button></div>`).join("")}</div>`).join("")}
+    <div class="row">${me.admin ? `<button class="btn" id="vSave" type="button">Save voices for every agent</button>` : `<span class="small">Only admins can save voice changes.</span>`}<span class="small" id="vMsg" role="status"></span></div></div>`;
+}
+const VSAMPLE = { Tasha: "Hey! Can you hear us okay? Marcus, come sit down, it's on.", Marcus: "Alright, I'm here. So what's this about, exactly?", Danielle: "Hi, sorry. Can you hear me? It's been a long day.", Earl: "Now hold on. We already got a policy through my old job.", Linda: "Earl, let the young man talk. Go ahead, honey.", Ray: "Hey. How long is this gonna take?", Angie: "Hi! Ray's here too. Can you hear us?", Travis: "Yeah, this is Travis. Hang on, let me turn the TV down." };
+document.addEventListener("change", e => { const n = e.target && e.target.dataset && e.target.dataset.vpick; if (n) { mgr.voicePick = mgr.voicePick || {}; mgr.voicePick[n] = e.target.value; } });
+document.addEventListener("click", async e => {
+  const p = e.target.closest("[data-vplay]");
+  if (p) { const n = p.dataset.vplay, id = (mgr.voicePick || {})[n]; if (!id) return; p.disabled = true; p.textContent = "…"; const url = await elFetch(VSAMPLE[n] || "Hi, this is " + n + ".", id); p.disabled = false; p.textContent = "Play"; const m = $("#vMsg"); if (!url) { if (m) m.textContent = "Couldn't play that voice. Check the ElevenLabs key and credits."; return; } new Audio(url).play().catch(() => {}); return; }
+  if (e.target.closest("#vSave")) { const m = $("#vMsg"); try { const j = await mgrApi("/api/tts/cast", { method: "POST", body: JSON.stringify({ cast: mgr.voicePick || {} }) }); EL.cast = Object.assign({}, EL.cast, j.cast || {}); if (m) m.textContent = "Saved. Every agent hears these voices on their next call."; } catch (err) { if (m) m.textContent = "Couldn't save: " + (err.message || err); } }
+});
 function castView() {
   let h = `<div class="page"><div class="eyebrow">Manager setup</div><h1>Cast the video families</h1>
     <p class="lead">Pick a face and a voice for each person. Your picks save in this browser so you can test right away. When you're happy, press <b>Copy cast</b> and send it to Claude to make it permanent for every agent.</p>`;
@@ -2866,7 +2918,7 @@ function startCall(fam, mode, format) {
   if (format === "dial") { rp.dial = true; rp.format = "tele"; }
   rp.video = VIDEO_ENABLED && SITE_MODE && castReady(fam); // video avatars are off unless VIDEO_ENABLED
   rp.objections = pickObjections(fam); if (rp.dial) rp.dialObjections = pickDialObjections(fam);
-  if (SITE_MODE) loadVoiceModel();
+  if (SITE_MODE) initEleven().then(ok => { if (!ok && !hasNaturalVoices()) loadVoiceModel(); });
   const taken = []; fam.speakers.forEach(n => { const v = pickVoice(n, taken); rp.voiceMap[n] = v; if (v) taken.push(v.name); });
   view = { name: "call" }; render();
 }
@@ -3003,7 +3055,7 @@ function playNext() {
   const done = () => { if (!rp || rp.capLine !== l) return; playNext(); };
   const useSynth = rp.sound && synth && (dictApi || !ttsApi);
   const natV = rp.voiceMap[l.speaker] && NATURAL_VOICE.test(rp.voiceMap[l.speaker].name);
-  if (rp.sound && SITE_MODE && VOICE.tts && !natV && !(rp.video && VID.people[l.speaker])) {
+  if (rp.sound && SITE_MODE && !(rp.video && VID.people[l.speaker]) && ((EL.ok && EL.cast[l.speaker]) || (VOICE.tts && !natV))) {
     rp.familySpeaking = true; setSpeaking(l.speaker);
     prepLine(l); playKokoro(l, done);
   } else if (rp.video && VID.people[l.speaker]) {
@@ -3550,7 +3602,7 @@ function inviteShare(inv) {
     <span class="small" data-icopied="${esc(inv.token)}" role="status"></span></div>`;
 }
 function mgrTabs() {
-  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["lists", "Lists"], ["invite", "Invite an agent"], ["managers", "Managers"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
+  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["lists", "Lists"], ["invite", "Invite an agent"], ["managers", "Managers"], ["voices", "Voices"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
 function inviteTab() {
@@ -3748,7 +3800,7 @@ function managerView() {
   let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
     <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
     ${mgrTabs()}`;
-  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : traineesTab();
+  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
   return h;
 }
@@ -4161,6 +4213,7 @@ document.addEventListener("click", e => {
   }
 });
 
+setTimeout(() => { if (SITE_MODE) initEleven(); }, 1500);
 if ((location.hash || "") === "#cast") view = { name: "cast" };
 if ((location.hash || "") === "#manager") view = { name: "manager" };
 if (WANT_ACADEMY) view = { name: "home" };
