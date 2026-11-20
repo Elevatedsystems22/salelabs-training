@@ -1077,6 +1077,21 @@ html.framed .globe-life-presentation .presentation-container { height: calc(100v
 .cl-opts button.good:hover, .cl-opts button.good:focus-visible { background: #e7f4ea; }
 .cl-foot { margin-top: 14px; }
 .cl-link { font: inherit; font-weight: 600; color: #0b4fb3; background: none; border: 0; cursor: pointer; padding: 6px 0; }
+.cl-clinic { font-size: 13px; color: #3f5470; display: flex; align-items: center; gap: 6px; }
+.cl-clinic b { color: #0f1b2d; font-variant-numeric: tabular-nums; }
+.cl-dot { width: 9px; height: 9px; border-radius: 50%; background: #9aa8bc; display: inline-block; }
+.cl-dot.block { background: #217a3b; box-shadow: 0 0 0 3px rgba(33,122,59,.18); }
+.cl-dot.break { background: #c8941a; }
+.cl-recap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+.cl-recap div { background: #f3f6fa; border-radius: 10px; padding: 10px; text-align: center; }
+.cl-recap b { display: block; font-size: 22px; color: #0f1b2d; }
+.cl-recap span { font-size: 12px; color: #4f5d73; }
+.cl-flag { border-left: 4px solid #8f5200; background: #fff4e5; border-radius: 0 10px 10px 0; padding: 10px 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: #5c3b00; }
+.cl-flag b { color: #3d2700; }
+.cl-flag.good { border-left-color: #217a3b; background: #e7f4ea; color: #14532d; }
+.cl-flag.good b { color: #14532d; }
+.cl-goal { margin: 12px 0 0; font-size: 14px; color: #0f1b2d; }
+.cl-card .cl-log { border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer; }
 
     </style>
 </head>
@@ -2188,7 +2203,7 @@ window.addEventListener("hashchange", dialFromHash);
     function logCall(contact, appt, extra) {
         const w = who(), call = Object.assign({ t: Date.now(), lead: leadName(), contact: !!contact, appt: contact ? appt : "no" }, extra || {});
         const h = chHour(); if (st.curHour !== h) { st.curHour = h; st.hour = 0; }
-        st.today.total++; st.hour++; if (call.contact) st.today.contacts++; if (call.appt === "yes") st.today.appts++; if (call.appt === "callback") st.today.callbacks++;
+        st.today.total++; st.hour++; st.today.byHour = st.today.byHour || {}; const bh = st.today.byHour[h] = st.today.byHour[h] || { t: 0, c: 0, a: 0 }; bh.t++; if (contact) bh.c++; if (contact && appt === "yes") bh.a++; if (call.contact) st.today.contacts++; if (call.appt === "yes") st.today.appts++; if (call.appt === "callback") st.today.callbacks++;
         st.loggedFor = callId() || ("manual-" + call.t);
         render();
         if (!w) { flash("Logged on this screen only. Sign in to the Academy on this computer to save your numbers."); return; }
@@ -2211,7 +2226,7 @@ window.addEventListener("hashchange", dialFromHash);
         if (!document.getElementById("clStrip")) {
             const s = document.createElement("div"); s.id = "clStrip"; s.className = "cl-strip";
             const top = cm.querySelector(".cm-top"); if (top) top.after(s); else cm.prepend(s);
-            s.addEventListener("click", e => { const b = e.target.closest("[data-cl]"); if (!b) return; if (b.dataset.cl === "log") openModal(); if (b.dataset.cl === "undo") undo(); });
+            s.addEventListener("click", e => { const b = e.target.closest("[data-cl]"); if (!b) return; if (b.dataset.cl === "log") openModal(); if (b.dataset.cl === "undo") undo(); if (b.dataset.cl === "recap") { const c = clinicState(); openRecap(c.hour != null ? c.hour : chHour(), c.phase === "block" ? `${c.sc.name}: Hour ${c.idx + 1} so far` : "This hour so far"); } });
         }
         if (!document.getElementById("clModal")) {
             const m = document.createElement("div"); m.id = "clModal"; m.className = "cl-modal"; m.hidden = true; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-labelledby", "clTitle");
@@ -2228,8 +2243,11 @@ window.addEventListener("hashchange", dialFromHash);
                 <span><b>${t.total}</b> call${t.total === 1 ? "" : "s"} today</span><span><b>${st.hour}</b> this hour</span><span><b>${t.contacts}</b> spoke to</span><span><b>${t.appts}</b> appts</span><span><b>${dpa}</b> dials/appt</span>
                 ${w ? "" : `<span class="cl-warn">Not saving: sign in to the Academy on this computer</span>`}
             </div>
-            <div class="cl-actions"><button type="button" data-cl="undo" class="cl-undo" title="Remove the last call you logged">Undo</button><button type="button" data-cl="log" class="cl-log">Log call <kbd>L</kbd></button></div>`;
+            <div class="cl-clinic" id="clClinic"></div>
+            <div class="cl-actions"><button type="button" data-cl="recap" class="cl-undo" title="See this hour's numbers">Hour recap</button><button type="button" data-cl="undo" class="cl-undo" title="Remove the last call you logged">Undo</button><button type="button" data-cl="log" class="cl-log">Log call <kbd>L</kbd></button></div>`;
+        afterRender();
     }
+    function afterRender() { try { tickClinic(); } catch (e) {} }
     function modalHtml() {
         const step = st.modal.step, prompt = st.modal.after ? "Before the next lead: how did that call go?" : "How did the call go?";
         if (step === 1) return `<div class="cl-card"><div class="cl-eyebrow">${esc(leadName())}</div><h2 id="clTitle">${prompt}</h2><p>Did you talk to someone?</p>
@@ -2259,6 +2277,59 @@ window.addEventListener("hashchange", dialFromHash);
         if (["yes", "callback", "no"].includes(a)) { logCall(true, a); return closeModal(true); }
     }
 
+
+    /* ----- Call clinic schedule + hour recap (same hours as your Call Clinic) ----- */
+    const SCHEDULES = {
+        call: { name: "Call Clinic", startHour: 16, numBlocks: 5, days: [1, 4] },
+        early: { name: "Early Call Clinic", startHour: 11, numBlocks: 3, days: [2, 3, 5] }
+    };
+    const FLAGS = { minDials: 30, contactRateMin: 0.20, contactRateMinDials: 15, apptRateMin: 0.10, apptRateMinContacts: 5, lowContactSpokeMin: 3, lowContactDials: 20 };
+    const hl = h => (h % 12 || 12) + (h < 12 ? " AM" : " PM"), hm = (h, m) => (h % 12 || 12) + ":" + String(m).padStart(2, "0");
+    function nowC() { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map(x => [x.type, x.value])); return { wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday), h: +p.hour, m: +p.minute, s: +p.second, date: `${p.year}-${p.month}-${p.day}` }; }
+    function schedFor(wd) { return Object.values(SCHEDULES).find(x => x.days.includes(wd)) || null; }
+    function clinicState() {
+        const n = nowC(), sec = n.h * 3600 + n.m * 60 + n.s, sc = schedFor(n.wd);
+        if (sc) {
+            const start = sc.startHour * 3600, end = start + sc.numBlocks * 3600 - 600;
+            if (sec >= start && sec < end) {
+                const idx = Math.floor((sec - start) / 3600), into = (sec - start) % 3600, h = sc.startHour + idx;
+                if (into < 3000) return { phase: "block", sc, idx, hour: h, left: 3000 - into, label: `${sc.name} · Hour ${idx + 1} of ${sc.numBlocks} (${hm(h, 0)}–${hm(h, 50)} ${h < 12 ? "AM" : "PM"})` };
+                return { phase: "break", sc, idx, hour: h, left: 3600 - into, label: `${sc.name} · Break until ${hm(h + 1, 0)}` };
+            }
+            if (sec < start) return { phase: "before", label: `${sc.name} today at ${hl(sc.startHour)}`, left: start - sec };
+        }
+        for (let d = 1; d < 8; d++) { const s2 = schedFor((n.wd + d) % 7); if (s2) return { phase: "off", label: `Next: ${s2.name} ${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][(n.wd + d) % 7]} at ${hl(s2.startHour)}` }; }
+        return { phase: "off", label: "" };
+    }
+    const mmss = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    function hourTotals(h) { const b = (st.today.byHour || {})[h] || { t: 0, c: 0, a: 0 }; return { total: b.t, contacts: b.c, appts: b.a }; }
+    function flagsFor(t) {
+        const out = [], cr = t.total ? t.contacts / t.total : 0, ar = t.contacts ? t.appts / t.contacts : 0;
+        if (t.total < FLAGS.minDials) out.push({ title: `Low dial volume: ${t.total} dial${t.total === 1 ? "" : "s"}`, tip: `${FLAGS.minDials - t.total} short of the ${FLAGS.minDials}-per-hour target. Aim for one dial about every two minutes and cut the gap between calls.` });
+        if (t.total >= FLAGS.contactRateMinDials && cr < FLAGS.contactRateMin) out.push({ title: `Low contact rate: ${Math.round(cr * 100)}%`, tip: "Target is 20% of dials. Vary call times, double-check numbers, and leave a voicemail with a callback hook." });
+        else if (t.total >= FLAGS.lowContactDials && t.contacts < FLAGS.lowContactSpokeMin) out.push({ title: `Few contacts: only spoke to ${t.contacts}`, tip: "Lots of dials but no one answering. Try a different list or time window next hour." });
+        if (t.contacts >= FLAGS.apptRateMinContacts && ar < FLAGS.apptRateMin) out.push({ title: `Low close rate: ${Math.round(ar * 100)}% of contacts`, tip: "Target is 10%. Tighten the opener and ask for the appointment sooner. Most people warm up after the second ask." });
+        return out;
+    }
+    function goalFor(t) { return `Next hour goal: <b>${Math.max(FLAGS.minDials, t.total)} dials</b> · <b>${Math.max(FLAGS.lowContactSpokeMin, t.contacts + 1)} contacts</b> · <b>${t.appts + 1} appointment${t.appts + 1 === 1 ? "" : "s"}</b>`; }
+    function openRecap(hour, title) {
+        if (!ensure()) return;
+        const t = hourTotals(hour), f = flagsFor(t), m = document.getElementById("clModal");
+        st.modal = { step: 0, after: null, prev: document.activeElement, recap: true };
+        m.innerHTML = `<div class="cl-card"><div class="cl-eyebrow">Hour recap</div><h2 id="clTitle">${esc(title || hl(hour) + " hour")}</h2>
+            <div class="cl-recap"><div><b>${t.total}</b><span>Dials</span></div><div><b>${t.contacts}</b><span>Spoke to</span></div><div><b>${t.appts}</b><span>Appts</span></div><div><b>${t.appts ? (t.total / t.appts).toFixed(1) : "–"}</b><span>Dials/appt</span></div></div>
+            ${f.length ? f.map(x => `<div class="cl-flag"><b>${esc(x.title)}</b><span>${esc(x.tip)}</span></div>`).join("") : `<div class="cl-flag good"><b>Strong hour</b><span>You hit your numbers. Keep the same pace.</span></div>`}
+            <p class="cl-goal">${goalFor(t)}</p>
+            <div class="cl-foot"><button type="button" data-cla="cancel" class="cl-log" style="padding:10px 18px">Got it</button></div></div>`;
+        m.hidden = false; const b = m.querySelector("button"); if (b) b.focus();
+    }
+    function tickClinic() {
+        const el = document.getElementById("clClinic"); const c = clinicState();
+        if (el) el.innerHTML = c.label ? `<span class="cl-dot ${c.phase}"></span>${esc(c.label)}${c.phase === "block" || c.phase === "break" ? ` · <b>${mmss(c.left)}</b> left` : ""}` : "";
+        if (c.phase === "break") { const key = "glp_recap_" + nowC().date + "_" + c.hour; try { if (!localStorage.getItem(key) && !st.modal && document.getElementById("cm") && !document.getElementById("cm").hidden) { localStorage.setItem(key, "1"); openRecap(c.hour, `${c.sc.name}: Hour ${c.idx + 1} recap`); } } catch (e) {} }
+    }
+    setInterval(tickClinic, 1000);
+
     /* Hook the existing call flow */
     document.addEventListener("click", e => {
         const b = e.target.closest && e.target.closest("#cm [data-dial]"); if (!b) return;
@@ -2284,7 +2355,7 @@ window.addEventListener("hashchange", dialFromHash);
 
     function init() {
         if (!document.getElementById("cm")) { try { if (typeof cmBuild === "function") cmBuild(); } catch (e) {} }
-        render(); flush().then(refresh);
+        render(); tickClinic(); flush().then(refresh);
         window.addEventListener("online", () => flush().then(refresh));
         document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
     }
