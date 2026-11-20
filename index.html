@@ -1968,7 +1968,7 @@ function renderRail() {
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
   h += `<button class="navbtn main ${view.name === "help" ? "active" : ""}" data-go="help" type="button"><span class="badge">?</span><span>My team</span><span></span></button>`;
   }
-  h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
+  if (isManager()) h += `<button class="navbtn main ${view.name === "manager" ? "active" : ""}" data-go="manager" type="button"><span class="badge">◎</span><span>Manager view</span><span></span></button>`;
   const sections = [];
   MODULES.forEach((m, i) => { let g = sections[sections.length - 1]; if (!g || g.name !== m.section) { g = { name: m.section, items: [] }; sections.push(g); } g.items.push([m, i]); });
   const curId = inLesson ? view.id : next.id;
@@ -2038,7 +2038,6 @@ function signInView() {
       <input type="text" id="nameInput" placeholder="e.g. Jordan Williams" autocomplete="name">
       <div><button class="btn" id="startBtn" type="button">Start the course</button></div>
     </div>
-    <p class="small">Manager? <button class="linkbtn" data-go="manager" type="button">Open the manager view</button></p>
   </div>`;
 }
 function bindSignIn() {
@@ -2141,7 +2140,7 @@ function launchView() {
       <div class="lp-who">${esc(store.name)} · <button class="linkbtn" id="switchUser" type="button">Change</button></div></div>
     <div class="lp-body"><div class="eyebrow">${cert ? "Certified agent" : "Welcome"}</div><h1>${greet}, ${first}. Where are we headed?</h1>
       <div class="lp-grid">${cert ? live + training : training + live}</div>
-      <div class="lp-links">${cert ? `<button class="linkbtn" data-go="numbers" type="button">My numbers</button><button class="linkbtn" data-go="standings" type="button">Standings</button><button class="linkbtn" data-go="docs" type="button">Documents</button>` : ""}<button class="linkbtn" data-go="help" type="button">My team</button><button class="linkbtn" data-go="manager" type="button">Manager view</button></div>
+      <div class="lp-links">${cert ? `<button class="linkbtn" data-go="numbers" type="button">My numbers</button><button class="linkbtn" data-go="standings" type="button">Standings</button><button class="linkbtn" data-go="docs" type="button">Documents</button>` : ""}<button class="linkbtn" data-go="help" type="button">My team</button>${isManager() ? `<button class="linkbtn" data-go="manager" type="button">Manager view</button>` : ""}</div>
     </div></div>`;
 }
 function homeView() {
