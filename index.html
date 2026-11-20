@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Virtual Presentation Academy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -667,6 +667,66 @@ tr.me-row td { background: var(--accent-soft); }
 .todo .btn.small { color: var(--on-accent); }
 .todo .btn.small.secondary { color: var(--accent); }
 .todo .box.ic { border: 0; background: var(--accent-soft); color: var(--accent); font-size: 12px; width: 28px; height: 28px; border-radius: 8px; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 900px) {
+  html, body { height: 100%; height: 100dvh; }
+  .app { height: 100%; height: 100dvh; }
+  .rail { max-height: none; position: relative; z-index: 30; }
+  .brand { padding: 10px 14px 8px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; }
+  .brandrow { gap: 10px; min-width: 0; }
+  .brandrow .logo { width: 28px; height: 28px; }
+  .brand .name { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .sub { display: none; }
+  .brand .progress { grid-column: 1 / -1; margin-top: 8px; }
+  .brand .progress-label { grid-column: 1 / -1; display: none; }
+  .rail.open .brand .progress-label { display: block; }
+  .menu-toggle { margin-top: 0; min-height: 40px; padding: 0 14px; gap: 6px; }
+  .rail .who { display: none; }
+  .rail.open .who { display: flex; }
+  .rail.open nav { max-height: calc(100dvh - 150px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .rail.open { box-shadow: 0 12px 30px rgba(15, 27, 45, .18); }
+  .navbtn { min-height: 44px; }
+  /* iPhone zooms in on any form box under 16px */
+  input, select, textarea, .rf-field input, .refact-form input { font-size: 16px !important; }
+  .btn, .chip, .linkbtn { min-height: 40px; }
+  .btn.small { min-height: 38px; }
+  .page, .page.wide { padding: 18px 14px 72px; }
+  h1 { font-size: 28px; line-height: 1.15; }
+  .card { padding: 18px 16px; }
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row { flex-wrap: wrap; }
+  table { font-size: 14px; }
+  .table-wrap, .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  img { max-width: 100%; height: auto; }
+  /* waiting room */
+  .lobby-card { padding: 18px 16px; }
+  .lobby-card h2 { font-size: 22px; }
+  .lobby-tile { aspect-ratio: 16 / 9; }
+  .lobby-shade { place-items: start center; padding-top: 10px; }
+  .lobby-shade { font-size: 12px; }
+  .lobby-tile:not(.phone) .lobby-shade { align-content: start; }
+  .lobby-tile.phone { aspect-ratio: auto; min-height: 110px; }
+  .lobby-tile.phone .lobby-shade { place-items: center; padding: 14px; text-align: center; }
+  /* call */
+  .mtop { padding: 8px 12px; font-size: 13px; }
+  .mbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 4px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  .mgroup { display: contents; }
+  .mbtn { min-width: 0; min-height: 50px; padding: 4px 2px; font-size: 11px; }
+  .mbtn.end { min-height: 50px; }
+  .menu-toggle { grid-row: 1; grid-column: 2; }
+  .self-float .tname { display: none; }
+  .mbody { overflow: hidden; }
+  .stage.sharing .share-wrap { min-height: 0; justify-content: flex-start; }
+  .stage.sharing:has(.rp-slide-refs) .strip { display: none; }
+  .stage.sharing:has(.rp-slide-refs) { padding: 6px; }
+  .self-float { width: 88px; }
+}
+@media (max-width: 420px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .lobby-grid { grid-template-columns: 1fr; }
+  .dash-head .row .btn, .lp-card .btn { width: 100%; justify-content: center; }
+}
 </style>
 </head>
 <body>
@@ -677,7 +737,7 @@ tr.me-row td { background: var(--accent-soft); }
       <div class="sub">New agent certification</div></div></div>
       <div class="progress"><div id="progFill" style="width:0%"></div></div>
       <div class="progress-label" id="progLabel"></div>
-      <button class="btn small secondary menu-toggle" id="menuToggle" type="button">Menu</button>
+      <button class="btn small secondary menu-toggle" id="menuToggle" type="button" aria-controls="nav" aria-expanded="false">☰ Menu</button>
     </div>
     <nav id="nav" aria-label="Course modules"></nav>
     <div class="who"><span id="whoName">Not signed in</span><button class="linkbtn" id="switchUser" type="button">Change</button></div>
@@ -4177,7 +4237,8 @@ document.addEventListener("click", e => {
   const tt = e.target.closest("[data-tool]"); if (tt) { openTool(/^\d+$/.test(tt.dataset.tool) ? +tt.dataset.tool : tt.dataset.tool); return; }
   const t = e.target.closest("[data-go],[data-q],[data-fam],[data-open],[data-exam],[data-pformat],#submitQuiz,#copyResult,#switchUser,#menuToggle,#checkDrill,#retryDrill");
   if (!t) return;
-  if (t.id === "menuToggle") { const r = $("#rail"); r.classList.toggle("open"); t.textContent = r.classList.contains("open") ? "Close menu" : "Menu"; return; }
+  if (t.id === "menuToggle") { const r = $("#rail"); r.classList.toggle("open"); t.textContent = r.classList.contains("open") ? "✕ Close" : "☰ Menu"; t.setAttribute("aria-expanded", r.classList.contains("open")); return; }
+  if (t.closest("#nav") && $("#rail").classList.contains("open")) { $("#rail").classList.remove("open"); const mt = $("#menuToggle"); if (mt) { mt.textContent = "☰ Menu"; mt.setAttribute("aria-expanded", "false"); } }
   if (t.id === "switchUser") { confirmModal("Change name?", "Progress is saved in this browser under the current name. Changing the name keeps the progress but relabels it.", "Change name", () => { store.name = ""; save(); render(); }); return; }
   if (t.dataset.go) {
     if (view.name === "call" && rp && !rp.ended) { confirmModal("Leave the call?", "Leaving now abandons this call without a grade.", "Leave call", () => { stopLive(); rp = null; view = { name: t.dataset.go, id: t.dataset.id }; render(); }); return; }
