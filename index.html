@@ -578,6 +578,32 @@ tr.me-row td { background: var(--accent-soft); }
 .sched-block th { background: var(--accent-soft); color: var(--accent); text-align: left; font-size: 13px; letter-spacing: .04em; padding: 8px 10px; }
 .date-in { font: inherit; border: 2px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--surface); color: var(--ink); }
 @media print { .rail, .dash-head .row, #schedMsg, #f25Msg { display: none !important; } main { padding: 0 !important; background: #fff !important; } .card { box-shadow: none !important; border: 1px solid #ccc !important; } }
+.app.launch-mode { grid-template-columns: 1fr; }
+.app.launch-mode .rail { display: none; }
+.app.launch-mode main { background-image: none; }
+.lp { min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+.lp-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 28px; background: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.lp-brand { display: flex; align-items: center; gap: 12px; }
+.lp-brand b { display: block; font-size: 16px; }
+.lp-brand span { display: block; font-size: 13px; color: var(--muted); }
+.lp-who { font-size: 14px; color: var(--muted); }
+.lp-body { width: 100%; max-width: 1040px; margin: 0 auto; padding: 56px 24px; }
+.lp-body h1 { font-size: 34px; margin: 6px 0 28px; }
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.lp-card { display: flex; flex-direction: column; gap: 10px; padding: 28px; border-radius: 16px; background: #fff; border: 2px solid var(--line); text-decoration: none; color: var(--ink); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.lp-card:hover { border-color: var(--accent); box-shadow: 0 10px 28px rgba(15,27,45,.08); }
+.lp-card.primary { border-color: var(--accent); background: var(--accent-soft); }
+.lp-ic { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-size: 26px; background: #fff; border: 1px solid var(--line); }
+.lp-tag { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--good); }
+.lp-card b { font-size: 24px; }
+.lp-card > span { font-size: 15px; line-height: 1.55; color: var(--muted); }
+.lp-card .lp-go { margin-top: auto; padding-top: 6px; font-weight: 700; color: var(--accent); font-size: 16px; }
+.lp-mini { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; color: var(--muted) !important; }
+.lp-mini b { color: var(--ink); font-size: 18px; }
+.lp-bar { height: 8px; background: #fff; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.lp-bar span { display: block; height: 100%; background: var(--good); }
+.lp-links { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 26px; }
+@media (max-width: 600px) { .lp-body { padding: 32px 16px; } .lp-body h1 { font-size: 26px; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .todo .btn.small { color: var(--on-accent); }
 .todo .btn.small.secondary { color: var(--accent); }
@@ -1488,6 +1514,7 @@ function notify(event, data) {
 }
 
 let view = { name: "home" };
+try { if (JSON.parse(localStorage.getItem("vpa_v2") || "{}").name && !location.hash && !/[?&]invite=/.test(location.search)) view = { name: "launch" }; } catch (e) {}
 let rp = null; // active role-play
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -1922,11 +1949,11 @@ function renderRail() {
   const inLesson = ["module", "quiz", "drill"].includes(view.name);
   const callsTotal = store.callCount || store.attempts.length;
   const cert = certified();
-  let h = "";
+  let h = `<button class="navbtn main" data-go="launch" type="button"><span class="badge">⌂</span><span>Home</span><span></span></button>`;
   if (cert) {
-    h += `<button class="navbtn main ${view.name === "home" && !view.academy ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Workspace</span><span></span></button>`;
-    h += `<a class="navbtn main" href="${TOOL_URL}#dial" target="_blank" rel="noopener"><span class="badge">📞</span><span>Make a call</span><span class="count">↗</span></a>`;
-    h += `<a class="navbtn main" href="${TOOL_URL}#present" target="_blank" rel="noopener"><span class="badge">◫</span><span>Presentation</span><span class="count">↗</span></a>`;
+    h += `<button class="navbtn main ${view.name === "home" && !view.academy ? "active" : ""}" data-go="home" type="button"><span class="badge">▦</span><span>Workspace</span><span></span></button>`;
+    h += `<a class="navbtn main" href="${TOOL_URL}#dial"><span class="badge">📞</span><span>Make a call</span><span class="count">→</span></a>`;
+    h += `<a class="navbtn main" href="${TOOL_URL}#present"><span class="badge">◫</span><span>Presentation</span><span class="count">→</span></a>`;
     h += `<button class="navbtn main ${view.name === "numbers" ? "active" : ""}" data-go="numbers" type="button"><span class="badge">#</span><span>My numbers</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "standings" ? "active" : ""}" data-go="standings" type="button"><span class="badge">🏆</span><span>Standings</span><span></span></button>`;
     h += `<button class="navbtn main ${["docs", "first25", "sched"].includes(view.name) ? "active" : ""}" data-go="docs" type="button"><span class="badge">📄</span><span>Documents</span><span></span></button>`;
@@ -1935,7 +1962,7 @@ function renderRail() {
     h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>Practice results</span><span></span></button>`;
     h += `<button class="navbtn main ${view.name === "home" && view.academy ? "active" : ""}" data-go="home" data-academy="1" type="button"><span class="badge">★</span><span>Academy dashboard</span><span></span></button>`;
   } else
-  h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">⌂</span><span>Dashboard</span><span></span></button>`;
+  h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">▦</span><span>Dashboard</span><span></span></button>`;
   h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></button>`;
   h += `<button class="navbtn main ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button"><span class="badge">▶</span><span>Practice calls</span><span class="count">${callsTotal || ""}</span></button>`;
   if (!cert) h += `<button class="navbtn main" data-tool="0" type="button"><span class="badge">◫</span><span>Presentation tool</span><span></span></button>`;
@@ -1977,11 +2004,13 @@ function renderRail() {
    ========================================================= */
 function render() {
   document.querySelector(".app").classList.toggle("in-call", view.name === "call");
+  document.querySelector(".app").classList.toggle("launch-mode", view.name === "launch" && !!store.name);
   renderRail();
   const main = $("#main");
   if (view.name === "cast") { main.innerHTML = castView(); bindCast(); return; }
   if (view.name === "manager") { main.innerHTML = managerView(); afterManagerRender(); main.scrollTop = 0; return; }
   if (!store.name) { main.innerHTML = signInView(); bindSignIn(); return; }
+  if (view.name === "launch") { main.innerHTML = launchView(); main.scrollTop = 0; return; }
   if (view.name === "home") main.innerHTML = homeView();
   else if (view.name === "module") main.innerHTML = moduleView(view.id);
   else if (view.name === "quiz") main.innerHTML = quizView(view.id);
@@ -2075,7 +2104,7 @@ function workspaceView() {
   const ap = appts();
   
     const cOn = certifiedOn();
-  const tile = (href, ic, title, body, cls) => `<a class="ws-tile ${cls || ""}" href="${href}" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${body}</span><span class="go">Open full screen ↗</span></a>`;
+  const tile = (href, ic, title, body, cls) => `<a class="ws-tile ${cls || ""}" href="${href}"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${body}</span><span class="go">Open full screen →</span></a>`;
   return `<div class="page wide">
     <div class="dash-head"><div><div class="eyebrow">Certified agent</div><h1>${greet}, ${first}</h1><p class="small" style="font-size:15px">${cOn ? "Certified " + cOn.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) + " · " : ""}Your call tools are below. The Academy is always here when you want a refresher.</p></div></div>
     <div class="ws-grid">
@@ -2093,6 +2122,22 @@ function workspaceView() {
     </div>
     ${store.attempts.length ? `<div class="card"><h2>Last practice call</h2>${coachNotes()}</div>` : ""}
   </div>`;
+}
+function launchView() {
+  const first = esc(store.name.split(" ")[0]), cert = certified(), n = passedCount();
+  const hr = new Date().getHours(), greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+  let today = "";
+  if (cert) { if (!callsData) loadCalls(); else { const t = sumDays(callsData.days, rangeDatesC("today")); today = `<div class="lp-mini"><span><b>${t.total}</b> calls</span><span><b>${t.contacts}</b> spoke to</span><span><b>${t.appts}</b> appts</span><span class="small">today</span></div>`; } }
+  const next = MODULES.find(m => !moduleDone(m.id));
+  const clinic = `<a class="lp-card ${cert ? "primary" : ""}" href="${TOOL_URL}"><span class="lp-ic" aria-hidden="true">📞</span><span class="lp-tag">${cert ? "Your daily tools" : "Practice with it as you learn"}</span><b>Call Clinic &amp; Presentation</b><span>Dial your leads with the scripts and rebuttals, log every call, and present by phone or Zoom. Opens full screen.</span>${today}<span class="lp-go">Open full screen →</span></a>`;
+  const academy = `<button class="lp-card ${cert ? "" : "primary"}" type="button" data-go="home" style="font:inherit;text-align:left"><span class="lp-ic" aria-hidden="true">🎓</span><span class="lp-tag">${cert ? "Certified · train any time" : `${n} of ${MODULES.length} lessons passed`}</span><b>Training Academy</b><span>${cert ? "Go back to any lesson, refresh a rebuttal, or practice a call with an AI family." : "Lessons, quizzes and practice calls with AI families, ending in your certification exams."}</span>${!cert ? `<span class="lp-bar"><span style="width:${Math.round(n / MODULES.length * 100)}%"></span></span>` : ""}<span class="lp-go">${cert ? "Open the Academy →" : next ? "Continue: " + esc(next.title) + " →" : "Open the Academy →"}</span></button>`;
+  return `<div class="lp">
+    <div class="lp-top"><div class="lp-brand"><img src="${ASSET_BASE}globe.png" alt="" width="34" height="34"><div><b>Virtual Presentation Academy</b><span>Carter Agencies · Globe Life Liberty National Division</span></div></div>
+      <div class="lp-who">${esc(store.name)} · <button class="linkbtn" id="switchUser" type="button">Change</button></div></div>
+    <div class="lp-body"><div class="eyebrow">${cert ? "Certified agent" : "Welcome back"}</div><h1>${greet}, ${first}. Where are we headed?</h1>
+      <div class="lp-grid">${cert ? clinic + academy : academy + clinic}</div>
+      <div class="lp-links">${cert ? `<button class="linkbtn" data-go="numbers" type="button">My numbers</button><button class="linkbtn" data-go="standings" type="button">Standings</button>` : ""}<button class="linkbtn" data-go="docs" type="button">Documents</button><button class="linkbtn" data-go="help" type="button">My team</button><button class="linkbtn" data-go="manager" type="button">Manager view</button></div>
+    </div></div>`;
 }
 function homeView() {
   if (certified() && !view.academy) return workspaceView();
@@ -3646,7 +3691,7 @@ async function loadCalls(force) {
   callsLoading = true;
   try { const r = await fetch("/api/calls/me?uid=" + encodeURIComponent(store.uid)); if (r.ok) callsData = await r.json(); } catch (e) {}
   callsLoading = false;
-  if (["home", "numbers"].includes(view.name)) render();
+  if (["home", "numbers", "launch"].includes(view.name)) render();
 }
 async function loadBoard(range, force) {
   if (!SYNC_ON || (boardData[range] && !force)) return;
@@ -3674,7 +3719,7 @@ function numbersView() {
   if (numRange === "today") second = `<h2>By hour</h2>${breakdownTable(Object.entries(t.byHour).sort((a, b) => a[0] - b[0]).map(([h, v]) => [hourLabel(h), v]), "Hour")}`;
   else { const dayRows = Object.entries(callsData.days).filter(([d, x]) => (!dates || dates.includes(d)) && x.total).sort((a, b) => b[0].localeCompare(a[0])).map(([d, x]) => [new Date(d + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }), { t: x.total, c: x.contacts, a: x.appts }]); second = `<h2>Days worked: ${t.sessions}</h2>${breakdownTable(dayRows, "Day")}`; }
   return `<div class="page wide"><div class="dash-head"><div><div class="eyebrow">Performance</div><h1>My numbers</h1><p class="small" style="font-size:15px">Every call you log on the Make a call screen adds up here.</p></div>
-    <div class="row"><button class="btn secondary" id="numCopy" type="button">Copy summary</button><button class="btn secondary" id="numCsv" type="button">Download CSV</button><a class="btn" href="${TOOL_URL}#dial" target="_blank" rel="noopener">Make a call ↗</a></div></div>
+    <div class="row"><button class="btn secondary" id="numCopy" type="button">Copy summary</button><button class="btn secondary" id="numCsv" type="button">Download CSV</button><a class="btn" href="${TOOL_URL}#dial">Make a call →</a></div></div>
     <div class="row" role="tablist" aria-label="Date range">${[["today", "Today"], ["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, l]) => `<button class="chip ${numRange === k ? "on" : ""}" role="tab" aria-selected="${numRange === k}" data-nrange="${k}" type="button">${l}</button>`).join("")}<span class="small" id="numMsg" role="status"></span></div>
     ${statCards(t, label)}
     <div class="dash-grid"><div class="card">${second}</div><div class="card"><h2>By lead type</h2>${breakdownTable(leadRows, "Lead type")}</div></div>

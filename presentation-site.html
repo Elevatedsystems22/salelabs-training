@@ -1052,6 +1052,10 @@ html.framed .globe-life-presentation .presentation-container { height: calc(100v
   .glp-landing h1 { font-size: 27px; }
 }
 
+.globe-life-presentation .glp-home { order: -3; font-weight: 700; font-size: 14px; color: var(--accent); text-decoration: none; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; white-space: nowrap; }
+.globe-life-presentation .glp-home:hover { background: var(--accent-soft); }
+html.framed .globe-life-presentation .glp-home { display: none; }
+
 /* ===== Call tracking strip + log window ===== */
 .cl-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 18px; background: #eef5fd; border-bottom: 1px solid #d3e3f5; font-family: "Inter", system-ui, sans-serif; }
 .cl-stats { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13.5px; color: #3f5470; }
@@ -1099,6 +1103,7 @@ html.framed .globe-life-presentation .presentation-container { height: calc(100v
     <div class="globe-life-presentation" id="glp">
         <!-- Start Button -->
         <div class="glp-topbar">
+            <a class="glp-home" href="index.html" aria-label="Back to home">← Home</a>
             <div class="glp-brand"><img src="globe.png" alt=""><div><b>Presentation tool</b><span>Virtual Presentation Academy</span></div></div>
             <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
         </div>
@@ -2226,7 +2231,7 @@ window.addEventListener("hashchange", dialFromHash);
         if (!document.getElementById("clStrip")) {
             const s = document.createElement("div"); s.id = "clStrip"; s.className = "cl-strip";
             const top = cm.querySelector(".cm-top"); if (top) top.after(s); else cm.prepend(s);
-            s.addEventListener("click", e => { const b = e.target.closest("[data-cl]"); if (!b) return; if (b.dataset.cl === "log") openModal(); if (b.dataset.cl === "undo") undo(); if (b.dataset.cl === "recap") { const c = clinicState(); openRecap(c.hour != null ? c.hour : chHour(), c.phase === "block" ? `${c.sc.name}: Hour ${c.idx + 1} so far` : "This hour so far"); } });
+            s.addEventListener("click", e => { const b = e.target.closest("[data-cl]"); if (!b) return; if (b.dataset.cl === "log") openModal(); if (b.dataset.cl === "undo") undo(); if (b.dataset.cl === "recap") { const c = clinicState(); openRecap(c.hour, "This hour so far"); } });
         }
         if (!document.getElementById("clModal")) {
             const m = document.createElement("div"); m.id = "clModal"; m.className = "cl-modal"; m.hidden = true; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-labelledby", "clTitle");
@@ -2278,28 +2283,13 @@ window.addEventListener("hashchange", dialFromHash);
     }
 
 
-    /* ----- Call clinic schedule + hour recap (same hours as your Call Clinic) ----- */
-    const SCHEDULES = {
-        call: { name: "Call Clinic", startHour: 16, numBlocks: 5, days: [1, 4] },
-        early: { name: "Early Call Clinic", startHour: 11, numBlocks: 3, days: [2, 3, 5] }
-    };
+    /* ----- Hourly tracking + hour recap (any time of day) ----- */
     const FLAGS = { minDials: 30, contactRateMin: 0.20, contactRateMinDials: 15, apptRateMin: 0.10, apptRateMinContacts: 5, lowContactSpokeMin: 3, lowContactDials: 20 };
     const hl = h => (h % 12 || 12) + (h < 12 ? " AM" : " PM"), hm = (h, m) => (h % 12 || 12) + ":" + String(m).padStart(2, "0");
     function nowC() { const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map(x => [x.type, x.value])); return { wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday), h: +p.hour, m: +p.minute, s: +p.second, date: `${p.year}-${p.month}-${p.day}` }; }
-    function schedFor(wd) { return Object.values(SCHEDULES).find(x => x.days.includes(wd)) || null; }
     function clinicState() {
-        const n = nowC(), sec = n.h * 3600 + n.m * 60 + n.s, sc = schedFor(n.wd);
-        if (sc) {
-            const start = sc.startHour * 3600, end = start + sc.numBlocks * 3600 - 600;
-            if (sec >= start && sec < end) {
-                const idx = Math.floor((sec - start) / 3600), into = (sec - start) % 3600, h = sc.startHour + idx;
-                if (into < 3000) return { phase: "block", sc, idx, hour: h, left: 3000 - into, label: `${sc.name} · Hour ${idx + 1} of ${sc.numBlocks} (${hm(h, 0)}–${hm(h, 50)} ${h < 12 ? "AM" : "PM"})` };
-                return { phase: "break", sc, idx, hour: h, left: 3600 - into, label: `${sc.name} · Break until ${hm(h + 1, 0)}` };
-            }
-            if (sec < start) return { phase: "before", label: `${sc.name} today at ${hl(sc.startHour)}`, left: start - sec };
-        }
-        for (let d = 1; d < 8; d++) { const s2 = schedFor((n.wd + d) % 7); if (s2) return { phase: "off", label: `Next: ${s2.name} ${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][(n.wd + d) % 7]} at ${hl(s2.startHour)}` }; }
-        return { phase: "off", label: "" };
+        const n = nowC(), left = 3600 - (n.m * 60 + n.s), nh = (n.h + 1) % 24;
+        return { phase: "block", hour: n.h, left, label: `This hour: ${hl(n.h).replace(" ", "")}–${hl(nh).replace(" ", "")}` };
     }
     const mmss = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
     function hourTotals(h) { const b = (st.today.byHour || {})[h] || { t: 0, c: 0, a: 0 }; return { total: b.t, contacts: b.c, appts: b.a }; }
@@ -2323,10 +2313,15 @@ window.addEventListener("hashchange", dialFromHash);
             <div class="cl-foot"><button type="button" data-cla="cancel" class="cl-log" style="padding:10px 18px">Got it</button></div></div>`;
         m.hidden = false; const b = m.querySelector("button"); if (b) b.focus();
     }
+    let lastHour = null;
     function tickClinic() {
         const el = document.getElementById("clClinic"); const c = clinicState();
-        if (el) el.innerHTML = c.label ? `<span class="cl-dot ${c.phase}"></span>${esc(c.label)}${c.phase === "block" || c.phase === "break" ? ` · <b>${mmss(c.left)}</b> left` : ""}` : "";
-        if (c.phase === "break") { const key = "glp_recap_" + nowC().date + "_" + c.hour; try { if (!localStorage.getItem(key) && !st.modal && document.getElementById("cm") && !document.getElementById("cm").hidden) { localStorage.setItem(key, "1"); openRecap(c.hour, `${c.sc.name}: Hour ${c.idx + 1} recap`); } } catch (e) {} }
+        if (el) el.innerHTML = `<span class="cl-dot block"></span>${esc(c.label)} · <b>${mmss(c.left)}</b> left`;
+        if (lastHour !== null && lastHour !== c.hour) {
+            const prev = lastHour, key = "glp_recap_" + nowC().date + "_" + prev;
+            try { if (hourTotals(prev).total > 0 && !localStorage.getItem(key) && !st.modal && document.getElementById("cm") && !document.getElementById("cm").hidden) { localStorage.setItem(key, "1"); openRecap(prev, `${hl(prev)} hour recap`); } } catch (e) {}
+        }
+        lastHour = c.hour;
     }
     setInterval(tickClinic, 1000);
 
