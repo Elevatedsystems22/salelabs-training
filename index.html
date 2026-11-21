@@ -2141,8 +2141,21 @@ function progressSnapshot() {
     weak: weakestSkill(), examTele: examPassed("tele"), examZoom: examPassed("zoom"), certified: certified(),
     next: next ? next.title : "",
     invite: store.invite ? store.invite.token : "",
+    rp: rpSnapshot(),
     lastCall: last ? { family: last.family, format: last.format, total: last.total, pass: last.pass, date: last.date, summary: last.summary } : null
   };
+}
+// Role-play summary for managers: how many passed, the latest one, and the reading habit to work on.
+function rpSnapshot() {
+  const all = store.roleplay || {}, ids = Object.keys(ROLEPLAYS), done = ids.filter(id => all[id]);
+  if (!done.length) return { passed: 0, total: ids.length };
+  const lasts = done.map(id => Object.assign({ id }, all[id].last || {})).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
+  const avg = k => { const xs = lasts.map(x => x[k]).filter(v => typeof v === "number"); return xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null; };
+  const acc = avg("acc"), wpm = avg("wpm"), flow = avg("flow"), variety = avg("variety");
+  const weak = acc != null && acc < 85 ? "Skips words" : wpm != null && wpm > 175 ? "Talks too fast" : flow != null && flow < 80 ? "Stalls mid-sentence" : variety != null && variety < 60 ? "Monotone" : wpm != null && wpm < 130 ? "Reads too slowly" : "";
+  const l = lasts[0];
+  return { passed: ids.filter(id => all[id] && all[id].pass).length, total: ids.length, tries: done.reduce((n, id) => n + (all[id].tries || 0), 0), acc, wpm, weak,
+    last: { title: modTitle(l.id), score: l.overall || 0, pass: !!(all[l.id] && all[l.id].pass), at: l.at || "" } };
 }
 let syncTimer = null;
 function scheduleSync() {
@@ -4269,15 +4282,17 @@ function traineesTab() {
     </div>
     <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
   if (!rows.length && !notStarted.length) h += `<div class="card"><h2>Invite your first agent</h2><p>Trainees show up here after they open their invite link or sign in on your site.</p><div><button class="btn" data-mtab="invite" type="button">Invite an agent</button></div></div>`;
-  else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
+  else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Role-plays</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
       <td><b>${esc(r.name)}</b>${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
       <td>${r.inv ? esc(mName(r.inv.managerId)) : "–"}</td>
       <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
-      <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td><td>${esc(r.weak || "–")}</td>
+      <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td>
+      <td>${r.rp && r.rp.tries ? `<b>${r.rp.passed}/${r.rp.total}</b> passed<div class="small">Last: ${esc(r.rp.last.title)} · ${r.rp.last.score}${r.rp.wpm ? ` · ${r.rp.wpm} wpm` : ""}</div>${r.rp.weak ? `<div class="small" style="color:var(--warn)">${esc(r.rp.weak)}</div>` : ""}` : "–"}</td>
+      <td>${esc(r.weak || "–")}</td>
       <td>${r.lastCall ? `${esc(r.lastCall.family)} · ${fmtLabel(r.lastCall.format)} · <b>${r.lastCall.total}</b> <span class="pill ${r.lastCall.pass ? "pass" : "fail"}">${r.lastCall.pass ? "Pass" : "No pass"}</span>` : "–"}</td>
       <td>${esc(ago(r.lastActive || r.savedAt))}</td><td><span class="status ${r.st[1]}">${r.st[0]}</span></td>
       <td><button class="linkbtn" data-mremove="${esc(r.uid)}" data-mname="${esc(r.name)}" type="button">Remove</button></td></tr>`).join("")}
-      ${mgr.filter === "all" || mgr.filter === "help" ? notStarted.map(i => `<tr><td><b>${esc(i.first)} ${esc(i.last)}</b>${i.phone ? `<div class="small"><a href="${telHref(i.phone)}">${esc(i.phone)}</a></div>` : ""}</td><td>${esc(mName(i.managerId))}</td><td colspan="6" class="small">Invited ${esc(ago(i.createdAt))}. Hasn't opened the link yet.</td><td><span class="status behind">Not started</span></td><td><button class="linkbtn" data-icopy="${esc(i.token)}" type="button">Copy link</button><span class="small" data-icopied="${esc(i.token)}" role="status"></span></td></tr>`).join("") : ""}
+      ${mgr.filter === "all" || mgr.filter === "help" ? notStarted.map(i => `<tr><td><b>${esc(i.first)} ${esc(i.last)}</b>${i.phone ? `<div class="small"><a href="${telHref(i.phone)}">${esc(i.phone)}</a></div>` : ""}</td><td>${esc(mName(i.managerId))}</td><td colspan="7" class="small">Invited ${esc(ago(i.createdAt))}. Hasn't opened the link yet.</td><td><span class="status behind">Not started</span></td><td><button class="linkbtn" data-icopy="${esc(i.token)}" type="button">Copy link</button><span class="small" data-icopied="${esc(i.token)}" role="status"></span></td></tr>`).join("") : ""}
       </tbody></table></div>`;
   if (topWeak && topWeak[1] >= 2) h += `<div class="note w"><b>Team pattern</b>${topWeak[1]} of ${rows.length} trainees are weakest at ${esc(topWeak[0])}. Worth a group role-play on it.</div>`;
   return h;

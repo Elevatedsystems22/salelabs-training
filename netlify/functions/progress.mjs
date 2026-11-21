@@ -30,6 +30,11 @@ function clean(s) {
     certified: !!s.certified,
     next: str(s.next, 80),
     invite: /^[A-Za-z0-9_-]{8,64}$/.test(String(s.invite || "")) ? s.invite : "",
+    rp: s.rp && typeof s.rp === "object" ? {
+      passed: num(s.rp.passed, 0, 100), total: num(s.rp.total, 0, 100), tries: num(s.rp.tries, 0, 100000), acc: s.rp.acc == null ? null : num(s.rp.acc, 0, 100),
+      wpm: s.rp.wpm == null ? null : num(s.rp.wpm, 0, 2000), weak: str(s.rp.weak, 40),
+      last: s.rp.last && typeof s.rp.last === "object" ? { title: str(s.rp.last.title, 80), score: num(s.rp.last.score, 0, 100), pass: !!s.rp.last.pass, at: str(s.rp.last.at, 40) } : null
+    } : null,
     lastCall: s.lastCall && typeof s.lastCall === "object" ? {
       family: str(s.lastCall.family, 60), format: str(s.lastCall.format, 20), total: num(s.lastCall.total, 0, 100),
       pass: !!s.lastCall.pass, date: str(s.lastCall.date, 40), summary: str(s.lastCall.summary, 400)
