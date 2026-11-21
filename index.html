@@ -650,6 +650,24 @@ tr.me-row td { background: var(--accent-soft); }
 .slide.rp-slide-refs { aspect-ratio: auto; flex: 1; min-height: 0; overflow-y: auto; max-height: 100%; align-items: stretch !important; justify-content: flex-start !important; text-align: left !important; padding: 16px !important; }
 .rp-slide-refs .rf-group { background: #f3f6fa; } .rp-slide-refs { --bg: #f3f6fa; --surface: #fff; --ink: #0f1b2d; --line: #dde3ec; --accent: #0b4fb3; color: #0f1b2d; background: #fff; }
 @media (max-width: 760px) { .rf-top, .rf-notes { grid-template-columns: 1fr; } }
+.rp-page { max-width: 860px; }
+.rp-crit { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.rp-crit div { background: var(--bg); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.rp-crit b { font-size: 14px; } .rp-crit span { font-size: 12.5px; color: var(--muted); }
+.rp-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--muted); font-weight: 600; margin: 8px 0 6px; }
+.rp-bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 14px; } .rp-bar span { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.rp-prompter { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 340px; }
+.rp-l { margin: 0; font-size: 15px; color: var(--muted); opacity: .75; line-height: 1.5; }
+.rp-l.them b, .rp-cur.them b { color: var(--accent); }
+.rp-l.cue, .rp-cur.cue { font-style: italic; color: #7a5200; }
+.rp-now { border-left: 4px solid var(--accent); padding: 10px 14px; background: var(--accent-soft, #e9f1fc); border-radius: 0 12px 12px 0; }
+.rp-now.lead { border-left-color: #8a96a8; background: var(--bg); } .rp-now.cue { border-left-color: #d9962b; background: #fff6e5; }
+.rp-cur { margin: 0; font-size: 22px; line-height: 1.55; color: var(--ink); font-weight: 500; }
+.rp-cur.me span { color: var(--ink); transition: color .15s; } .rp-cur.me span.said { color: #8a96a8; }
+.rp-status { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; color: var(--muted); font-weight: 600; }
+.rp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); } .rp-dot.on { background: #d93636; box-shadow: 0 0 0 4px rgba(217, 54, 54, .18); }
+.rp-fix { border-top: 1px solid var(--line); padding: 10px 0; } .rp-fix ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; }
+@media (max-width: 900px) { .rp-crit { grid-template-columns: 1fr 1fr; } .rp-cur { font-size: 19px; } .rp-prompter { padding: 14px; min-height: 280px; } }
 .vrow-fam { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
 .vrow { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .vrow select { min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
@@ -1353,6 +1371,421 @@ const MODULES = [
 const PASS_QUIZ = 80;
 const QUIZ_DRAW = 5;
 const DRILLS = {}; MODULES.forEach(m => { if (m.drill) DRILLS[m.id] = m.drill; });
+/* =========================================================
+   SCRIPT ROLE-PLAYS
+   The agent reads the script out loud like a teleprompter while a lead answers with scripted lines
+   (spoken with the ElevenLabs voice when it's connected). Graded on reading skill:
+   accuracy to the script, pace, flow (stalls), dead air and vocal variety (pitch movement).
+   Every role-play starts at the top of its track and runs through the newest lesson.
+   ========================================================= */
+const RP_LEADS = {
+  presubmit: { name: "Pre-Submit", family: "The Johnsons", client: "Tasha", clients: "Tasha and Marcus", spouse: "Marcus", kids: ["Jaylen", "Maya"], voice: "Tasha", voice2: "Marcus",
+    topic: "the life insurance information you requested", ben: "Marcus", house: { amount: "$165,000", earner: "Marcus" }, fe: "$20,000", opt1: 142, opt2: 118, time: "6:30", email: "tasha dot johnson at gmail dot com",
+    form: [["Born and raised in Mobile. My mom lives about ten minutes from us and watches the kids.", "Yeah, we're in west Mobile. My mom's close by, and Marcus's brother Derrick is out in Theodore."],
+      ["I'm a dental assistant, going on six years now. Marcus supervises a shift at a warehouse.", "Six years at a dental office. I help with cleanings and get patients ready."],
+      ["Marcus coaches our son's Little League team, and we love going down to Dauphin Island.", "Honestly, ball games. Marcus coaches Jaylen's Little League team."]],
+    refs: { ben: "That'd be Marcus.", next: "My mom, Carol. She lives about ten minutes from us.", kids: "She doesn't have kids at home anymore, but Marcus's brother Derrick has two: Tyler and Brooke.", off: "Derrick gets off at the plant around 4:30.", last: "And probably my coworker Shay." } },
+  adp: { name: "ADP Referral", family: "Danielle Brooks", client: "Danielle", clients: "Danielle", spouse: "", kids: ["Aubree"], voice: "Danielle", sponsor: "Keisha", rel: "coworker",
+    topic: "the no-cost policy Keisha gifted you", ben: "my mom, Gloria", house: null, fe: "$20,000", opt1: 79, opt2: 64, time: "1:00", email: "danielle brooks 29 at gmail dot com",
+    form: [["I grew up in Prichard. My mom Gloria is close by, and my sister Renee is over in Mobile.", "Yeah, my mom lives right down the road. She helps me a lot with Aubree."],
+      ["I'm a CNA at a nursing home. Night shift, about four years now.", "Nights at the nursing home. I take care of the residents, get them ready for bed, all of that."],
+      ["Fun? I work nights and have a six-year-old, so mostly park days with Aubree.", "We go to the park a lot, and I like watching cooking shows when I can."]],
+    refs: { ben: "My mom, Gloria. She'd handle everything.", next: "My sister Renee. She lives in Mobile.", kids: "Renee has two boys, Jordan and Caleb.", off: "She gets off at the bank at five.", last: "And maybe my friend Tasha from church." } },
+  lapsed: { name: "Globe Lapsed", family: "The Whitakers", client: "Earl", clients: "Earl and Linda", spouse: "Linda", kids: [], voice: "Earl", voice2: "Linda",
+    topic: "your Globe Life coverage", ben: "Linda", house: { amount: "$28,000", earner: "Earl" }, fe: "$20,000", opt1: 168, opt2: 139, time: "10:00", email: "earl whitaker at yahoo dot com",
+    form: [["We've been in Saraland near about 30 years. Our son Michael is in Mobile and our daughter Karen's over in Pensacola.", "Born here. Our boy Michael lives in Mobile, and Karen's in Pensacola with the grandkids."],
+      ["I'm retired. Thirty-four years at the Ingalls shipyard. Linda works part time at the church office.", "Retired now, but I was at Ingalls for 34 years. Pipefitter."],
+      ["Alabama football, and I smoke a mean brisket.", "Roll Tide. And I'll smoke a brisket any weekend you let me."]],
+    refs: { ben: "Linda.", next: "Our son, Michael. He's in Mobile.", kids: "He's got two, Brody and Ella.", off: "He gets off around five thirty.", last: "And Linda's brother, James." } },
+  policy: { name: "Policy Owner", family: "The Delgados", client: "Angie", clients: "Angie and Ray", spouse: "Ray", kids: ["Sofia", "Mateo", "Lucas"], voice: "Angie", voice2: "Ray",
+    topic: "your Globe Life policy", ben: "Ray", house: { amount: "$240,000", earner: "Ray" }, fe: "$20,000", opt1: 236, opt2: 198, time: "7:15", email: "angie at delgado h v a c dot com",
+    form: [["We're in Daphne. My parents are over in Fairhope, so not far.", "Daphne. Ray's family is all in Mobile, and mine's in Fairhope."],
+      ["We own an HVAC company. Ray runs the jobs and I do the books. Six employees now.", "I do the books for our HVAC business. Ray's out running the crews."],
+      ["Ray bass fishes every chance he gets. I'm usually at one of the kids' games.", "The kids keep us busy with sports. Ray sneaks off to go fishing."]],
+    refs: { ben: "Ray.", next: "My sister, Monica. She's in Fairhope.", kids: "She has a little girl, Isabella.", off: "Monica gets off work around five.", last: "And Ray's foreman, Luis." } }
+};
+const RP_LEAD_ORDER = ["presubmit", "adp", "lapsed", "policy"];
+const RP_BANK = `Ok. Now to qualify for our programs and rates with us, you would need to bank locally with a traditional bank or credit union… Who do you bank with?`;
+const rpPick = a => Array.isArray(a) ? a[Math.floor(Math.random() * a.length)] : a;
+// Steps: { who: "agent", text } | { who: "lead", text, speaker } | { who: "cue", text }
+const rpA = t => ({ who: "agent", text: t }), rpR = (t, sp) => ({ who: "lead", text: rpPick(t), speaker: sp }), rpC = t => ({ who: "cue", text: t });
+
+/* ---------- making the call ---------- */
+function rpDialOpen(L, k, withRebuttal) {
+  const s = L.voice, s2 = L.voice2 || L.voice, st = [];
+  const rebut = (obj, text, ok) => withRebuttal ? [rpR(obj, s), rpA(text), rpR(ok, s)] : [];
+  if (k === "adp") st.push(
+    rpA(`Hey, {client}! My name is {agent}. I'm reaching out because {sponsor} gifted you a $3,000 no-cost insurance policy through my company, Globe Life. They took advantage of this free coverage and figured you would too. This is at no cost to you; it's simply a gift from {sponsor} to you.`),
+    ...rebut(["I'm not really interested.", "Yeah, I'm not interested."], `Totally get it. Just so you know, it's not something you're buying… I'm only reaching out because {sponsor} figured you'd want it too after they claimed theirs. My job is just to deliver it and show you how it works. After that, you decide if it's a fit… Is now a good time for a quick run-through, or is later better for you?`, ["Oh, okay. I guess that's fine.", "Okay, if Keisha did it, sure."]),
+    rpR(["Oh, okay. Keisha did mention you.", "Really? That was nice of her."], s),
+    rpA(`It's just my job to set it up for you. Are you married?`), rpR(["No, it's just me and my daughter.", "No, I'm single."], s),
+    rpA(`Any kids under 18?`), rpR(["Yes, my daughter Aubree. She's six.", "One, Aubree. She's in first grade."], s),
+    rpA(`Ok perfect! This policy also provides $1,000 for each child as well. Along with your free benefits today you also have the same opportunities that {sponsor} did because they banked locally. Do you also bank with a credit union or traditional bank in your area?`),
+    rpR(["Yeah, I bank with Regions.", "I use a credit union."], s));
+  if (k === "presubmit") st.push(
+    rpA(`Hey {client}, this is {agent} calling from Globe Life about an application you started online with us. Has anyone reached out to set up your free benefits yet?`),
+    ...rebut(["I'm really just looking for quotes.", "I was just looking for quotes."], `Ok, so to get you what you're looking for, I'll need to get your no-cost insurance set up first, and then I can generate those quotes and see what you qualify for. That way, whether or not we can cover you or meet your budget, you didn't waste your time.`, ["Okay, that makes sense.", "Alright."]),
+    rpR(["No, nobody's called me.", "Um, no. I don't think so."], s),
+    rpA(`Perfect. Now, were you looking for coverage on yourself, your family, or someone else?`), rpR(["For me and my husband, mostly.", "For the family."], s),
+    rpA(`Ok great! The company wanted me to reach out to congratulate you first! Because of your interest in our company or products, they are giving you some free benefits. After we set up your free benefits, we can also look into any additional information or coverage you need.`), rpR(["Oh, okay. That's nice.", "Free benefits? Okay."], s),
+    rpA(`It only takes a few minutes to get everything set up. Are you married?`), rpR(["Yes, to Marcus.", "Yeah, I'm married."], s),
+    rpA(`Is your spouse there with you as well?`), rpR(["He gets home around six.", "Not right now, he's at work."], s),
+    rpA(`Any kids we need to include under the age of 18?`), rpR(["Yes, two. Jaylen and Maya.", "We've got two kids, eight and five."], s),
+    rpA(RP_BANK), rpR(["We bank with Regions.", "Navy Federal."], s));
+  if (k === "lapsed") st.push(
+    rpA(`Hey {client}, my name is {agent}. I'm reaching out because you had some coverage with our parent company, Globe Life.`),
+    ...rebut(["Is this a bill collector?", "Hold on. Is this a debt collector?"], `I want to be absolutely clear, {client}: this is NOT a debt collection call. You don't owe us anything. I'm calling from the benefits department at Globe Life. When policies lapse, we follow up to offer a complimentary accidental death policy as a courtesy to former policyholders. It's completely free, requires no payment information, and has no obligation attached.`, ["Alright. Go ahead.", "Okay, I just wanted to make sure."]),
+    rpA(`I'm not calling to collect any premiums or anything. In fact, I'm calling because the company is giving you some no-cost coverage for being a former policyholder. This will give you some protection until everything is situated.`),
+    rpA(`Was the coverage too expensive, or did you happen to change banks?`), rpR(["Honestly, it got too expensive after my knee surgery.", "It just got to be too much every month."], s),
+    rpA(`I completely understand. It can be pretty expensive, especially if you have too much or the wrong coverage. The good news is that the company is giving you some free benefits at no cost!`),
+    rpA(`Are you married?`), rpR(["Yes, to Linda. Thirty-eight years.", "Yes sir, to Linda."], s),
+    rpA(`Is your spouse there with you as well?`), rpR(["She's right here.", "Yeah, she's in the kitchen."], s),
+    rpA(`Any kids we need to include under the age of 18?`), rpR(["No, our kids are grown.", "No, they're all grown and gone."], s),
+    rpA(RP_BANK), rpR(["We're with Regions.", "The credit union."], s));
+  if (k === "policy") st.push(
+    rpA(`Hey {client}, this is {agent} with your insurance company, Globe Life - Liberty National.`),
+    ...rebut(["Why do you need to verify anything?", "What's this about? Why are you calling?"], `{client}, I appreciate the question. Regular verification is crucial because outdated information could delay benefit payments to your loved ones if a claim needs to be filed. People move, family situations change, and beneficiary information may need updating. This quick review keeps your records accurate and gives you access to the free benefits you're entitled to as a policyholder. Does that make sense?`, ["Okay, that makes sense.", "Alright, fair enough."]),
+    rpR(["Okay.", "Oh, hey. What can I do for you?"], s),
+    rpA(`I was calling to see when the last time was that you spoke with someone about your policies? We want to make sure that if a claim were made, everything on the account is correct and it's received quickly by the right person.`),
+    rpR(["Gosh, it's been a few years.", "Probably not since I bought it."], s),
+    rpA(`Ok, well I'm glad I called. As a policyholder, you're entitled to some free benefits every year. Since it's been over a year, we need to renew those free benefits along with checking over everything.`),
+    rpR(["Okay, sounds good.", "Alright."], s));
+  return st;
+}
+function rpBooking(L, type) {
+  const s = L.voice;
+  if (type === "now") return [rpA(`Are you home now to knock this out?`), rpR(["Sure, I've got a few minutes.", "Yeah, now's fine."], s), rpA(`Ok great! Give me one second for my computer to catch up.`), rpC("Start the presentation and go straight into rapport (F.O.R.M.).")];
+  const st = [rpA(`Are you home now to knock this out?`), rpR(["Not right now, I'm about to head out.", "Can we do this later? I'm busy right now."], s),
+    rpA(`What time will you be home later today for me to give you a call back?`), rpR([`Probably around {time}.`, `I should be home by {time}.`], s)];
+  if (L.spouse) st.push(rpA(`Will your spouse be home as well?`), rpR(["Yes, we'll both be here.", "Yeah, they'll be home by then."], s));
+  st.push(rpA(`What's a good email address for you?`), rpR([`It's {email}.`], s),
+    rpA(`Ok, {client}, if I'm booking an appointment with you, then I'm telling another family I'm not available at that time. Are you sure this will be a good time for you?`), rpR(["Yes, that works.", "Yes, I'll be there."], s),
+    rpA(`Ok, I'll see you at {time}. Have a great day!`));
+  return st;
+}
+
+/* ---------- the presentation (phone wording) ---------- */
+function rpPurpose(L, k) {
+  const s = L.voice;
+  if (k === "policy") return [rpA(`Well, {clients}, I reached out to you so I can service your policy and make sure you're all up to date. Do you remember how your policy works?`), rpR(["Not really, honestly.", "Kind of. It's been a while."], s),
+    rpA(`To keep in touch with our policyholders regularly, the company asked that I reach out to you to set up this meeting. During this meeting, I'm going to do three simple things. One, thank you for being a policyholder with our company by renewing your no-cost benefits. Two, do a new needs analysis to make sure your current coverage is still adequate. Three, review your existing coverage and what it provides for you and your family. If you're like most of our clients, you probably don't remember all your policy details.`),
+    rpA(`To renew your no-cost benefits, I need to verify the information I have on file.`), rpC("Read their information back to verify it, and set the lead type to Policy Owner Service.")];
+  if (k === "presubmit") return [rpA(`Well, {clients}, I'm speaking with you today in response to your request for more information about life insurance. I've been asked to meet with you to answer any questions you have. We have a simple 2-step process. One, we'll set up the no-cost benefits you are entitled to by simply inquiring with our company. Two, we'll go through a needs analysis to see exactly what you qualify for and what you need to protect your family best.`),
+    rpA(`To get started, I need some basic information.`), rpC("Read their information back to verify it, and set the lead type to Globe.")];
+  if (k === "lapsed") return [rpA(`Well, {clients}, I'm speaking with you today because I noticed your Globe Life policy has lapsed. Our records show that you were previously interested in having life insurance coverage. Today, I'd like to understand what led to your policy lapsing, see if we can find a solution that better fits your current situation, and review what benefits you're eligible for now.`),
+    rpA(`To get started, I need to verify some information with you.`), rpC("Listen closely to why it lapsed. Read their information back to verify it, and set the lead type to Globe Lapsed.")];
+  return [rpA(`Well, {clients}, I'm speaking with you today because your {rel}, {sponsor}, thought it would be beneficial for us to talk. They recently met with me regarding their insurance needs and mentioned you might appreciate similar information. Our meeting today is simple. One, I'd like to set up the no-cost benefits you're entitled to as a referral from one of our valued clients. Two, go through a brief needs analysis to see what solutions might work best for your unique situation.`),
+    rpA(`To get started, I just need to verify some basic information.`), rpC("Read their information back to verify it, and set the lead type to Referral.")];
+}
+const RP_PRES = [
+  { mod: "s02", label: "Opening", build: (L, k, o) => o.type === "now"
+    ? [rpA(`Hey, {client}? This is {agent}. I have a few minutes available right now and wanted to reach out about {topic}. Do you have about 15 to 20 minutes to go over this information with me right now over the phone?`), rpR(["Sure, I've got some time.", "Yeah, I can do that."], L.voice),
+      rpA(`Perfect! I'll walk you through everything as we go. Are you in a quiet place where you can focus for a few minutes?`), rpR(["Yeah, it's quiet.", "Yes, I'm good."], L.voice)]
+    : [rpA(`Hey, {client}? This is {agent} calling for our {time} appointment to go over {topic}. Are you in a good place to talk for about 15 to 20 minutes?`), rpR(["Yes, we're ready.", "Yeah, go ahead."], L.voice),
+      rpA(`Perfect! I'll walk you through everything as we go. Stop me anytime you have a question.`)] },
+  { mod: "s04", label: "Rapport (F.O.R.M.)", build: L => [rpA(`So, are you from this area? Does your family live nearby? What family do you have in this area?`), rpR(L.form[0], L.voice),
+      rpA(`How long have you been at your job? What exactly do you do there?`), rpR(L.form[1], L.voice),
+      rpA(`What do you do for fun?`), rpR(L.form[2], L.voice), rpC("Me: share one thing you have in common, briefly, then hand it back.")] },
+  { mod: "s05", alt: "s06", label: "Purpose statement", build: (L, k) => rpPurpose(L, k) },
+  { mod: "s07", label: "Company story", build: L => [rpA(`The name of our company is Globe Life Liberty National Division. We've been committed to protecting American families where we live and serve for over 120 years. Due to our unique one-on-one service, the Globe Life companies combined have more policyholders than any other life insurance company in the country. With more than 129,000 claims fulfilled every year, we're proud to help lessen the financial strain on the worst day in a family's life.`),
+      rpA(`As we grow, so do our efforts to give back to the communities we protect. Through our Make Tomorrow Better program, we donate millions of dollars and spend countless hours helping those in need. We're looking forward to helping you Make Tomorrow Better.`),
+      rpA(`Now, {client}, are you a sports fan?`), rpR(["Oh yeah. Roll Tide!", "A little. Mostly football."], L.voice),
+      rpA(`After checking out our background, financial strength and mission, we're very proud to say that we're the official life insurance of the Texas Rangers, the Dallas Cowboys and the Los Angeles Lakers, and a proud partner of the Atlanta Braves.`)] },
+  { mod: "s08", label: "No-cost Accidental Death", build: L => [rpA(`{client}, the purpose of our meeting today is to set up your no-cost Accidental Death Policy. Accidents are the leading cause of death among those 1 to 44 years old, and the third leading cause overall. They can happen to anyone, unexpectedly. This benefit will cover you${L.spouse ? " and {spouse}" : ""} with $3,000${L.kids.length ? ", and each of your children with $1,000" : ""}. It's designed to provide an immediate payout to your family if an unexpected death occurs. I'm sure you can see how valuable that would be, right?`), rpR(["Yeah, definitely.", "Absolutely."], L.voice)] },
+  { mod: "s09", label: "Referrals", build: L => [rpA(`{client}, the company is now allowing you to gift this same no-cost benefit to people in your circle who you think can use it the most. Most of my clients give this to a minimum of 10 people. Let's start with your beneficiary. In the event of your unexpected death, who would handle your final expenses?`), rpR(L.refs.ben, L.voice),
+      rpA(`Who's next?`), rpR(L.refs.next, L.voice), rpA(`What are the kids' names so I can also assign them a child safe kit?`), rpR(L.refs.kids, L.voice),
+      rpA(`So I don't catch them at a bad time, what time do they get off?`), rpR(L.refs.off, L.voice), rpA(`Who's next?`), rpR(L.refs.last, L.voice), rpC("Type each referral with their F.O.R.M. notes as they talk.")] },
+  { mod: "s10", label: "Word of thanks", build: L => [rpA(`What I have next is a brief thank you letter explaining the purpose of our meeting today outside of our no-cost benefits.`),
+      rpA(`We'd like to thank you for listening to the agent who is speaking with you today. We are a trusted name in insurance. The Globe Life companies issue more life insurance policies and have more policyholders than any other life insurance company in the country. Our benefits are not in competition with any benefits you may already have and are meant to work in conjunction with any benefits through your employer, or other coverage you have in place. Please listen to the agent speaking with you. If we can help you with any of your needs, please take advantage of this coverage today.`),
+      rpA(`In other words, after I've answered any questions you may have, I expect a simple yes or no. We anticipate these benefits will make sense to you, so go ahead and take advantage of them today. Any questions so far?`), rpR(["No, that makes sense.", "No questions so far."], L.voice)] },
+  { mod: "s11", label: "Term vs. whole life", build: L => [rpA(`{client}, every person I meet with has different needs regarding insuring themselves and their families. Since every situation is unique, I will briefly explain the 2 kinds of life insurance. That way, you can make the best decision for those you would be leaving behind.`),
+      rpA(`Generally speaking, life insurance is offered in whole life or term life policies. Simply put, whole life insurance covers you from the time the policy begins through the end of your life. Once in force, the coverage will never decrease, and premiums will never increase. This makes the coverage best suited for needs that will never change, such as end-of-life expenses.`),
+      rpA(`Term life, on the other hand, covers a specific length of time, or term. It's typically used for temporary needs, such as replacing income, covering the mortgage, or paying for your children's education.`),
+      rpA(`Picture life like a hill. As you go up, you add a spouse, a home, kids. That's when you need the most protection. As you come down the other side, the house gets paid off and the kids grow up.`),
+      rpA(`As life progresses and those obligations are taken care of, term life insurance is no longer needed. Then you can fall back on your whole life policy, which will cover any remaining needs for the rest of your life. Make sense?`), rpR(["Yeah, that makes sense.", "Okay, I follow."], L.voice)] },
+  { mod: "s12", label: "Needs survey & medical", build: L => [rpA(`Now that you have more information on the different types of life insurance, I'll ask you some questions to see exactly what you qualify for, and we'll go on from there.`), rpR(["Okay.", "Sure, go ahead."], L.voice),
+      rpC("Complete the survey on the eApp through the medical questions. Ask about existing coverage now."),
+      rpA(`The way you qualify for life insurance coverage is you must be in relatively good health. Some people who want coverage don't qualify medically, so I'll go ahead and ask you${L.spouse ? " and {spouse}" : ""} some questions about your family's health.`), rpR(["Okay, go ahead.", "That's fine."], L.voice)] },
+  { mod: "s14", label: "Final expense", build: L => [rpA(`The first thing you qualify for is final expense protection. This benefit will provide the money needed to cover your final expenses.`),
+      rpA(`Some things your loved ones may be asked to pay for include transportation, embalming or cremation, preparation of the body, the facility fee for viewing, the hearse, memorial materials, a metal casket, urn or vault, a cemetery plot, opening and closing of the grave, and a monument and marker.`),
+      rpA(`Funeral and cemetery expenses can be up to $15,000 today, and cremation prices can range up to $10,000 depending on what services are selected. If you qualify, Social Security only pays a $255 death benefit.`),
+      rpA(`Remember, just like other things, funerals are subject to inflation. In the next 20 years, final expenses are projected to cost up to $30,000.`),
+      rpA(`We also have what's called the Freedom of Choice Certificate to handle a massive burden for your family. Your beneficiary will take this to the funeral home instead of handing your policy to the funeral director.`),
+      rpA(`What's great about the certificate is that it has no dollar amounts on it. {client}, if the funeral director knew you had $30,000 of coverage, how much would they charge your beneficiary for all your final expenses?`), rpR(["All of it, probably.", "Probably the whole thirty thousand."], L.voice),
+      rpA(`Exactly! Since they won't know how much coverage you have, your beneficiary can negotiate and get the best deal possible. Any remaining benefit goes back to your loved ones.`),
+      rpA(`You don't have any protection here, so you'll need {fe}, which is the amount we're providing you with. Make sense so far?`), rpR(["Yes.", "Makes sense."], L.voice),
+      rpA(`I'm sure you can see how important this benefit is when something happens to you, right?`), rpR(["Yes, definitely.", "Absolutely."], L.voice),
+      rpA(`Why is this benefit important to you?`), rpR(["I don't want my family stuck paying for my funeral.", "So nobody has to pass a hat around for us."], L.voice)] },
+  { mod: "s15", label: "Income & mortgage", build: L => {
+      const st = [rpA(`Next, I want to talk about Income Protection. In addition to providing the money needed for your final expenses, another major concern is how your family would continue to pay all the bills after your paycheck has stopped coming in.`),
+        rpA(`{client}, most families can't afford to lose just one check, let alone the rest of their earnings forever! We recommend you have at least 1 to 2 years of your income protected for your family.`),
+        rpA(`{client}, we've provided 2 years of income protection for ${L.spouse ? "both of you" : "you"}. This would allow your family to maintain their quality of life in the event of your death. Does that make sense so far?`), rpR(["Yes, it does.", "Yeah."], L.voice),
+        rpA(`I'm sure you can see how vitally important this is when you die, right?`), rpR(["Right.", "Yes."], L.voice), rpA(`Why is this benefit important to you?`), rpR(["The bills don't stop just because I do.", "I want them to be okay without my check."], L.voice)];
+      if (L.house) st.push(rpA(`Remember that there will be an adjustment period after the death of the breadwinner. But the most expensive bill, which is usually the mortgage, will still need to be paid.`),
+        rpA(`{client}, the last thing we want is for your family to lose you and possibly their home in the same year. Stability will be essential at that time so they can rebuild their lives.`),
+        rpA(`We'll provide ${L.house.amount} of mortgage protection. This would pay off your home in the event of ${L.house.earner}'s death. Does that make sense so far?`), rpR(["Yes.", "That makes sense."], L.voice),
+        rpA(`Once again, I'm sure you can see how important this protection is for your family, right?`), rpR(["Definitely.", "Yes."], L.voice), rpA(`Why is this benefit important to you?`), rpR(["I never want them to lose the house.", "So they can stay in our home."], L.voice));
+      else st.push(rpC(`${L.client} rents, so there's no mortgage slide. Her income protection keeps a roof over the family.`));
+      return st; } },
+  { mod: "s16", label: "College education", build: L => L.kids.length ? [rpA(`Okay, next I want to talk about the importance of your children's college education.`),
+      rpA(`Most children rely on their parents to attend college, whether they help financially or by simply co-signing student loans. A college education can affect future generations of your family. The current average cost of a 2 to 6 year college education is between $25,000 and $116,000.`),
+      rpA(`We've provided $25,000 of coverage for {kids}.`), rpA(`It probably goes without saying how important that is, right?`), rpR(["Yes, it is.", "Absolutely."], L.voice),
+      rpA(`Why is this benefit important to you?`), rpR(["I want my kids to have a better start than I did.", "College is a big deal to us."], L.voice)]
+    : [rpC(`The ${L.family.replace(/^The /, "")} kids are grown, so skip College Education.`)] },
+  { mod: "s17", label: "The close", build: (L, k, o) => [rpA(`To recap, your plan covers your final expenses, protects your income so your family can maintain their lifestyle${L.house ? ", handles your mortgage" : ""}${L.kids.length ? ", and safeguards your children's education" : ""}. If everything makes sense, starting today, you will take a crucial step towards being fully protected. Since this plan is tailored to fit your current needs, the only question I have for you is this: which option works best for you?`),
+      rpA(`Option 1, at {opt1} dollars a month, has all the benefits with inflation built in for the cost of final expenses in the future. Or Option 2, at {opt2} dollars a month, has all the benefits and covers your final expenses at today's cost. Which option works best for you?`),
+      ...(o.upto === "s17" ? [rpR(["I think Option 2.", "Let's do Option 2."], L.voice), rpA(`Why is this coverage important to you?`), rpR(["Because my family is everything.", "I just want them taken care of."], L.voice)] : [])] },
+  { mod: "s18", label: "Rebuttal: thinking it over", build: (L, k, o) => [rpR(["This all makes sense, but I need to think about it.", "I think we need to think about it."], L.voice),
+      rpA(`I completely understand; this is a big decision for your family, and you must do it right. I help many families make this decision each day. Now, I have found that when someone needs to think about it, it usually comes down to one or two things: do they see the need for this? Which you already told me you did. Or can they afford this?`),
+      rpA(`I don't pretend to know any family's financial situation, but what would make a bigger impact on your family on the day you die: having this monthly premium in the bank, or having all these needs taken care of? The good news is that there are two options, so if Option 1 is too much, you can always start with Option 2 and add later. The important thing is to get something started now.`),
+      rpA(`Which option would be better for you to get started today?`),
+      ...(o.upto === "s18" ? [rpR(["Okay. Let's start with Option 2.", "Alright, Option 2."], L.voice)] : [])] },
+  { mod: "s19", label: "Rebuttal: affordability", build: L => [rpR(["Honestly, I just can't afford it right now.", "Money's tight. I can't afford that."], L.voice),
+      rpA(`OK, I understand. Let me ask you: do you understand how important this is? So here's what we can do: adjust the Final Expense benefit to $15,000. That should help cover the cost of a funeral. Your income protection will remain the same${L.house ? ", along with your mortgage coverage" : ""}${L.kids.length ? " and the college education benefit" : ""}. Let's recalculate and see where we're at. Does this make you feel better?`),
+      rpR(["Yeah, that's better. Let's do that.", "Okay, that works."], L.voice)] }
+];
+const RP_DIAL = { c02: ["adp"], c03: ["presubmit"], c04: ["lapsed"], c05: ["policy"] };
+const ROLEPLAYS = {};
+["c02", "c03", "c04", "c05", "c06", "c07"].forEach(id => ROLEPLAYS[id] = { track: "dial" });
+RP_PRES.forEach(p => { ROLEPLAYS[p.mod] = { track: "pres" }; if (p.alt) ROLEPLAYS[p.alt] = { track: "pres" }; });
+function rpLeadsFor(mod) {
+  if (RP_DIAL[mod]) return RP_DIAL[mod];
+  if (mod === "s05") return ["policy"];
+  if (mod === "s06") return ["presubmit", "lapsed", "adp"];
+  if (mod === "s16") return RP_LEAD_ORDER.filter(k => RP_LEADS[k].kids.length);
+  return RP_LEAD_ORDER;
+}
+function rpWantsType(mod) { return mod === "c07" || ROLEPLAYS[mod].track === "pres"; }
+function rpFill(t, L) {
+  const kids = L.kids.length > 1 ? L.kids.slice(0, -1).join(", ") + " and " + L.kids[L.kids.length - 1] : (L.kids[0] || "");
+  const map = { client: L.client, clients: L.clients, spouse: L.spouse, agent: (store.name || "your name").split(" ")[0], sponsor: L.sponsor || "", rel: L.rel || "", time: L.time, topic: L.topic, kids, fe: L.fe, opt1: L.opt1, opt2: L.opt2, email: L.email };
+  return String(t).replace(/\{(\w+)\}/g, (m, k) => map[k] != null ? map[k] : m);
+}
+function rpBuild(mod, k, type) {
+  const L = RP_LEADS[k]; let segs = [];
+  if (ROLEPLAYS[mod].track === "dial") {
+    const reb = mod === "c06" || mod === "c07";
+    segs.push({ label: mod === "c06" ? "Opening + rebuttal" : "Opening", mod: mod === "c07" ? "c06" : mod, steps: rpDialOpen(L, k, reb) });
+    if (mod === "c07") segs.push({ label: type === "now" ? "Start now" : "Book the appointment", mod: "c07", steps: rpBooking(L, type) });
+    if (mod === "c07") segs[0].mod = "c06";
+  } else {
+    const order = RP_PRES.map(p => p.mod), target = mod === "s06" ? "s05" : mod, upto = order.indexOf(target);
+    RP_PRES.slice(0, upto + 1).forEach(p => segs.push({ label: p.label, mod: p.mod, steps: p.build(L, k, { type, upto: target }) }));
+  }
+  const last = segs[segs.length - 1];
+  const steps = [];
+  segs.forEach(sg => sg.steps.forEach(s => steps.push({ ...s, text: rpFill(s.text, L), seg: sg.label, isNew: sg === last })));
+  return { L, steps, segs: segs.map(s => s.label) };
+}
+
+/* ---------- reading-skill scoring ---------- */
+const rpNorm = t => String(t || "").toLowerCase().replace(/[$,]/g, "").replace(/[-–—]/g, " ").replace(/[^a-z0-9' ]/g, " ").replace(/\s+/g, " ").trim();
+const NUMW = { "0": "zero", "1": "one", "2": "two", "3": "three", "4": "four", "5": "five", "6": "six", "7": "seven", "8": "eight", "9": "nine", "10": "ten", "15": "fifteen", "20": "twenty", "44": "forty four" };
+function rpWords(t) { return rpNorm(t).split(" ").filter(Boolean).map(w => w.replace(/'/g, "")); }
+function rpSame(a, b) { if (a === b) return true; if (NUMW[a] === b || NUMW[b] === a) return true; if (a.length > 3 && b.length > 3 && (a.startsWith(b) || b.startsWith(a))) return true; return false; }
+// Longest common subsequence: which script words were said, and in order.
+function rpAlign(script, heard) {
+  const n = script.length, m = heard.length, dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) dp[i][j] = rpSame(script[i - 1], heard[j - 1]) ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  const hit = new Array(n).fill(false); let i = n, j = m;
+  while (i > 0 && j > 0) { if (rpSame(script[i - 1], heard[j - 1]) && dp[i][j] === dp[i - 1][j - 1] + 1) { hit[i - 1] = true; i--; j--; } else if (dp[i - 1][j] >= dp[i][j - 1]) i--; else j--; }
+  return { lcs: dp[n][m], hit };
+}
+// Live progress pointer: how far down the line the agent has read.
+function rpPointer(script, heard) { return rpPointerAt(script, heard).p; }
+function rpPointerAt(script, heard) { let p = 0, end = -1; heard.forEach((w, j) => { for (let k = p; k < Math.min(script.length, p + 5); k++) if (rpSame(script[k], w)) { p = k + 1; if (p >= script.length && end < 0) end = j; break; } }); return { p, end }; }
+function rpPitch(buf, rate) {
+  let rms = 0; for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i]; rms = Math.sqrt(rms / buf.length);
+  if (rms < 0.012) return { rms, f: 0 };
+  const min = Math.floor(rate / 400), max = Math.floor(rate / 70); let best = 0, bestLag = 0;
+  for (let lag = min; lag <= max; lag++) { let s = 0; for (let i = 0; i < buf.length - lag; i += 2) s += buf[i] * buf[i + lag]; if (s > best) { best = s; bestLag = lag; } }
+  let norm = 0; for (let i = 0; i < buf.length - bestLag; i += 2) norm += buf[i] * buf[i];
+  return { rms, f: bestLag && best / (norm || 1) > 0.45 ? rate / bestLag : 0 };
+}
+function rpVariety(fs) {
+  if (fs.length < 12) return null;
+  const s = fs.slice().sort((a, b) => a - b), med = s[Math.floor(s.length / 2)];
+  const st = fs.map(f => 12 * Math.log2(f / med)).filter(x => Math.abs(x) < 12);
+  const mean = st.reduce((a, b) => a + b, 0) / st.length, sd = Math.sqrt(st.reduce((a, b) => a + (b - mean) ** 2, 0) / st.length);
+  return { sd, score: Math.round(Math.max(20, Math.min(100, 30 + (sd - 1) * 35))) };
+}
+function rpScoreLine(m) {
+  const S = rpWords(m.text), H = m.heard;
+  const al = rpAlign(S, H), acc = S.length ? al.lcs / S.length : 1;
+  const out = { acc, accScore: Math.round(Math.max(0, Math.min(1, (acc - 0.5) / 0.45)) * 100), hit: al.hit, words: S.length };
+  const dur = (m.tLast - m.tFirst) / 1000;
+  if (S.length >= 8 && dur >= 2 && H.length >= 6) { out.wpm = Math.round(H.length / (dur / 60)); const d = out.wpm < 130 ? 130 - out.wpm : out.wpm > 175 ? out.wpm - 175 : 0; out.paceScore = Math.max(0, Math.round(100 - d * 2.5)); }
+  out.hes = m.hes || 0; out.flowScore = Math.max(0, 100 - out.hes * 25);
+  const v = rpVariety(m.pitch || []); if (v && S.length >= 8) { out.sd = v.sd; out.varScore = v.score; }
+  out.dead = m.dead || 0;
+  const parts = [[out.accScore, 40], [out.paceScore, 25], [out.flowScore, 20], [out.varScore, 15]].filter(p => p[0] != null);
+  out.score = Math.round(parts.reduce((a, p) => a + p[0] * p[1], 0) / parts.reduce((a, p) => a + p[1], 0));
+  if (out.wpm && out.wpm > 210) out.score = Math.min(out.score, 70);
+  const missed = S.filter((w, i) => !al.hit[i]);
+  out.tips = [];
+  if (acc < 0.85 && missed.length) out.tips.push(`Missed words: “${missed.slice(0, 8).join(" ")}${missed.length > 8 ? "…" : ""}”`);
+  if (out.wpm && out.wpm > 175) out.tips.push(`Too fast (${out.wpm} words a minute). Slow down so they can follow.`);
+  if (out.wpm && out.wpm < 130) out.tips.push(`A little slow (${out.wpm} words a minute). Keep it moving.`);
+  if (out.hes) out.tips.push(`Stalled ${out.hes} time${out.hes > 1 ? "s" : ""} mid-sentence. Read a few words ahead.`);
+  if (out.varScore != null && out.varScore < 60) out.tips.push(`Flat delivery. Let your voice rise and fall, and smile while you talk.`);
+  if (out.dead) out.tips.push(`${out.dead.toFixed(1)} seconds of dead air before you came in.`);
+  return out;
+}
+function rpSummarize(lines) {
+  const sc = lines.map(rpScoreLine);
+  const wavg = (key, wkey) => { const xs = sc.map((s, i) => [s[key], wkey ? s.words : 1]).filter(p => p[0] != null); return xs.length ? Math.round(xs.reduce((a, p) => a + p[0] * p[1], 0) / xs.reduce((a, p) => a + p[1], 0)) : null; };
+  const deadN = sc.filter(s => s.dead > 0).length;
+  const overall = Math.max(0, (wavg("score", true) || 0) - Math.min(20, deadN * 4));
+  const acc = wavg("accScore", true), rawAcc = Math.round(sc.reduce((a, s) => a + s.acc * s.words, 0) / Math.max(1, sc.reduce((a, s) => a + s.words, 0)) * 100);
+  const wpms = sc.filter(s => s.wpm).map(s => s.wpm);
+  return { lines: sc, overall, acc, rawAcc, pace: wavg("paceScore", true), flow: wavg("flowScore", true), variety: wavg("varScore", true), deadN,
+    wpm: wpms.length ? Math.round(wpms.reduce((a, b) => a + b, 0) / wpms.length) : null, pass: overall >= 80 && rawAcc >= 80 };
+}
+
+/* ---------- the role-play session ---------- */
+let rpl = null;
+function rplPassed(id) { return !!(store.roleplay && store.roleplay[id] && store.roleplay[id].pass); }
+function rplOpen(mod) { if (rpl && rpl.mod === mod) return; rpl = { mod, phase: "setup", lead: (rpLeadsFor(mod)[0]), type: "appointment" }; }
+function roleplayView(id) {
+  rplOpen(id);
+  const i = MODULES.findIndex(m => m.id === id), m = MODULES[i], r = rpl;
+  const leads = rpLeadsFor(id), pres = ROLEPLAYS[id].track === "pres";
+  let h = `<div class="page rp-page"><div class="eyebrow">Module ${i + 1} · Script role-play</div><h1>${esc(m.title)}</h1>`;
+  if (r.phase === "setup") {
+    const plan = rpBuild(id, r.lead, r.type);
+    const agentN = plan.steps.filter(s => s.who === "agent").length;
+    h += `<p class="lead">Read the script out loud like you're on the phone. You can read it right off the screen; what's graded is how it sounds. When you finish a line, ${esc(RP_LEADS[r.lead].client)} answers, then you read the next one.</p>
+      <div class="card"><h2>How you're graded</h2><div class="rp-crit"><div><b>Accuracy</b><span>Say the script's words</span></div><div><b>Pace</b><span>130–175 words a minute</span></div><div><b>Flow</b><span>No stalls mid-sentence</span></div><div><b>Dead air</b><span>Come right back in</span></div><div><b>Vocal variety</b><span>Not monotone</span></div></div><p class="small">Pass with 80 or better and at least 80% of the words.</p></div>
+      <div class="card"><h2>Set up the call</h2>
+      ${leads.length > 1 ? `<div class="row"><span class="small"><b>Lead type:</b></span>${leads.map(k => `<button class="chip ${r.lead === k ? "on" : ""}" data-rplead="${k}" type="button" aria-pressed="${r.lead === k}">${esc(RP_LEADS[k].name)}</button>`).join("")}</div>` : `<p><b>Lead type:</b> ${esc(RP_LEADS[r.lead].name)}</p>`}
+      ${rpWantsType(id) ? `<div class="row"><span class="small"><b>${pres ? "Call type" : "They"}:</b></span>${(pres ? [["appointment", "Appointment"], ["now", "Now presentation"]] : [["book", "Book the appointment"], ["now", "Start now"]]).map(([k, l]) => `<button class="chip ${(r.type === k || (!pres && k === "book" && r.type === "appointment")) ? "on" : ""}" data-rptype="${k === "book" ? "appointment" : k}" type="button">${l}</button>`).join("")}</div>` : ""}
+      <p class="small">You'll be talking to <b>${esc(RP_LEADS[r.lead].family)}</b>. This run covers: ${plan.segs.map((s, k) => k === plan.segs.length - 1 ? `<b>${esc(s)} (new)</b>` : esc(s)).join(" → ")}. That's ${agentN} lines for you to read.</p>
+      ${dictApi ? "" : `<div class="warn"><b>Your browser can't hear you</b>Role-plays need the microphone. Use Chrome on a computer or an Android phone.</div>`}
+      <p class="small">🎧 Headphones help: the lead's voice won't get picked up as yours.</p>
+      <div class="row"><button class="btn" id="rplStart" type="button" ${dictApi ? "" : "disabled"}>Start the role-play</button><button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div></div>`;
+  } else if (r.phase === "run") {
+    const st = r.steps, cur = st[r.i] || {};
+    const prev = st.slice(Math.max(0, r.i - 2), r.i), next = st.slice(r.i + 1, r.i + 4);
+    const done = r.lines.length, total = st.filter(s => s.who === "agent").length;
+    const line = s => s.who === "agent" ? `<p class="rp-l me">${esc(s.text)}</p>` : s.who === "lead" ? `<p class="rp-l them"><b>${esc(s.speaker)}:</b> ${esc(s.text)}</p>` : `<p class="rp-l cue">${esc(s.text)}</p>`;
+    let curHTML;
+    if (cur.who === "agent") { const W = cur.text.split(/\s+/); let wi = 0; const S = rpWords(cur.text), ptr = r.ptr || 0; curHTML = `<p class="rp-cur me">${W.map(w => { const n = rpWords(w).length; const said = wi < ptr; wi += n; return `<span class="${said ? "said" : ""}">${esc(w)}</span>`; }).join(" ")}</p>`; }
+    else if (cur.who === "lead") curHTML = `<p class="rp-cur them"><b>${esc(cur.speaker)}:</b> ${r.leadShown ? esc(cur.text) : "…"}</p>`;
+    else curHTML = `<p class="rp-cur cue">${esc(cur.text || "")}</p>`;
+    h += `<div class="rp-top"><span>${esc(RP_LEADS[r.lead].family)} · ${esc(cur.seg || "")}${cur.isNew ? ` <span class="pill pass">New</span>` : ""}</span><span>Line ${Math.min(done + 1, total)} of ${total}</span></div>
+      <div class="rp-bar"><span style="width:${Math.round(done / Math.max(1, total) * 100)}%"></span></div>
+      <div class="rp-prompter" aria-live="polite">${prev.map(line).join("")}<div class="rp-now ${cur.who}">${curHTML}</div>${next.map(line).join("")}</div>
+      <div class="rp-status"><span class="rp-dot ${r.listening ? "on" : ""}"></span>${cur.who === "agent" ? (r.heardAny ? "Listening…" : "Your line. Start reading.") : cur.who === "lead" ? `${esc(cur.speaker)} is talking…` : "Do this, then keep going."}${r.liveWpm ? ` · ${r.liveWpm} wpm` : ""}</div>
+      <div class="row"><button class="btn" id="rplNext" type="button">${cur.who === "agent" ? "Done with this line (Space)" : "Skip (Space)"}</button><button class="btn secondary" id="rplStop" type="button">Stop</button></div>`;
+  } else if (r.phase === "done") {
+    const g = r.result;
+    const tile = (l, v, sub) => `<div class="stat"><span class="stat-l">${l}</span><b>${v == null ? "–" : v}</b><span class="small">${sub || ""}</span></div>`;
+    const bad = g.lines.map((s, k) => ({ s, k, text: r.lines[k].text })).filter(x => x.s.score < 80 || x.s.tips.length).sort((a, b) => a.s.score - b.s.score).slice(0, 6);
+    h += `<div class="result-banner ${g.pass ? "pass" : "fail"}"><div class="row spread"><div class="big">${g.pass ? "Passed" : "Not yet"}</div><div class="big">${g.overall}</div></div><p>${g.pass ? "That sounded like a real call. Keep the same pace and energy on the phone." : g.rawAcc < 80 ? `You said ${g.rawAcc}% of the script's words. You need 80% and an overall 80 to pass.` : "Close. Work on the lines below, then run it again."}</p></div>
+      <div class="stats">${tile("Accuracy", g.rawAcc + "%", "of the script's words")}${tile("Pace", g.wpm ? g.wpm + " wpm" : null, "aim for 130–175")}${tile("Flow", g.flow, "stalls cost points")}${tile("Vocal variety", g.variety, g.variety == null ? "mic level unavailable" : "pitch movement")}${tile("Dead air", g.deadN, "times you waited 3s+")}</div>
+      ${bad.length ? `<div class="card"><h2>Lines to work on</h2>${bad.map(x => `<div class="rp-fix"><div class="row spread"><span class="small">${esc(x.text.slice(0, 140))}${x.text.length > 140 ? "…" : ""}</span><span class="pill ${x.s.score >= 80 ? "pass" : "fail"}">${x.s.score}</span></div><ul>${x.s.tips.map(t => `<li>${esc(t)}</li>`).join("") || "<li>Read it again with a little more energy.</li>"}</ul></div>`).join("")}</div>` : ""}
+      <div class="row"><button class="btn" id="rplAgain" type="button">Run it again</button>${g.pass && MODULES[i + 1] ? `<button class="btn secondary" data-go="module" data-id="${MODULES[i + 1].id}" type="button">Next: ${esc(MODULES[i + 1].title)}</button>` : ""}<button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div>`;
+  }
+  return h + `</div>`;
+}
+function bindRoleplay() {
+  document.querySelectorAll("[data-rplead]").forEach(b => b.onclick = () => { rpl.lead = b.dataset.rplead; render(); });
+  document.querySelectorAll("[data-rptype]").forEach(b => b.onclick = () => { rpl.type = b.dataset.rptype; render(); });
+  const s = $("#rplStart"); if (s) s.onclick = rplStart;
+  const n = $("#rplNext"); if (n) n.onclick = () => rplAdvance(true);
+  const x = $("#rplStop"); if (x) x.onclick = () => { rplStopAudio(); rpl.phase = "setup"; render(); };
+  const a = $("#rplAgain"); if (a) a.onclick = () => { rpl.phase = "setup"; render(); };
+}
+document.addEventListener("keydown", e => { if (e.code === "Space" && view.name === "roleplay" && rpl && rpl.phase === "run" && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || "")) { e.preventDefault(); rplAdvance(true); } });
+async function rplStart() {
+  const r = rpl, plan = rpBuild(r.mod, r.lead, r.type);
+  Object.assign(r, { phase: "run", steps: plan.steps, i: -1, lines: [], cur: null, leadEnd: 0, ended: false });
+  try { await dictApi.start(); r.listening = true; } catch (e) { r.phase = "setup"; render(); alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
+  rplAudioStart();
+  if (EL.ok === false && EL.status === "idle") initEleven();
+  if (r.tick) clearInterval(r.tick);
+  r.tick = setInterval(rplTick, 150);
+  rplNextStep();
+}
+function rplNextStep() {
+  const r = rpl; if (!r || r.phase !== "run") return;
+  r.i++;
+  const s = r.steps[r.i];
+  if (!s) return rplFinish();
+  r.leadShown = false;
+  if (s.who === "agent") { r.cur = { text: s.text, heard: [], finals: [], uttUsed: 0, tFirst: 0, tLast: 0, lastWord: 0, hes: 0, pitch: [], afterLead: r.steps[r.i - 1] && r.steps[r.i - 1].who === "lead" }; r.ptr = 0; r.heardAny = false; r.liveWpm = 0; render(); rplPrefetch(); }
+  else if (s.who === "lead") { r.cur = null; render(); rplSay(s, () => { if (rpl !== r || r.steps[r.i] !== s) return; r.leadEnd = Date.now(); rplNextStep(); }); }
+  else { r.cur = null; render(); r.cueTimer = setTimeout(() => { if (rpl === r && r.steps[r.i] === s) rplNextStep(); }, 2600); }
+}
+function rplPrefetch() { const r = rpl; const nx = r.steps.slice(r.i + 1).find(s => s.who === "lead"); if (nx && !nx.audioP && EL.ok && EL.cast[nx.speaker]) nx.audioP = elFetch(nx.text, EL.cast[nx.speaker]); }
+function rplSay(s, done) {
+  const r = rpl; r.leadSpeaking = true; let fin = false;
+  const end = () => { if (fin) return; fin = true; r.leadSpeaking = false; r.audio = null; setTimeout(done, 250); };
+  setTimeout(() => { if (rpl === r) { r.leadShown = true; render(); } }, 200);
+  const synthIt = () => { if (!synth) { setTimeout(end, 600 + words(s.text) * 330); return; } try { const u = new SpeechSynthesisUtterance(s.text); const v = pickVoice(s.speaker, []); if (v) u.voice = v; u.onend = end; u.onerror = end; synth.speak(u); setTimeout(end, 3000 + words(s.text) * 600); } catch (e) { end(); } };
+  if (EL.ok && EL.cast[s.speaker]) {
+    (s.audioP || elFetch(s.text, EL.cast[s.speaker])).then(url => { if (!url) return synthIt(); const au = new Audio(url); r.audio = au; au.onended = end; au.onerror = end; au.play().catch(synthIt); setTimeout(end, 4000 + words(s.text) * 700); });
+  } else synthIt();
+}
+function rplStopAudio() { const r = rpl; if (!r) return; if (r.tick) clearInterval(r.tick); r.tick = null; if (r.cueTimer) clearTimeout(r.cueTimer); try { r.audio && r.audio.pause(); } catch (e) {} try { synth && synth.cancel(); } catch (e) {} if (dictApi) dictApi.stop().catch(() => {}); r.listening = false; rplAudioStop(); }
+// Speech recognition feeds words here. Partial text grows until the pause that makes it final.
+function rplHeard(text, final) {
+  const r = rpl; if (!r || r.phase !== "run") return;
+  if (r.leadSpeaking) return;
+  const c = r.cur; if (!c) return;
+  const all = rpWords(text), fresh = all.slice(c.uttUsed);
+  const now = Date.now(), before = c.heard.length;
+  c.heard = c.finals.concat(fresh);
+  if (c.heard.length > before) {
+    if (!c.tFirst) { c.tFirst = now; if (c.afterLead && r.leadEnd) { const gap = (now - r.leadEnd) / 1000 - 0.6; if (gap > 3) c.dead = gap; } }
+    else if (c.lastWord && now - c.lastWord > 1500 && r.ptr < rpWords(c.text).length - 1) c.hes++;
+    c.lastWord = now; c.tLast = now; r.heardAny = true;
+  }
+  if (final) { c.finals = c.finals.concat(fresh); c.uttUsed = 0; }
+  const S = rpWords(c.text); r.ptr = rpPointer(S, c.heard);
+  const dur = (c.tLast - c.tFirst) / 1000; r.liveWpm = dur > 3 ? Math.round(c.heard.length / (dur / 60)) : 0;
+  // Reached the end of the line while still talking (next line is also theirs): carry the extra words over.
+  const nxt = r.steps[r.i + 1];
+  if (r.ptr >= S.length && nxt && nxt.who === "agent" && !final) {
+    const at = rpPointerAt(S, c.heard).end, used = c.uttUsed + Math.max(0, at + 1 - c.finals.length);
+    c.heard = c.heard.slice(0, at + 1); rplFinishLine();
+    rplNextStep(); if (rpl.cur) rpl.cur.uttUsed = used; rplHeard(text, false); return;
+  }
+  rplPaint();
+}
+function rplPaint() { const r = rpl, cur = r && r.steps[r.i]; if (!cur || cur.who !== "agent") return; const el = document.querySelector(".rp-cur.me"); if (!el) return render(); const spans = el.querySelectorAll("span"); let wi = 0; spans.forEach(sp => { const n = rpWords(sp.textContent).length; sp.classList.toggle("said", wi < r.ptr); wi += n; }); const st = document.querySelector(".rp-status"); if (st) st.innerHTML = `<span class="rp-dot on"></span>Listening…${r.liveWpm ? ` · ${r.liveWpm} wpm` : ""}`; }
+function rplTick() {
+  const r = rpl; if (!r || r.phase !== "run") return;
+  const c = r.cur, s = r.steps[r.i]; if (!c || !s || s.who !== "agent" || !c.lastWord) return;
+  const S = rpWords(c.text), cov = r.ptr / Math.max(1, S.length), quiet = Date.now() - c.lastWord;
+  if ((cov >= 0.85 && quiet > 900) || (cov >= 0.5 && quiet > 2300) || (r.ptr >= S.length - 1 && quiet > 600)) rplAdvance(false);
+}
+function rplAudioSample() { const r = rpl; if (!r || !r.an) return; const a = r.an; a.node.getFloatTimeDomainData(a.buf); if (r.leadSpeaking || !r.cur) return; const p = rpPitch(a.buf, a.ctx.sampleRate); if (p.f) r.cur.pitch.push(p.f); }
+async function rplAudioStart() {
+  const r = rpl; if (/iPhone|iPad|iPod/.test(navigator.userAgent)) { r.an = null; return; } try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    const ctx = new (window.AudioContext || window.webkitAudioContext)(), src = ctx.createMediaStreamSource(stream), node = ctx.createAnalyser(); node.fftSize = 2048; src.connect(node);
+    r.an = { ctx, node, stream, buf: new Float32Array(node.fftSize) }; r.anTimer = setInterval(rplAudioSample, 60);
+  } catch (e) { r.an = null; }
+}
+function rplAudioStop() { const r = rpl; if (!r) return; if (r.anTimer) clearInterval(r.anTimer); if (r.an) { try { r.an.stream.getTracks().forEach(t => t.stop()); r.an.ctx.close(); } catch (e) {} } r.an = null; }
+function rplFinishLine() { const r = rpl, c = r.cur; if (!c) return; r.lines.push({ text: c.text, heard: c.heard.slice(), tFirst: c.tFirst, tLast: c.tLast, hes: c.hes, dead: c.dead || 0, pitch: c.pitch.slice() }); r.cur = null; }
+function rplAdvance(manual) {
+  const r = rpl; if (!r || r.phase !== "run") return; const s = r.steps[r.i];
+  if (s && s.who === "agent") { rplFinishLine(); rplNextStep(); }
+  else if (manual && s && s.who === "lead") { try { r.audio && r.audio.pause(); } catch (e) {} try { synth && synth.cancel(); } catch (e) {} r.leadSpeaking = false; r.leadEnd = Date.now(); rplNextStep(); }
+  else if (manual && s && s.who === "cue") { clearTimeout(r.cueTimer); rplNextStep(); }
+}
+function rplFinish() {
+  const r = rpl; rplStopAudio();
+  const g = rpSummarize(r.lines); r.result = g; r.phase = "done";
+  if (!store.roleplay) store.roleplay = {};
+  const prev = store.roleplay[r.mod] || {};
+  store.roleplay[r.mod] = { pass: prev.pass || g.pass, best: Math.max(prev.best || 0, g.overall), tries: (prev.tries || 0) + 1, last: { overall: g.overall, acc: g.rawAcc, wpm: g.wpm, flow: g.flow, variety: g.variety, dead: g.deadN, lead: r.lead, at: new Date().toISOString() } };
+  save(); try { notify("roleplay_attempt", { module: r.mod, score: g.overall, passed: g.pass }); } catch (e) {} checkModuleDone(r.mod);
+  render();
+}
+
 const DRILL_PASS = 0.8;
 /* Matching steps in the agency presentation tool (presentation.html; numbers are its slide ids). */
 const TOOL_STEPS = { "dial-adp": "Make the call: ADP Referral", "dial-presubmit": "Make the call: Pre-Submit", "dial-lapsed": "Make the call: Globe Lapsed", "dial-policy": "Make the call: Policy Owner", 0: "Presentation Setup", 1: "General Introduction", 2: "Rapport Building", 3: "Policy Owner", 4: "Pre-Submit", 5: "Globe Lapsed", 6: "ADP Referral", 7: "No-Cost Renewal", 8: "Company Introduction", 9: "Make Tomorrow Better", 10: "Sports Partnerships", 11: "Accidental Death Policy", 12: "Referral Collection", 13: "Word of Thanks", 14: "Insurance Types", 15: "Term & Whole Life", 16: "Needs Survey", 17: "Medical Questions", 18: "Final Expense", 19: "Freedom of Choice", 20: "Final Expense Recap", 21: "Income Protection", 22: "Mortgage Protection", 23: "College Education", 24: "Final Recap & Close" };
@@ -1644,7 +2077,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&am
 
 function quizPassed(id) { return (store.quiz[id] || 0) >= PASS_QUIZ; }
 function drillPassed(id) { return !!(store.drill && store.drill[id] && store.drill[id].pass); }
-function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)); }
+function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)); }
 function checkModuleDone(id) {
   if (!moduleDone(id)) return;
   store.doneNotified = store.doneNotified || {};
@@ -2107,8 +2540,8 @@ async function initCaps() {
 }
 function wireDict() {
   if (dictApi) {
-    dictApi.onPartial(({ text }) => { if (rp && view.name === "call") { micPartial(text); } else if (view.name === "drill" && drillState) { const t = $("#drillInput"); if (t) { t.value = ((drillState.dictBase || "") + " " + text).trim(); drillState.text = t.value; } } });
-    dictApi.onFinal(({ text }) => { if (rp && view.name === "call") { micFinal(text); } else if (view.name === "drill" && drillState) { drillState.dictBase = ((drillState.dictBase || "") + " " + text).trim(); const t = $("#drillInput"); if (t) { t.value = drillState.dictBase; drillState.text = t.value; } } });
+    dictApi.onPartial(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, false); return; } if (rp && view.name === "call") { micPartial(text); } else if (view.name === "drill" && drillState) { const t = $("#drillInput"); if (t) { t.value = ((drillState.dictBase || "") + " " + text).trim(); drillState.text = t.value; } } });
+    dictApi.onFinal(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, true); return; } if (rp && view.name === "call") { micFinal(text); } else if (view.name === "drill" && drillState) { drillState.dictBase = ((drillState.dictBase || "") + " " + text).trim(); const t = $("#drillInput"); if (t) { t.value = drillState.dictBase; drillState.text = t.value; } } });
     dictApi.onState(({ state, reason }) => { if (rp && view.name === "call") micState(state, reason); if (drillState) drillState.listening = state === "listening"; const dm = $("#drillMic"); if (dm) { dm.classList.toggle("on", state === "listening"); dm.setAttribute("aria-pressed", state === "listening"); } });
   }
 }
@@ -2149,7 +2582,7 @@ function renderRail() {
     h += `<button class="group group-btn" type="button" data-railsec="${esc(g.name)}" aria-expanded="${open}" aria-controls="railsec${gi}"><span class="caret" aria-hidden="true">${open ? "▾" : "▸"}</span><span>${esc(g.name)}</span><span class="gcount">${doneN === g.items.length ? "✓" : doneN + "/" + g.items.length}</span></button><div id="railsec${gi}" ${open ? "" : "hidden"}>`;
     g.items.forEach(([m, i]) => {
       const done = moduleDone(m.id); const un = moduleUnlocked(i);
-      const total = DRILLS[m.id] ? 2 : 1; const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0);
+      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0);
       const active = inLesson && view.id === m.id;
       h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
@@ -2175,11 +2608,13 @@ function render() {
   if (view.name === "cast") { main.innerHTML = castView(); bindCast(); return; }
   if (view.name === "manager") { main.innerHTML = managerView(); afterManagerRender(); main.scrollTop = 0; return; }
   if (!store.name) { main.innerHTML = signInView(); bindSignIn(); return; }
+  if (rpl && rpl.phase === "run" && view.name !== "roleplay") { rplStopAudio(); rpl.phase = "setup"; }
   if (view.name === "launch") { main.innerHTML = launchView(); main.scrollTop = 0; return; }
   if (view.name === "home") main.innerHTML = homeView();
   else if (view.name === "module") main.innerHTML = moduleView(view.id);
   else if (view.name === "quiz") main.innerHTML = quizView(view.id);
   else if (view.name === "drill") { main.innerHTML = drillView(view.id); bindDrill(); }
+  else if (view.name === "roleplay") { main.innerHTML = roleplayView(view.id); bindRoleplay(); }
   else if (view.name === "practice" || view.name === "exam") main.innerHTML = familyPickView(view.name);
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
@@ -2235,7 +2670,8 @@ function todayList() {
   Object.entries(store.doneNotified || {}).forEach(([id, at]) => { if (new Date(at).toDateString() === today) items.push({ done: true, t: `Lesson: ${modTitle(id)}` }); });
   MODULES.filter(m => !moduleDone(m.id)).slice(0, 2).forEach(m => {
     const i = MODULES.indexOf(m), un = moduleUnlocked(i);
-    if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
+    if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && ROLEPLAYS[m.id]) items.push({ t: `Role-play: ${m.title}`, btn: un ? `<button class="btn small" data-go="roleplay" data-id="${m.id}" type="button">Start</button>` : "" });
+    else if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
     else items.push({ t: `Lesson: ${m.title}`, btn: un ? `<button class="btn small" data-go="module" data-id="${m.id}" type="button">Open</button>` : "", locked: !un });
   });
   const tried = new Set(store.attempts.map(a => a.family + "|" + a.format));
@@ -2499,10 +2935,12 @@ function moduleView(id) {
     <p class="lead">${m.summary}</p>
     <div class="card">${m.blocks.map(blockHTML).join("")}</div>
     <div class="card"><h2>Check your knowledge</h2>
-      <div class="row spread"><div><h3>${DRILLS[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
+      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
       <button class="btn ${quizPassed(id) ? "secondary" : ""}" data-go="quiz" data-id="${id}" type="button">${sc != null ? "Retake quiz" : "Take the quiz"}</button></div>
       ${DRILLS[id] ? `<div class="row spread"><div><h3>2. Say-it drill ${drillPassed(id) ? `<span class="pill pass">Passed</span>` : (store.drill && store.drill[id]) ? `<span class="pill fail">Try again</span>` : ""}</h3><p class="small">Deliver a key part of this script from memory. The lesson is hidden while you answer.</p></div>
       <button class="btn ${drillPassed(id) ? "secondary" : ""}" data-go="drill" data-id="${id}" type="button">${drillPassed(id) ? "Practice again" : "Start the drill"}</button></div>` : ""}
+      ${ROLEPLAYS[id] ? (() => { const rr = (store.roleplay || {})[id]; return `<div class="row spread"><div><h3>${DRILLS[id] ? "3" : "2"}. Script role-play ${rplPassed(id) ? `<span class="pill pass">Passed ${rr.best}</span>` : rr ? `<span class="pill fail">Best ${rr.best}</span>` : ""}</h3><p class="small">${ROLEPLAYS[id].track === "dial" ? "Read the call script out loud with a lead on the line" : "Read the presentation out loud from the opening through this lesson"}. Graded on how you sound: accuracy, pace, flow and energy.</p></div>
+      <button class="btn ${rplPassed(id) ? "secondary" : ""}" data-go="roleplay" data-id="${id}" type="button">${rplPassed(id) ? "Run it again" : "Start the role-play"}</button></div>`; })() : ""}
     </div>
   </div>`;
 }
@@ -4251,6 +4689,7 @@ document.addEventListener("click", e => {
     if (t.dataset.go === "home" && t.dataset.academy) { view = { name: "home", academy: true }; render(); return; }
     if (t.dataset.go === "quiz") quizState = null;
     if (t.dataset.go === "drill") drillState = null;
+    if (t.dataset.go === "roleplay" && rpl && rpl.mod !== t.dataset.id) rpl = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
   }
   if (t.dataset.q !== undefined) {
