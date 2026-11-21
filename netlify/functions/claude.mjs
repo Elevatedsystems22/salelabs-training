@@ -1,6 +1,8 @@
 /* The AI family brain and the grader. Streams plain text back to the course.
    Needs the environment variable ANTHROPIC_API_KEY.
-   Optional: MODEL_FAST (family replies, drills; default Haiku, the low-cost model) and MODEL_SMART (final call grading; default Sonnet). */
+   Optional: MODEL_FAMILY (the AI family on practice calls and exams; default Sonnet), MODEL_FAST (drills and quick checks; default Haiku)
+   and MODEL_SMART (final call grading; default Sonnet).
+   The family's instructions are sent as a cached "system" block so each turn of a call only pays full price for the new part. */
 import { allowed, json } from "../lib/guard.mjs";
 
 const MAX_PROMPT = 120000;
@@ -13,13 +15,14 @@ export default async (req) => {
   try { body = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
   const prompt = String(body.prompt || "");
   if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad_request" }, 400);
-  const smart = body.tier === "complex";
-  const model = smart ? (process.env.MODEL_SMART || "claude-sonnet-5-5") : (process.env.MODEL_FAST || "claude-haiku-5-5");
+  const smart = body.tier === "complex", family = body.tier === "family";
+  const model = smart ? (process.env.MODEL_SMART || "claude-sonnet-5-5") : family ? (process.env.MODEL_FAMILY || "claude-sonnet-5-5") : (process.env.MODEL_FAST || "claude-haiku-5-5");
+  const system = typeof body.system === "string" && body.system.length && body.system.length <= MAX_PROMPT ? [{ type: "text", text: body.system, cache_control: { type: "ephemeral" } }] : undefined;
 
   const upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: smart ? 4000 : 1200, stream: true, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model, max_tokens: smart ? 4000 : 1200, stream: true, ...(system ? { system } : {}), messages: [{ role: "user", content: prompt }] }),
     signal: req.signal
   });
   if (!upstream.ok || !upstream.body) {

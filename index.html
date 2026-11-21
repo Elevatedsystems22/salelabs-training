@@ -1850,11 +1850,16 @@ function pickDialObjections(fam) {
      /api/anam/session   video avatars for Zoom calls
    ========================================================= */
 let SITE_MODE = false;
+// Splits the family prompt at "CURRENT MOOD" so the fixed part (household, rules, objections) can be cached on the server.
+function siteBody(prompt, opts) {
+  const tier = opts.modelTier || "default", i = opts.cacheSplit ? prompt.indexOf("\n\nCURRENT MOOD:") : -1;
+  return i > 0 ? { system: prompt.slice(0, i), prompt: prompt.slice(i + 2), tier } : { prompt, tier };
+}
 function siteSample() {
   return async (prompt, opts = {}) => {
     let r;
     try {
-      r = await fetch("/api/claude", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ prompt, tier: opts.modelTier || "default" }), signal: opts.signal });
+      r = await fetch("/api/claude", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(siteBody(prompt, opts)), signal: opts.signal });
     } catch (e) {
       if (e && e.name === "AbortError") throw e;
       const er = new Error("network"); er.code = "network"; throw er;
@@ -3169,7 +3174,7 @@ async function requestFamily(kind) {
     }
   };
   try {
-    const res = await sampleFn(familyPrompt(kind), { modelTier: "default", cache: false, signal: ctrl.signal, onText: ({ text }) => handle(text, false) });
+    const res = await sampleFn(familyPrompt(kind), { modelTier: SITE_MODE ? "family" : "default", cacheSplit: true, cache: false, signal: ctrl.signal, onText: ({ text }) => handle(text, false) });
     if (gen !== rp.gen || !rp) return;
     handle(res.text || "", true);
     const st = (res.text || "").match(/#STATE\s+mood=(\d+)\s+decision=(\w+)(?:\s+note=(.*))?/);
