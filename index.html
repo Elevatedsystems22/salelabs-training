@@ -1980,7 +1980,8 @@ WHO YOU ARE (secret: reveal details only when asked):
 ${f.profile}
 
 THIS CALL
-- Lead: ${D.lead}${D.ver ? " (" + D.ver + " lead)" : ""}. ${D.card}
+- Lead: ${D.lead}${D.ver ? " (" + D.ver + " lead)" : ""}. ${D.card}${LEAD_PROFILE[D.lead] ? `
+- How this lead type usually acts: ${LEAD_PROFILE[D.lead].behavior}` : ""}
 - Right now: ${D.situation}
 - Speakers on the phone: ${f.speakers.join(", ")} (follow the situation about who can talk).
 
@@ -2274,16 +2275,41 @@ const OBJECTION_BANK = [
   { t: "We need to talk it over between the two of us first.", couple: true },
   { t: "I'd want to run this by my family before I sign anything.", single: true }
 ];
+/* How each lead type usually acts, and the objections they raise, built from the agency's call-clinic scripts and rebuttals.
+   Add your agents' real-world objections to these lists to make the families more accurate. */
+const LEAD_PROFILE = {
+  "Pre-Submit": {
+    behavior: "Started a request online and half forgot about it. Wants quotes, not a presentation, and is wary of being sold. Calms down once the agent verifies their address and explains the free benefits come first, then quotes.",
+    phone: ["I don't know what you're talking about. I never filled anything out.", "I'm really just looking for quotes.", "I already got it taken care of.", "I can't talk right now.", "How did you get my number?"],
+    pres: ["I was just looking for a quote. I didn't expect all this.", "Can you just tell me the price?", "I want to shop around and compare a few quotes first."] },
+  "ADP Referral": {
+    behavior: "Someone they know gifted them a no-cost policy. Curious but suspicious of anything free, and warms up when the agent uses the sponsor's name and talks about the gift instead of a sale.",
+    phone: ["Wait, why is it free? What's the catch?", "I'm not interested.", "I already have insurance.", "I don't know who that is.", "Wrong number.", "Not a good time."],
+    pres: ["Keisha said this was free. Why are you selling me something now?", "I'd want to talk to my mom before I sign anything.", "I already have something through work."] },
+  "Globe Lapsed": {
+    behavior: "Had a Globe Life policy that lapsed. Assumes the call is about money owed and feels a little embarrassed about letting it go. Opens up once the agent makes clear it's not a collection call and asks what happened without judging.",
+    phone: ["Is this a bill collector?", "I canceled it on purpose.", "I found better coverage.", "I'm not interested.", "I can't talk now."],
+    pres: ["We had a policy with y'all before and it didn't work out. Why would this be any different?", "We stopped paying because it got too expensive. What's changed?", "Our kids can handle the funeral if it comes to that."] },
+  "Policy Owner": {
+    behavior: "A current Globe Life policyholder. Thinks they're already fully covered and wonders why anyone needs to verify anything. Respects confidence and numbers; gets impatient with fluff.",
+    phone: ["Why do you need to verify anything? Is something wrong with my policy?", "I'm too busy right now.", "What free benefits?", "Someone just reviewed it.", "Wrong number."],
+    pres: ["I already have a policy with you. Why would I need more?", "My term policy through work covers me.", "Can you just email me something?"] }
+};
 const PHONE_OBJECTION_BANK = ["How did you get my number?", "Is this some kind of scam?", "I'm not really interested in buying anything.", "Can you just call me back another time?"];
 function pickObjections(fam) {
   const couple = fam.speakers.length > 1;
   const core = fam.objections[0];
   const fit = OBJECTION_BANK.filter(o => o.any || (couple ? o.couple : o.single));
-  const pool = shuffle(fam.objections.slice(1).concat(shuffle(fit).slice(0, 3).map(o => `${fam.speakers[Math.floor(Math.random() * fam.speakers.length)]}: "${o.t}"`)));
+  const who = () => fam.speakers[Math.floor(Math.random() * fam.speakers.length)];
+  const famText = fam.objections.join(" ").toLowerCase();
+  const leadObs = ((LEAD_PROFILE[fam.leadType] || {}).pres || []).filter(t => !famText.includes(t.toLowerCase().slice(0, 20))).map(t => `${who()}: "${t}"`);
+  const pool = shuffle(fam.objections.slice(1).concat(shuffle(leadObs).slice(0, 2), shuffle(fit).slice(0, 2).map(o => `${who()}: "${o.t}"`)));
   return [core].concat(pool.slice(0, fam.difficulty === "Hard" ? 2 : 1));
 }
 function pickDialObjections(fam) {
-  const D = DIAL_FAM[fam.id]; const extra = PHONE_OBJECTION_BANK[Math.floor(Math.random() * PHONE_OBJECTION_BANK.length)];
+  const D = DIAL_FAM[fam.id], said = D.objections.join(" ").toLowerCase();
+  const leadPool = ((LEAD_PROFILE[D.lead] || {}).phone || []).filter(t => !said.includes(t.toLowerCase().slice(0, 18)) && !/wrong number|don't know who/i.test(t) && !["busy", "quote", "free", "talk", "insurance", "covered", "bill collector", "canceled"].some(k => t.toLowerCase().includes(k) && said.includes(k)));
+  const pool = leadPool.length ? leadPool : PHONE_OBJECTION_BANK; const extra = pool[Math.floor(Math.random() * pool.length)];
   return D.objections.concat([`${fam.speakers[0]}: "${extra}"`]);
 }
 
@@ -3671,7 +3697,8 @@ HOUSEHOLD (secret: reveal details only when the agent asks or it comes up natura
 ${f.profile}
 
 SPEAKERS: ${f.speakers.join(", ")}. Only these people speak.
-LEAD TYPE: ${f.leadType}.
+LEAD TYPE: ${f.leadType}.${LEAD_PROFILE[f.leadType] ? `
+HOW THIS LEAD TYPE USUALLY ACTS: ${LEAD_PROFILE[f.leadType].behavior}` : ""}
 
 HOW TO BEHAVE
 - Real conversation: short and natural, usually 1 to 2 sentences per speaker, often just one person. Back-channel like a real person ("Mm-hm.", "Okay.", "Yeah, I see it.") when the agent is just presenting. No speeches, no lists, no emojis.
