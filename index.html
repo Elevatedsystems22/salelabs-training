@@ -2853,17 +2853,28 @@ function webSpeechDict() {
    or pick them on the casting page: add #cast to the course address.
    ========================================================= */
 const VIDEO_CAST = {
-  // Young couple, early 30s (Anam avatars "Mina" and "Marcus"; voices "Ariana" and "Cole")
-  johnson: { Tasha: { avatarId: "65bdc796-f739-47fe-9a48-1134dc3ddae4", voiceId: "8cc7ba7b-4fc0-11f1-84b0-52bacf74fa75" }, Marcus: { avatarId: "c8601ae3-9686-4f1f-8e32-7499b470f6b5", voiceId: "8ebf24c3-4fc0-11f1-84b0-52bacf74fa75" } },
-  // Single woman, 29 (avatar "Talia"; voice "Michelle")
-  brooks: { Danielle: { avatarId: "dd5bec05-78f0-424e-a7c8-576b6aba969e", voiceId: "90919e2e-4fc0-11f1-84b0-52bacf74fa75" } },
-  // Older couple, 60s (avatars "Harold" and "Maria"; voices "Carl" and "Celine")
-  whitaker: { Earl: { avatarId: "a64dd018-7dff-4f86-a623-0230f71fffa6", voiceId: "8cc80e1f-4fc0-11f1-84b0-52bacf74fa75" }, Linda: { avatarId: "a7fe242b-9ab6-43a7-a31b-514d9606bc14", voiceId: "8cc81552-4fc0-11f1-84b0-52bacf74fa75" } },
-  // Middle-aged couple, around 40 (avatars "Pablo" and "Kiara"; voices "Cooper" and "Stephanie")
-  delgado: { Ray: { avatarId: "92b91f2a-4159-411f-b092-3e1b8663f6b9", voiceId: "90c1fb05-4fc0-11f1-84b0-52bacf74fa75" }, Angie: { avatarId: "42675ef1-2342-45d8-9603-9bd92ed45699", voiceId: "8fd0e01e-4fc0-11f1-84b0-52bacf74fa75" } },
-  // Single man, 38 (avatar "Owen"; voice "Joseph")
-  boone: { Travis: { avatarId: "31fcc5e6-f15d-4d56-8b5c-a7061847a218", voiceId: "8ff0da65-4fc0-11f1-84b0-52bacf74fa75" } }
+  // Every face is at home. "scene" tells the family brain what the agent can see behind them, so what they say matches the video.
+  johnson: { Tasha: { avatarId: "65bdc796-f739-47fe-9a48-1134dc3ddae4", voiceId: "8cc7ba7b-4fc0-11f1-84b0-52bacf74fa75", scene: "You're standing in the hallway at home with the laptop propped on a shelf, wearing a blue cable-knit sweater. Marcus is on the couch in the living room, just out of view." },
+    Marcus: { avatarId: "c8601ae3-9686-4f1f-8e32-7499b470f6b5", voiceId: "8ebf24c3-4fc0-11f1-84b0-52bacf74fa75" } },
+  brooks: { Danielle: { avatarId: "482d0d8a-1c27-4bf3-9be9-30189c63432d", voiceId: "90919e2e-4fc0-11f1-84b0-52bacf74fa75", scene: "You're sitting in your living room at home in a black turtleneck. Behind you: a window with greenery outside, curtains, and a wooden shelf with a couple of vases. Aubree is in her room." } },
+  whitaker: { Earl: { avatarId: "a64dd018-7dff-4f86-a623-0230f71fffa6", voiceId: "8cc80e1f-4fc0-11f1-84b0-52bacf74fa75" },
+    Linda: { avatarId: "edcb8f1a-334f-4cdb-871c-5c513db806a7", voiceId: "8cc81552-4fc0-11f1-84b0-52bacf74fa75", scene: "You're sitting on the living room couch with the laptop, in a dark grey sweater over a white collared shirt. Earl is in his recliner across the room, off camera." } },
+  delgado: { Ray: { avatarId: "92b91f2a-4159-411f-b092-3e1b8663f6b9", voiceId: "90c1fb05-4fc0-11f1-84b0-52bacf74fa75", scene: "You're at the desk in your home office, where Angie does the company books, with a window behind you. You're in a dark blue zip-up sweater over a white t-shirt. Angie is sitting next to you, off to the side of the camera." },
+    Angie: { avatarId: "42675ef1-2342-45d8-9603-9bd92ed45699", voiceId: "8fd0e01e-4fc0-11f1-84b0-52bacf74fa75" } },
+  boone: { Travis: { avatarId: "8a339c9f-0666-46bd-ab27-e90acd0409dc", voiceId: "8ff0da65-4fc0-11f1-84b0-52bacf74fa75", scene: "You're in your living room at home in a dark blue button-down over a white t-shirt, with a big window behind you looking out at a brick building. The TV is on across the room." } }
 };
+// Who sits in front of the camera in each household (everyone else is in the room, off camera).
+const VIDEO_ON_CAMERA = { whitaker: "Linda" };
+function camPerson(fam) { const n = VIDEO_ON_CAMERA[fam.id]; return n && fam.speakers.includes(n) ? n : fam.speakers[0]; }
+// What the agent can see on the family's video. Falls back to Anam's description of the face if a manager picked a different one.
+let anamSummary = null;
+async function sceneFor(fam) {
+  const n = camPerson(fam), c = castFor(fam.id)[n] || {};
+  const base = (VIDEO_CAST[fam.id] || {})[n] || {};
+  if (c.scene && c.avatarId === base.avatarId) return c.scene;
+  try { anamSummary = anamSummary || await fetch("/api/anam/catalog?summary=1").then(r => r.json()); const a = (anamSummary.avatars || []).find(x => x.id === c.avatarId); if (a && a.desc) return "What your camera shows: " + a.desc.replace(/^An? (young |mature |older )?(woman|man|person)/i, "You"); } catch (e) {}
+  return "";
+}
 function castFor(famId) {
   let local = {}; try { local = JSON.parse(localStorage.getItem("vpa_cast") || "{}"); } catch (e) {}
   const base = VIDEO_CAST[famId] || {}; const over = local[famId] || {}; const out = {};
@@ -2892,7 +2903,7 @@ function planInterrupts(fam, mode) {
   const pool = shuffle(INTERRUPT_BANK.filter(x => (x.slide !== "College Education" || kids) && (x.slide !== "Mortgage Protection" || !rents)));
   return pool.slice(0, mode === "exam" ? 4 : 2).map(x => ({ slide: x.slide, hint: x.hint, who: x.spouse && spouse ? spouse : main }));
 }
-function castReady(fam) { const c = castFor(fam.id), n = fam.speakers[0]; return !!(c[n] && c[n].avatarId && c[n].voiceId); }
+function castReady(fam) { const c = castFor(fam.id), n = camPerson(fam); return !!(c[n] && c[n].avatarId && c[n].voiceId); }
 let anamSDK = null;
 async function loadAnam() { if (!anamSDK) anamSDK = await import("https://esm.sh/@anam-ai/js-sdk@latest"); return anamSDK; }
 const VID = { people: {}, dock: null, ctx: null };
@@ -2901,7 +2912,8 @@ function vidDock() { if (!VID.dock) { VID.dock = document.createElement("div"); 
 async function startVideoFamily(fam) {
   try { VID.ctx = VID.ctx || new (window.AudioContext || window.webkitAudioContext)(); VID.ctx.resume(); } catch (e) {}
   const sdk = await loadAnam(); const cast = castFor(fam.id);
-  await Promise.all(fam.speakers.slice(0, 1).map(async name => {
+  rp.scene = await sceneFor(fam);
+  await Promise.all([camPerson(fam)].map(async name => {
     const el = document.createElement("video"); el.id = "vid_" + name; el.autoplay = true; el.playsInline = true; el.className = "vperson";
     vidDock().appendChild(el);
     const p = { name, el, client: null, level: 0, lastLoud: 0, analyser: null, status: "Connecting video…" };
@@ -2977,7 +2989,7 @@ function stopVideoFamily() {
   VID.people = {};
 }
 function videoTileHTML(fam, compact) {
-  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => !VID.people[n] && n !== fam.speakers[0] ? `<div class="vcell camoff ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="camoff-in"><span class="camoff-av">${esc(n[0])}</span><span>${esc(n)}</span><small>Camera off</small></div></div>` : `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="vstatus" data-vstatus="${esc(n)}" ${VID.people[n] && VID.people[n].status ? "" : "hidden"}>${esc((VID.people[n] && VID.people[n].status) || "")}</div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
+  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => !VID.people[n] && n !== camPerson(fam) ? `<div class="vcell camoff ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="camoff-in"><span class="camoff-av">${esc(n[0])}</span><span>${esc(n)}</span><small>Camera off</small></div></div>` : `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="vstatus" data-vstatus="${esc(n)}" ${VID.people[n] && VID.people[n].status ? "" : "hidden"}>${esc((VID.people[n] && VID.people[n].status) || "")}</div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
 }
 
 /* =========================================================
@@ -4223,7 +4235,7 @@ Decide whether a real person in this household would cut in right now: confused 
     : `Respond to the agent's latest words as the family.`;
   const fmt = rp.format === "tele"
     ? `FORMAT: TELESALES PHONE CALL. You are on the phone${f.speakers.length > 1 ? " on speaker together" : ""}. You CANNOT see anything: no video, no slides, no screen. If the agent says "as you can see", "on your screen", "this slide" or asks if you can see something, be honestly confused ("Uh, I can't see anything, we're on the phone") and lower mood a little. You understand numbers and ideas only when the agent says them clearly; if they rush through numbers, ask them to repeat.`
-    : `FORMAT: ZOOM VIDEO CALL. ${rp.video && f.speakers.length > 1 ? `${f.speakers[0]} is on camera. ${f.speakers.slice(1).join(" and ")} is in the room with the camera pointed away, so they can hear everything and jump in, but the agent can't see them.` : "You are on camera together on one device."} [SCREEN: ...] lines tell you which slide the agent is sharing; you can see it.`;
+    : `FORMAT: ZOOM VIDEO CALL. ${rp.video && f.speakers.length > 1 ? `${camPerson(f)} is on camera. ${f.speakers.filter(n => n !== camPerson(f)).join(" and ")} is in the room with the camera pointed away, so they can hear everything and jump in, but the agent can't see them.` : "You are on camera together on one device."}${rp.video && rp.scene ? `\nWHAT THE AGENT SEES ON YOUR VIDEO: ${rp.scene} You are really there. Keep everything you say consistent with this setting (where you are, what's around you, what you're wearing) and never describe a place that contradicts it. Mention things in the room naturally only when it fits.` : ""} [SCREEN: ...] lines tell you which slide the agent is sharing; you can see it.`;
   return `${fmt}
 
 You are role-playing a household on a live life insurance appointment. This is a training simulation for a new Globe Life Liberty National agent. The agent is SPEAKING (their words are live speech-to-text, so ignore small transcription errors and missing punctuation). Your lines are spoken aloud immediately. Stay fully in character. Never mention AI, never coach the agent, never break character, never write stage directions or actions.
