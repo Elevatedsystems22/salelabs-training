@@ -2692,6 +2692,7 @@ function initEleven() {
   EL.p = fetch("/api/tts/status?speakers=" + encodeURIComponent(sp)).then(r => r.json()).then(j => { EL.ok = !!(j && j.ok); EL.cast = (j && j.cast) || {}; EL.status = EL.ok ? "ready" : "off"; voiceStatusRender(); return EL.ok; }).catch(() => { EL.status = "off"; EL.ok = false; return false; });
   return EL.p;
 }
+function elUrl(text, voiceId) { return "/api/tts/play?v=" + encodeURIComponent(voiceId) + "&t=" + encodeURIComponent(String(text).slice(0, 600)); }
 function elFetch(text, voiceId) {
   return fetch("/api/tts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, voiceId }) })
     .then(r => r.ok ? r.blob() : null).then(b => b && b.size > 200 ? URL.createObjectURL(b) : null).catch(() => null);
@@ -2699,7 +2700,7 @@ function elFetch(text, voiceId) {
 /* Start making a line's audio as soon as the line arrives, so it's ready when its turn comes. */
 function prepLine(l) {
   if (l.audioP) return;
-  if (EL.ok && EL.cast[l.speaker]) { l.audioP = elFetch(l.text, EL.cast[l.speaker]); return; }
+  if (EL.ok && EL.cast[l.speaker]) { const url = elUrl(l.text, EL.cast[l.speaker]); try { const a = new Audio(); a.preload = "auto"; a.src = url; l.au = a; } catch (e) {} l.audioP = Promise.resolve(url); return; }
   if (!VOICE.tts) return;
   const v = KOKORO_VOICES[l.speaker] || { voice: FEMALE[l.speaker] ? "af_heart" : "am_michael", speed: 1 };
   l.audioP = VOICE.tts.generate(l.text, { voice: v.voice, speed: v.speed }).then(a => URL.createObjectURL(a.toBlob())).catch(() => null);
@@ -2720,9 +2721,10 @@ function playKokoro(l, done) {
     clearTimeout(wait);
     if (finished || !rp || rp.capLine !== l) return;
     if (!url) { synthLine(l, fin); return; }
-    au = new Audio(url); rp.curAudio = au;
-    au.onended = fin; au.onerror = fin;
-    au.play().catch(fin);
+    au = l.au && l.au.src.endsWith(url) ? l.au : new Audio(url); rp.curAudio = au;
+    let started = false; au.onplaying = () => { started = true; };
+    au.onended = fin; au.onerror = () => { if (!started && !finished) { rp.curAudio = null; synthLine(l, fin); } else fin(); };
+    au.play().catch(() => { if (!finished) synthLine(l, fin); });
     setTimeout(() => { if (rp && rp.curAudio === au && !finished) fin(); }, 4000 + words(l.text) * 700);
   });
 }
@@ -2791,7 +2793,10 @@ let SITE_MODE = false;
 // Splits the family prompt at "CURRENT MOOD" so the fixed part (household, rules, objections) can be cached on the server.
 function siteBody(prompt, opts) {
   const tier = opts.modelTier || "default", i = opts.cacheSplit ? prompt.indexOf("\n\nCURRENT MOOD:") : -1;
-  return i > 0 ? { system: prompt.slice(0, i), prompt: prompt.slice(i + 2), tier } : { prompt, tier };
+  if (i <= 0) return { prompt: prompt.replace(/\u241E/g, ""), tier };
+  const t = prompt.lastIndexOf("\n\nTRANSCRIPT SO FAR:", i);
+  if (t > 0) { const hist = prompt.slice(t + 2, i).split("\u241E").map(x => x.trim()).filter(Boolean); return { system: prompt.slice(0, t), history: hist, prompt: prompt.slice(i + 2), tier }; }
+  return { system: prompt.slice(0, i).replace(/\u241E/g, ""), prompt: prompt.slice(i + 2), tier };
 }
 function siteSample() {
   return async (prompt, opts = {}) => {
@@ -3938,6 +3943,16 @@ const TELE_GREETINGS = { johnson: [["Tasha", "Hello?"]], brooks: [["Danielle", "
 const FEMALE = { Tasha: 1, Danielle: 1, Linda: 1, Angie: 1 };
 const VOICE_TUNE = { Tasha: { pitch: 1.05, rate: 1.02 }, Marcus: { pitch: 0.9, rate: 0.98 }, Danielle: { pitch: 1.0, rate: 0.95 }, Earl: { pitch: 0.82, rate: 0.9 }, Linda: { pitch: 1.0, rate: 0.93 }, Ray: { pitch: 0.92, rate: 1.06 }, Angie: { pitch: 1.08, rate: 1.0 }, Travis: { pitch: 0.9, rate: 1.02 } };
 const PAUSES = { short: 1200, normal: 1800, long: 2600 };
+const QUICK = { short: 350, normal: 500, long: 900 };
+// Did the agent just ask them something? Then they answer right away instead of waiting out the full pause.
+function invitesReply(text) {
+  const t = String(text || "").toLowerCase().trim(); if (!t) return false;
+  if (/\?\s*$/.test(t)) return true;
+  const tail = t.split(/\s+/).slice(-9).join(" ");
+  if (/\b(right|make sense|makes sense|sound good|sounds good|fair enough|correct|any questions|any questions so far|questions so far|work for you|works best for you|okay with you|you there|can you hear me|see that|see my screen|is that okay|is that fair)\s*$/.test(tail)) return true;
+  return /(^|\b)(are|is|do|does|did|can|could|would|will|have|has|was|were)\s+(you|your|y'all|that|it|we|this|everyone|there|he|she|they)\b[^.]*$/.test(tail) && t.split(/\s+/).length >= 3
+    || /(^|\b)(what|which|when|where|who|how|why)\s+(is|are|do|does|did|was|were|would|will|time|kind|option|day|of)\b[^.]*$/.test(tail);
+}
 const synth = (typeof window !== "undefined" && window.speechSynthesis) ? window.speechSynthesis : null;
 let browserVoices = [];
 function loadVoices() { if (!synth) return; try { browserVoices = synth.getVoices().filter(v => /^en/i.test(v.lang)); } catch (e) { browserVoices = []; } }
@@ -4039,7 +4054,7 @@ function micPartial(text) {
 function micFinal(text) {
   if (!rp || rp.phase !== "live" || rp.ended || rp.micMuted) return;
   if (rp.familySpeaking) { if (rp.headphones && words(text) >= 2) interruptFamily(); else return; }
-  rp.buffer = (rp.buffer + " " + text).trim(); rp.partial = ""; heard();
+  rp.buffer = (rp.buffer + " " + text).trim(); rp.partial = ""; heard(); rp.finalAt = rp.lastHeard;
 }
 function heard() {
   const now = Date.now(); rp.lastHeard = now; rp.lastActivity = now; rp.nudged = false;
@@ -4074,6 +4089,8 @@ function engineTick() {
   if (!rp || rp.phase !== "live" || rp.ended) return;
   const now = Date.now(); const pending = (rp.buffer + " " + rp.partial).trim();
   if (pending && !rp.familySpeaking && now - rp.lastHeard >= PAUSES[rp.pause]) { commitTurn(); return; }
+  if (pending && !rp.familySpeaking && !rp.partial && rp.finalAt >= rp.lastHeard && now - rp.lastHeard >= QUICK[rp.pause] && invitesReply(pending)) { commitTurn(); return; }
+  if (pending && !rp.familySpeaking && now - rp.lastHeard >= QUICK[rp.pause] + 600 && invitesReply(pending)) { commitTurn(); return; }
   // Planned interruption: the family cuts in on a specific slide once the agent is into it.
   if (rp.current !== rp.slideSeen) { rp.slideSeen = rp.current; rp.slideAt = now; }
   if (pending && !rp.awaiting && !rp.familySpeaking && rp.planned && rp.planned.length && (rp.sharing || rp.format === "tele") && rp.current != null && now - rp.slideAt > 7000 && words(pending) >= 14 && now - rp.lastInterjectAt > 25000) {
@@ -4187,8 +4204,10 @@ function showThinking(on) {
   if (!on && th) th.remove();
 }
 
-function transcriptText() {
-  return rp.msgs.filter(m => m.who !== "system").map(m => m.who === "agent" ? `Agent: ${m.text}` : m.who === "family" ? `${m.speaker}: ${m.text}` : m.who === "step" ? `[Agent moved on to: "${m.text}" (phone call, nothing is shown to the family)]` : `[SCREEN: agent is now sharing the "${m.text}" slide]`).join("\n");
+function transcriptText(chunked) {
+  const lines = rp.msgs.filter(m => m.who !== "system").map(m => m.who === "agent" ? `Agent: ${m.text}` : m.who === "family" ? `${m.speaker}: ${m.text}` : m.who === "step" ? `[Agent moved on to: "${m.text}" (phone call, nothing is shown to the family)]` : `[SCREEN: agent is now sharing the "${m.text}" slide]`);
+  if (!chunked || !SITE_MODE) return lines.join("\n");
+  return lines.map((l, n) => (n > 0 && n % 8 === 0 ? "\u241E" : "") + l).join("\n");
 }
 function familyPrompt(kind) {
   if (rp.dial) return dialFamilyPrompt(kind);
@@ -4219,6 +4238,7 @@ HOW THIS LEAD TYPE USUALLY ACTS: ${LEAD_PROFILE[f.leadType].behavior}` : ""}
 HOW TO BEHAVE
 - Real conversation: short and natural, usually 1 to 2 sentences per speaker, often just one person. Back-channel like a real person ("Mm-hm.", "Okay.", "Yeah, I see it.") when the agent is just presenting. No speeches, no lists, no emojis.
 - It's fine to interrupt the flow like real people do: ask what something means, react, joke, get briefly distracted.
+- LISTENING: when the agent is presenting or explaining and just paused between sentences without asking you anything, real people keep listening. Write no spoken line at all, or at most a 1 to 3 word acknowledgment like "Mm-hmm." or "Okay.", unless something truly confused or bothered you. When they ask you a question, answer right away and naturally. Keep answers as short as a real person would on a call.
 - Don't volunteer finances, coverage or health unless asked. Answer honestly when asked.
 - Warm up (raise mood) when the agent builds genuine rapport about family, work, fun and common ground, listens, and uses what you told them. Cool off (lower mood) if they rush to slides, read robotically, interrogate, ignore what you said, talk too long without checking in, or pressure you.
 - A line ending in [interrupted by agent] means the agent talked over you; react like a person would if it keeps happening.
@@ -4232,15 +4252,15 @@ ${(rp.objections || f.objections).map((o, i) => `  ${i + 1}. ${o}`).join("\n")}
 - If the agent never actually asks you to choose or buy, do not offer to buy on your own.
 - Decline (no_sale) if the agent gives up, misrepresents things, promises guaranteed approval, or is rude. End the call (hung_up) only if mood drops near 0 or the agent is disrespectful.
 
-CURRENT MOOD: ${rp.mood}/100 (0 = about to hang up, 100 = ready to buy).
-
 TRANSCRIPT SO FAR:
-${transcriptText()}
+${transcriptText(true)}
+
+CURRENT MOOD: ${rp.mood}/100 (0 = about to hang up, 100 = ready to buy).
 
 TASK: ${task}
 
 OUTPUT FORMAT (plain text, nothing else):
-Each spoken line on its own line as  Name: words
+Each spoken line on its own line as  Name: words  (zero spoken lines is fine when you're just listening)
 Final line exactly:  #STATE mood=<0-100> decision=<none|buy_option1|buy_option2|buy_reduced|no_sale|hung_up> note=<short reason, or leave empty>`;
 }
 

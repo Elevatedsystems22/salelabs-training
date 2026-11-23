@@ -59,9 +59,12 @@ export default async (req) => {
   }
   if (!KEY()) return json({ error: "missing_key", message: "ELEVENLABS_API_KEY is not set in Netlify." }, 500);
 
-  if (path === "/api/tts" && req.method === "POST") {
-    if (!allowed(req)) return json({ error: "forbidden" }, 403);
-    let b; try { b = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
+  // GET /api/tts/play?v=<voice>&t=<text>: same as POST, but an <audio> element can start playing while it downloads.
+  const play = path === "/api/tts/play" && req.method === "GET";
+  if ((path === "/api/tts" && req.method === "POST") || play) {
+    const sameSite = req.headers.get("sec-fetch-site") === "same-origin";
+    if (!allowed(req) && !(play && sameSite)) return json({ error: "forbidden" }, 403);
+    let b; try { b = play ? { voiceId: new URL(req.url).searchParams.get("v"), text: new URL(req.url).searchParams.get("t") } : await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
     const text = String(b.text || "").replace(/\[[^\]]*\]/g, "").trim().slice(0, 600);
     if (!text || !VID.test(String(b.voiceId || ""))) return json({ error: "bad_request" }, 400);
     // Daily spending cap for the whole team.

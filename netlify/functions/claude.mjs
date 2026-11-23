@@ -17,12 +17,17 @@ export default async (req) => {
   if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad_request" }, 400);
   const smart = body.tier === "complex", family = body.tier === "family";
   const model = smart ? (process.env.MODEL_SMART || "claude-sonnet-5-5") : family ? (process.env.MODEL_FAMILY || "claude-sonnet-5-5") : (process.env.MODEL_FAST || "claude-haiku-5-5");
+  // The conversation so far arrives in stable chunks; caching up to the last one means each turn only processes what's new.
+  const hist = Array.isArray(body.history) ? body.history.filter(x => typeof x === "string" && x).slice(0, 60) : [];
+  const userContent = hist.length && hist.join("").length <= MAX_PROMPT
+    ? hist.map((x, i) => ({ type: "text", text: x, ...(i === hist.length - 1 ? { cache_control: { type: "ephemeral" } } : {}) })).concat([{ type: "text", text: prompt }])
+    : prompt;
   const system = typeof body.system === "string" && body.system.length && body.system.length <= MAX_PROMPT ? [{ type: "text", text: body.system, cache_control: { type: "ephemeral" } }] : undefined;
 
   const upstream = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: smart ? 4000 : 1200, stream: true, ...(system ? { system } : {}), messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model, max_tokens: smart ? 4000 : 1200, stream: true, ...(system ? { system } : {}), messages: [{ role: "user", content: userContent }] }),
     signal: req.signal
   });
   if (!upstream.ok || !upstream.body) {
