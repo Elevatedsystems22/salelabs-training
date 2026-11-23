@@ -688,6 +688,7 @@ tr.me-row td { background: var(--accent-soft); }
 .zs-pgrid button { font: inherit; border: 2px solid #dde3ec; background: #fff; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; text-align: left; color: #0f1b2d; }
 .zs-pgrid button:hover { border-color: #0b5cff; } .zs-pgrid small { color: #5b6676; font-size: 12px; }
 .zs-thumb { height: 60px; border-radius: 6px; background: #e9eef5; display: block; } .zs-thumb.client { background: linear-gradient(135deg, #0b4fb3, #3b82f6); } .zs-thumb.tool { background: linear-gradient(135deg, #fff7e6, #f5c26b); } .zs-thumb.eapp { background: linear-gradient(135deg, #217a3b, #4ade80); } .zs-thumb.mail { background: linear-gradient(135deg, #ea4335, #fbbc05); } .zs-thumb.screen { background: linear-gradient(135deg, #334155, #64748b); }
+.zs-opt.right { border-color: var(--good); background: #eaf6ee; } .zs-opt.wrong, .zs-opt.wrong:focus { border-color: var(--bad, #b42318); background: #fdeceb; } .zs-opt.right:focus { border-color: var(--good); } .zs-opt:disabled { cursor: default; color: var(--ink); }
 .zs-choice { margin-top: 12px; } .zs-opt { display: block; width: 100%; text-align: left; font: inherit; font-size: 15px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; cursor: pointer; } .zs-opt:hover { border-color: var(--accent); }
 @media (max-width: 900px) { .zs-body { height: 260px; } .zs-panel { position: absolute; right: 0; top: 30px; bottom: 60px; width: 210px; z-index: 2; } .zs-btn { min-width: 48px; padding: 4px 4px; font-size: 16px; } .zs-btn span { font-size: 10px; } .zs-list { columns: 1; } .zs-task { flex-direction: column; } .zs-meta { flex-direction: row; gap: 12px; } }
 .od-crit { grid-template-columns: repeat(4, 1fr); }
@@ -2164,6 +2165,87 @@ function zsFinish() {
   render();
 }
 
+/* =========================================================
+   SCENARIOS
+   Real situations from a call. Pick what you'd do or say and see why.
+   Missed ones come back at the end until you get them right. Pass with 80% right on the first try.
+   ========================================================= */
+const SCENARIOS = {
+  s01: [
+    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Telesales: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on video so they see every slide." },
+    { sit: "Earl says, “I don't fool with computers. Just talk to me on the phone.”", q: "What do you do?", o: ["Insist on Zoom, it works better", "Present by phone and describe each slide out loud", "Reschedule until his son can set up Zoom"], a: 1, why: "Phone is the backup when Zoom isn't available or convenient. Don't lose the presentation over the format." },
+    { sit: "Travis answers on speaker, driving home from the shipyard.", q: "What's the right move?", o: ["Do a Now presentation while he drives", "Have him pull over and join Zoom on his phone", "Book a specific time tonight when he's home"], a: 2, why: "He can't focus while driving. Book an appointment for when he's home." },
+    { sit: "Danielle is home, relaxed, and says she has about 20 minutes right now.", q: "What do you do?", o: ["Start a Now presentation right away", "Book her for next week so you have more time", "Send her information first"], a: 0, why: "Take the opportunity. A Now presentation needs quicker engagement, so get her on Zoom and go." },
+    { sit: "Ten minutes into a Zoom, the Johnsons' audio stops working and they can't fix it.", q: "What do you do?", o: ["End the call and try again next week", "Switch to Telesales: call their phone and keep going", "Keep talking and hope it comes back"], a: 1, why: "Phone is the fallback. Call them and finish over the phone instead of losing the presentation." }
+  ],
+  c01: [
+    { sit: "You dial Tasha Johnson. She answers, “Hello?”", q: "What do you say first?", o: ["“Hi, is this Tasha Johnson?”", "“Hey Tasha, this is Jordan calling from Globe Life about…”", "“May I speak with Tasha, please?”"], a: 1, why: "Assume, don't ask permission. Say their name and go." },
+    { sit: "A new Pre-Submit lead came in ten minutes ago.", q: "When do you call?", o: ["Right now, while it's fresh", "This evening, when they're home from work", "After you email them first"], a: 0, why: "New leads are the warmest they'll ever be. Call ASAP." },
+    { sit: "You're calling an ADP Referral lead from four months ago.", q: "How do you handle it?", o: ["Pretend it just came in", "Skip it. Old leads are dead", "Acknowledge it's been a while, but the benefit is still unclaimed"], a: 2, why: "Lean into the obvious. Old isn't dead: it's still theirs to claim." },
+    { sit: "The lead asks, a little suspicious, “What's this about?”", q: "How do you sound?", o: ["Apologetic, so you don't seem pushy", "Upbeat and confident: you're delivering a gift, then ask your next question", "Slow and formal, explaining the whole company first"], a: 1, why: "Tonality is a transfer of belief. Smile, deliver the gift, and keep control with a question." },
+    { sit: "After your opener, Tasha says, “Okay.”", q: "What's next?", o: ["“Is now a good time to talk?”", "Start the presentation right away", "The family questions: “Are you married?”"], a: 2, why: "Every lead gets the same four questions: married, spouse home, kids under 18, and their bank. The answers decide now or later." },
+    { sit: "She's married, her husband isn't home until 6, they have two kids and bank locally.", q: "Now or later?", o: ["Book a time tonight when they're both home", "Present now without him", "Call back next week"], a: 0, why: "You want both spouses on the presentation. Book a specific time when they're both home." }
+  ],
+  s02t: [
+    { sit: "You're on a Telesales call and reach the final expense part.", q: "Which line fits?", o: ["“As you can see on this slide…”", "“Final expenses today can run up to $15,000, and Social Security only pays $255.”", "“Let me pull that up on your screen.”"], a: 1, why: "Paint the picture with words. Never say “as you can see” on the phone." },
+    { sit: "You've been talking for about a minute straight.", q: "What do you do?", o: ["Keep going so you don't lose momentum", "Ask, “Can you see that?”", "Check in: “Does that make sense?”"], a: 2, why: "You can't see their face, so check in about every minute." },
+    { sit: "You just said an important number, and the line goes quiet.", q: "What now?", o: ["Pause and give them time to answer", "Fill the silence with more details", "Repeat the number faster"], a: 0, why: "Silence feels longer on the phone than it is. Let them think and answer." },
+    { sit: "You're at the close on the phone.", q: "How do you present the options?", o: ["Go over every benefit again, then ask", "Say both monthly premiums clearly, then stop talking", "Only mention the cheaper option"], a: 1, why: "Say both premiums one at a time, then stop talking and let them choose." },
+    { sit: "Tasha mentioned Marcus coaches Little League during rapport.", q: "How do you use that?", o: ["Bring it up to keep the presentation personal", "Don't mention it; stay on script", "Only use it if they object"], a: 0, why: "Use their names and F.O.R.M. details to keep a phone presentation personal." }
+  ],
+  s03: [
+    { sit: "The Johnsons join your Zoom and Marcus says, “Let's just get right into it.”", q: "What do you do?", o: ["Share your screen right away", "Still build rapport with F.O.R.M. before you share", "Skip ahead to the prices"], a: 1, why: "They buy you first, the company second, the products third. Build rapport before you share." },
+    { sit: "Tasha mentions her mom passed away last spring.", q: "What do you do?", o: ["Slow down and acknowledge it before you go on", "Move on quickly to stay on schedule", "Use it right away to push final expense"], a: 0, why: "Personal moments matter more than the schedule. Slow down." },
+    { sit: "Three minutes in, you're itching to share your screen.", q: "What do you do?", o: ["Share now; they seem ready", "Keep going with F.O.R.M. You want 8 to 10 minutes first", "Ask if they'd rather skip the small talk"], a: 1, why: "Spend 8 to 10 minutes on rapport before you share your screen." },
+    { sit: "Marcus is quiet with his arms crossed while Tasha does all the talking.", q: "How do you bring him in?", o: ["Talk to Tasha; he'll come around", "Start the slides to get his attention", "Ask Marcus about his work or what he does for fun"], a: 2, why: "Use F.O.R.M. on the quiet spouse too. People open up when you ask about them." },
+    { sit: "Which order does the client buy in?", q: "Pick the order.", o: ["The products, then the company, then you", "You, then the company, then the products", "The company, then the products, then you"], a: 1, why: "You first, the company second, the products third. It can't go in any other order." }
+  ],
+  s13: [
+    { sit: "You've just explained why final expenses matter.", q: "What comes next in the pattern?", o: ["Recap with their numbers", "Ask for the sale", "Move on to the next benefit"], a: 0, why: "Introduce, recap with their numbers, tie-down, then ask why it's important." },
+    { sit: "You finished the mortgage recap: “We've provided $165,000…”", q: "What's next?", o: ["“Why is this important to you?”", "“I'm sure you can see how important this is, right?”", "Go straight to college education"], a: 1, why: "The tie-down comes right after the recap. Get a verbal yes." },
+    { sit: "They said yes to your tie-down.", q: "What do you ask?", o: ["“Why is this benefit important to you?”", "“Which option do you want?”", "“Any questions?”"], a: 0, why: "Let them sell themselves. Their answer is your best closing tool." },
+    { sit: "At the close, Tasha says, “I need to think about it.”", q: "What do you lean on?", o: ["A discount", "Their own words from the “why is this important” answers", "How many other families bought today"], a: 1, why: "Repeat their own words back to them. It's the strongest answer to any objection." },
+    { sit: "Which recap follows the pattern?", q: "Pick one.", o: ["“This is a great product a lot of families like.”", "“Let's skip ahead to the price.”", "“As you can see, we've provided $165,000, which would pay off your home.”"], a: 2, why: "Recap with their numbers, then tie it down." }
+  ]
+};
+function scenPassed(id) { return !!(store.scen && store.scen[id] && store.scen[id].pass); }
+let sc = null;
+function scenOpen(id) { if (sc && sc.id === id) return; sc = { id, phase: "intro" }; }
+function scenarioView(id) {
+  scenOpen(id);
+  const m = MODULES.find(x => x.id === id), set = SCENARIOS[id];
+  let h = `<div class="page rp-page"><div class="eyebrow">Module ${MODULES.indexOf(m) + 1} · Scenarios</div><h1>${esc(m.title)}</h1>`;
+  if (sc.phase === "intro") {
+    const best = (store.scen || {})[id];
+    h += `<p class="lead">${set.length} real situations from a call. Pick what you'd do or say. Miss one and it comes back at the end.</p><div class="card"><p class="small">Pass with ${Math.ceil(set.length * 0.8)} of ${set.length} right on the first try.${best ? ` Your best: ${best.best} of ${set.length}.` : ""}</p>
+      <div class="row"><button class="btn" id="scStart" type="button">Start</button><button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div></div>`;
+  } else if (sc.phase === "run") {
+    const it = set[sc.queue[0]], picked = sc.picked;
+    h += `<div class="rp-top"><span>${sc.retry ? "Try it again" : "Scenario"}</span><span>${sc.done} of ${set.length} done</span></div><div class="rp-bar"><span style="width:${Math.round(sc.done / set.length * 100)}%"></span></div>
+      <div class="od-card"><div class="od-who">The situation</div><p class="od-obj" style="font-size:19px">${esc(it.sit)}</p></div><h2>${esc(it.q)}</h2>
+      ${it.o.map((o, i) => `<button type="button" class="zs-opt ${picked == null ? "" : i === it.a ? "right" : i === picked ? "wrong" : ""}" data-scpick="${i}" ${picked != null ? "disabled" : ""}>${esc(o)}</button>`).join("")}
+      ${picked != null ? `<div class="note ${picked === it.a ? "g" : "w"}" role="status"><b>${picked === it.a ? "Right" : "Not quite"}</b>${esc(it.why)}</div><div class="row"><button class="btn" id="scNext" type="button">Next</button></div>` : ""}`;
+  } else {
+    const n = set.length, pass = sc.first >= Math.ceil(n * 0.8);
+    h += `<div class="result-banner ${pass ? "pass" : "fail"}"><div class="row spread"><div class="big">${pass ? "Passed" : "Not yet"}</div><div class="big">${sc.first}/${n}</div></div><p>${pass ? "You'd handle those calls the right way." : `You need ${Math.ceil(n * 0.8)} of ${n} right on the first try. Reread the lesson and run it again.`}</p></div>
+      <div class="row"><button class="btn" id="scAgain" type="button">Run it again</button><button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div>`;
+  }
+  return h + `</div>`;
+}
+function bindScenario() {
+  const s = $("#scStart"); if (s) s.onclick = () => { Object.assign(sc, { phase: "run", queue: shuffle(SCENARIOS[sc.id].map((_, i) => i)), first: 0, done: 0, missed: {}, picked: null, retry: false }); render(); };
+  document.querySelectorAll("[data-scpick]").forEach(b => b.onclick = () => { const i = +b.dataset.scpick, k = sc.queue[0], it = SCENARIOS[sc.id][k]; sc.picked = i; if (i === it.a) { if (!sc.missed[k]) sc.first++; sc.done++; } else sc.missed[k] = true; render(); });
+  const n = $("#scNext"); if (n) n.onclick = () => { const k = sc.queue.shift(), it = SCENARIOS[sc.id][k]; if (sc.picked !== it.a) sc.queue.push(k); sc.picked = null; sc.retry = sc.queue.length && sc.missed[sc.queue[0]]; if (!sc.queue.length) scenFinish(); else render(); };
+  const a = $("#scAgain"); if (a) a.onclick = () => { sc.phase = "intro"; render(); };
+}
+function scenFinish() {
+  const n = SCENARIOS[sc.id].length, pass = sc.first >= Math.ceil(n * 0.8); sc.phase = "done";
+  if (!store.scen) store.scen = {};
+  const prev = store.scen[sc.id] || {};
+  store.scen[sc.id] = { pass: prev.pass || pass, best: Math.max(prev.best || 0, sc.first), tries: (prev.tries || 0) + 1, at: new Date().toISOString() };
+  save(); checkModuleDone(sc.id); render();
+}
+
 const DRILL_PASS = 0.8;
 /* Matching steps in the agency presentation tool (presentation.html; numbers are its slide ids). */
 const TOOL_STEPS = { "dial-adp": "Make the call: ADP Referral", "dial-presubmit": "Make the call: Pre-Submit", "dial-lapsed": "Make the call: Globe Lapsed", "dial-policy": "Make the call: Policy Owner", 0: "Presentation Setup", 1: "General Introduction", 2: "Rapport Building", 3: "Policy Owner", 4: "Pre-Submit", 5: "Globe Lapsed", 6: "ADP Referral", 7: "No-Cost Renewal", 8: "Company Introduction", 9: "Make Tomorrow Better", 10: "Sports Partnerships", 11: "Accidental Death Policy", 12: "Referral Collection", 13: "Word of Thanks", 14: "Insurance Types", 15: "Term & Whole Life", 16: "Needs Survey", 17: "Medical Questions", 18: "Final Expense", 19: "Freedom of Choice", 20: "Final Expense Recap", 21: "Income Protection", 22: "Mortgage Protection", 23: "College Education", 24: "Final Recap & Close" };
@@ -2456,7 +2538,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&am
 
 function quizPassed(id) { return (store.quiz[id] || 0) >= PASS_QUIZ; }
 function drillPassed(id) { return !!(store.drill && store.drill[id] && store.drill[id].pass); }
-function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)) && (!OBJ_LESSON[id] || objPassed(id)) && (!ZOOM_LESSON[id] || zoomPassed(id)); }
+function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)) && (!OBJ_LESSON[id] || objPassed(id)) && (!ZOOM_LESSON[id] || zoomPassed(id)) && (!SCENARIOS[id] || scenPassed(id)); }
 function checkModuleDone(id) {
   if (!moduleDone(id)) return;
   store.doneNotified = store.doneNotified || {};
@@ -2972,7 +3054,7 @@ function renderRail() {
   $("#progLabel").textContent = PREVIEW ? `Preview mode: lessons unlocked · ${n} of ${MODULES.length} passed` : certified() ? "Certified. All lessons passed." : `${n} of ${MODULES.length} lessons passed`;
   $("#whoName").textContent = store.name ? store.name : (isManager() ? "Manager" : "Not signed in");
   const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
-  const inLesson = ["module", "quiz", "drill"].includes(view.name);
+  const inLesson = ["module", "quiz", "drill", "roleplay", "zoomsim", "scenario"].includes(view.name) || (view.name === "objdrill" && view.id !== "free");
   const callsTotal = store.callCount || store.attempts.length;
   const cert = certified();
   let h = `<button class="navbtn main" data-go="launch" type="button"><span class="badge">⌂</span><span>Home</span><span></span></button>`;
@@ -3000,7 +3082,7 @@ function renderRail() {
     h += `<button class="group group-btn" type="button" data-railsec="${esc(g.name)}" aria-expanded="${open}" aria-controls="railsec${gi}"><span class="caret" aria-hidden="true">${open ? "▾" : "▸"}</span><span>${esc(g.name)}</span><span class="gcount">${doneN === g.items.length ? "✓" : doneN + "/" + g.items.length}</span></button><div id="railsec${gi}" ${open ? "" : "hidden"}>`;
     g.items.forEach(([m, i]) => {
       const done = moduleDone(m.id); const un = moduleUnlocked(i);
-      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0) + (OBJ_LESSON[m.id] ? 1 : 0) + (ZOOM_LESSON[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0) + (OBJ_LESSON[m.id] && objPassed(m.id) ? 1 : 0) + (ZOOM_LESSON[m.id] && zoomPassed(m.id) ? 1 : 0);
+      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0) + (OBJ_LESSON[m.id] ? 1 : 0) + (ZOOM_LESSON[m.id] ? 1 : 0) + (SCENARIOS[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0) + (OBJ_LESSON[m.id] && objPassed(m.id) ? 1 : 0) + (ZOOM_LESSON[m.id] && zoomPassed(m.id) ? 1 : 0) + (SCENARIOS[m.id] && scenPassed(m.id) ? 1 : 0);
       const active = inLesson && view.id === m.id;
       h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
@@ -3036,6 +3118,7 @@ function render() {
   else if (view.name === "roleplay") { main.innerHTML = roleplayView(view.id); bindRoleplay(); }
   else if (view.name === "objdrill") { main.innerHTML = objDrillView(view.id); bindObjDrill(); }
   else if (view.name === "zoomsim") { main.innerHTML = zoomSimView(view.id); bindZoomSim(); }
+  else if (view.name === "scenario") { main.innerHTML = scenarioView(view.id); bindScenario(); }
   else if (view.name === "practice" || view.name === "exam") main.innerHTML = familyPickView(view.name);
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
@@ -3091,7 +3174,8 @@ function todayList() {
   Object.entries(store.doneNotified || {}).forEach(([id, at]) => { if (new Date(at).toDateString() === today) items.push({ done: true, t: `Lesson: ${modTitle(id)}` }); });
   MODULES.filter(m => !moduleDone(m.id)).slice(0, 2).forEach(m => {
     const i = MODULES.indexOf(m), un = moduleUnlocked(i);
-    if (quizPassed(m.id) && ZOOM_LESSON[m.id] && !zoomPassed(m.id)) items.push({ t: `Zoom practice: ${m.title}`, btn: un ? `<button class="btn small" data-go="zoomsim" data-id="${m.id}" type="button">Start</button>` : "" });
+    if (quizPassed(m.id) && SCENARIOS[m.id] && !scenPassed(m.id)) items.push({ t: `Scenarios: ${m.title}`, btn: un ? `<button class="btn small" data-go="scenario" data-id="${m.id}" type="button">Start</button>` : "" });
+    else if (quizPassed(m.id) && ZOOM_LESSON[m.id] && !zoomPassed(m.id)) items.push({ t: `Zoom practice: ${m.title}`, btn: un ? `<button class="btn small" data-go="zoomsim" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && (!ROLEPLAYS[m.id] || rplPassed(m.id)) && OBJ_LESSON[m.id]) items.push({ t: `Objection drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="objdrill" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && ROLEPLAYS[m.id]) items.push({ t: `Role-play: ${m.title}`, btn: un ? `<button class="btn small" data-go="roleplay" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
@@ -3358,7 +3442,7 @@ function moduleView(id) {
     <p class="lead">${m.summary}</p>
     <div class="card">${m.blocks.map(blockHTML).join("")}</div>
     <div class="card"><h2>Check your knowledge</h2>
-      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] || ZOOM_LESSON[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
+      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] || ZOOM_LESSON[id] || SCENARIOS[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
       <button class="btn ${quizPassed(id) ? "secondary" : ""}" data-go="quiz" data-id="${id}" type="button">${sc != null ? "Retake quiz" : "Take the quiz"}</button></div>
       ${DRILLS[id] ? `<div class="row spread"><div><h3>2. Say-it drill ${drillPassed(id) ? `<span class="pill pass">Passed</span>` : (store.drill && store.drill[id]) ? `<span class="pill fail">Try again</span>` : ""}</h3><p class="small">Deliver a key part of this script from memory. The lesson is hidden while you answer.</p></div>
       <button class="btn ${drillPassed(id) ? "secondary" : ""}" data-go="drill" data-id="${id}" type="button">${drillPassed(id) ? "Practice again" : "Start the drill"}</button></div>` : ""}
@@ -3368,6 +3452,8 @@ function moduleView(id) {
       <button class="btn ${objPassed(id) ? "secondary" : ""}" data-go="objdrill" data-id="${id}" type="button">${objPassed(id) ? "Drill again" : "Start the drill"}</button></div>`; })() : ""}
       ${ZOOM_LESSON[id] ? (() => { const zz = (store.zoomSim || {})[id]; const nStep = 2 + (DRILLS[id] ? 1 : 0) + (ROLEPLAYS[id] ? 1 : 0) + (OBJ_LESSON[id] ? 1 : 0); return `<div class="row spread"><div><h3>${nStep}. Zoom practice ${zoomPassed(id) ? `<span class="pill pass">Passed ${zz.best}</span>` : zz ? `<span class="pill fail">Best ${zz.best}</span>` : ""}</h3><p class="small">Run a practice Zoom meeting: ${ZOOM_LESSON[id].length} timed tasks, from admitting the family to ending the call.</p></div>
       <button class="btn ${zoomPassed(id) ? "secondary" : ""}" data-go="zoomsim" data-id="${id}" type="button">${zoomPassed(id) ? "Practice again" : "Start Zoom practice"}</button></div>`; })() : ""}
+      ${SCENARIOS[id] ? (() => { const ss = (store.scen || {})[id]; const nStep = 2 + (DRILLS[id] ? 1 : 0) + (ROLEPLAYS[id] ? 1 : 0) + (OBJ_LESSON[id] ? 1 : 0) + (ZOOM_LESSON[id] ? 1 : 0); return `<div class="row spread"><div><h3>${nStep}. Scenarios ${scenPassed(id) ? `<span class="pill pass">Passed ${ss.best}/${SCENARIOS[id].length}</span>` : ss ? `<span class="pill fail">Best ${ss.best}/${SCENARIOS[id].length}</span>` : ""}</h3><p class="small">${SCENARIOS[id].length} real situations from a call. Pick what you'd do or say.</p></div>
+      <button class="btn ${scenPassed(id) ? "secondary" : ""}" data-go="scenario" data-id="${id}" type="button">${scenPassed(id) ? "Run it again" : "Start scenarios"}</button></div>`; })() : ""}
     </div>
   </div>`;
 }
@@ -5122,6 +5208,7 @@ document.addEventListener("click", e => {
     if (t.dataset.go === "roleplay" && rpl && rpl.mod !== t.dataset.id) rpl = null;
     if (t.dataset.go === "objdrill" && od && od.id !== t.dataset.id) od = null;
     if (t.dataset.go === "zoomsim" && zs && zs.id !== t.dataset.id) zs = null;
+    if (t.dataset.go === "scenario" && sc && sc.id !== t.dataset.id) sc = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
   }
   if (t.dataset.q !== undefined) {
