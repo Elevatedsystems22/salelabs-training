@@ -4714,7 +4714,7 @@ function inviteTab() {
   }).join("")}</tbody></table></div>`;
   return h;
 }
-const RANKS = ["RAD (Regional Agency Director)", "AD (Agency Director)", "GA (General Agent)", "SA (Supervising Agent)"];
+const RANKS = ["AO (Agency Owner)", "RAD (Regional Agency Director)", "AD (Agency Director)", "GA (General Agent)", "SA (Supervising Agent)"];
 function rankOf(m) { const p = String((m && m.position) || ""); const i = RANKS.findIndex(r => p.startsWith(r.split(" ")[0] + " ") || p === r.split(" ")[0] || p.startsWith(r.split(" ")[0] + "/")); return i < 0 ? 9 : i; }
 function byRank(list) { return list.slice().sort((a, b) => rankOf(a) - rankOf(b) || String(a.name).localeCompare(String(b.name))); }
 function rankSelect(cur) {
