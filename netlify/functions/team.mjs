@@ -9,6 +9,8 @@
      POST   /api/team/manager             add a manager, or edit yourself (admins can edit anyone)
      POST   /api/team/invite              create an invite {first, last, phone, email, managerId}
      DELETE /api/team/invite?token=…
+     GET    /api/team/notifications       record of texts/emails sent (admins see all, others see their own)
+     POST   /api/team/notify/test         sends a test text and email to yourself
    Admins only:
      POST   /api/team/password/reset      {id, temp} sets a temporary password; they pick their own at next sign-in
      DELETE /api/team/manager?id=…
@@ -55,11 +57,20 @@ export default async (req) => {
   const body = async () => { try { return await req.json(); } catch (e) { return null; } };
   const inviteUrl = t => url.origin + "/?invite=" + encodeURIComponent(t);
   const managerUrl = url.origin + "/#manager";
+  const nlog = getStore({ name: "notifylog", consistency: "strong" });
+  let byId = "";
+  // Sends through GHL and keeps a record (never the message text, which can hold a temporary password).
+  const logged = async (payload, ref) => {
+    const res = await notify(payload);
+    const at = new Date().toISOString();
+    try { await nlog.setJSON(at.replace(/[:.]/g, "-") + "-" + randomBytes(3).toString("hex"), { at, event: payload.event, role: payload.role, name: payload.full_name || "", phone: payload.phone || "", email: payload.email || "", sent: !!res.sent, reason: res.reason || "", by: byId, ...ref }); } catch (e) {}
+    return res;
+  };
   const sendInvite = async inv => {
     const m = inv.managerId ? await mgrs.get(inv.managerId, { type: "json" }).catch(() => null) : null;
-    return notify(agentInviteMsg({ first: inv.first, last: inv.last, phone: inv.phone, email: inv.email, link: inviteUrl(inv.token), manager: m }));
+    return logged(agentInviteMsg({ first: inv.first, last: inv.last, phone: inv.phone, email: inv.email, link: inviteUrl(inv.token), manager: m }), { token: inv.token });
   };
-  const sendManager = (m, temp, reset) => { const [first, ...rest] = String(m.name || "").split(" "); return notify(managerWelcomeMsg({ first, last: rest.join(" "), phone: m.phone, email: m.email, link: managerUrl, temp, reset })); };
+  const sendManager = (m, temp, reset) => { const [first, ...rest] = String(m.name || "").split(" "); return logged(managerWelcomeMsg({ first, last: rest.join(" "), phone: m.phone, email: m.email, link: managerUrl, temp, reset }), { managerId: m.id }); };
 
   if (path === "/api/invite" && req.method === "GET") {
     const token = url.searchParams.get("token") || "";
@@ -98,6 +109,23 @@ export default async (req) => {
   const me = await authManager(req);
   if (!me) return json({ error: "signed_out", message: "Your sign-in expired. Sign in again." }, 401);
   const isAdmin = !!me.admin;
+  byId = me.id;
+
+  if (path === "/api/team/notifications" && req.method === "GET") {
+    const { blobs } = await nlog.list();
+    const keys = blobs.map(b => b.key).sort().reverse().slice(0, 300);
+    let rows = (await Promise.all(keys.map(k => nlog.get(k, { type: "json" }).catch(() => null)))).filter(Boolean);
+    if (!isAdmin) rows = rows.filter(r => r.by === me.id || r.managerId === me.id);
+    return json({ connected: /^https:\/\//.test(process.env.NOTIFY_WEBHOOK_URL || "") || !!(process.env.NOTIFY_ALLOW_HTTP && /^http:\/\/localhost/.test(process.env.NOTIFY_WEBHOOK_URL || "")), admin: isAdmin, log: rows.slice(0, 150) });
+  }
+  if (path === "/api/team/notify/test" && req.method === "POST") {
+    if (me.id === "_master") return json({ error: "bad_request" }, 400);
+    const [first, ...rest] = String(me.name || "").split(" ");
+    const msg = "This is a test from the Virtual Presentation Academy. If you got this, automatic texts and emails are working.";
+    const notified = await logged({ event: "test", role: "manager", first_name: first, last_name: rest.join(" "), full_name: me.name, phone: me.phone, email: me.email, link: managerUrl,
+      sms_text: `Hi ${first}! ${msg}`, email_subject: "Test: Virtual Presentation Academy notifications", email_body: `Hi ${first},\n\n${msg}\n\nManager sign-in: ${managerUrl}` }, { managerId: me.id });
+    return json({ notified });
+  }
 
   if (path === "/api/team" && req.method === "GET") {
     const [m, i] = await Promise.all([managersList(mgrs), allJSON(invites)]);

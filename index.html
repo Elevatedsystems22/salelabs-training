@@ -4695,7 +4695,7 @@ function inviteShare(inv) {
     <span class="small" data-icopied="${esc(inv.token)}" role="status"></span></div>`;
 }
 function mgrTabs() {
-  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["lists", "Lists"], ["invite", "Invite an agent"], ["managers", "Managers"], ["voices", "Voices"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
+  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["lists", "Lists"], ["invite", "Invite an agent"], ["managers", "Managers"], ["notify", "Notifications"], ["voices", "Voices"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
 function inviteTab() {
@@ -4874,6 +4874,50 @@ function traineesTab() {
   if (topWeak && topWeak[1] >= 2) h += `<div class="note w"><b>Team pattern</b>${topWeak[1]} of ${rows.length} trainees are weakest at ${esc(topWeak[0])}. Worth a group role-play on it.</div>`;
   return h;
 }
+/* Notifications tab: every automatic text/email the site sent through GoHighLevel, a test button, and resends. */
+const NOTE_LABEL = { agent_invite: "Agent invite", manager_welcome: "Manager sign-in", manager_password_reset: "Password reset", test: "Test" };
+async function loadNotes() {
+  mgr.notesLoading = true;
+  try { mgr.notes = await mgrApi("/api/team/notifications"); } catch (e) { mgr.notes = { error: e.message }; }
+  mgr.notesLoading = false; render();
+}
+function noteReason(r) { return r === "not_set" ? "Not connected" : /^http_/.test(r) ? "GoHighLevel refused (" + r.slice(5) + ")" : r === "error" ? "Couldn't reach GoHighLevel" : r || "Not sent"; }
+function notifyTab() {
+  if (!mgr.notes) { if (!mgr.notesLoading) setTimeout(loadNotes, 0); return `<div class="card"><p class="small">Loading notifications…</p></div>`; }
+  if (mgr.notes.error) return `<div class="warn"><b>Couldn't load notifications</b>${esc(mgr.notes.error)}</div>`;
+  const n = mgr.notes, admin = mgr.me && mgr.me.admin;
+  const invByTok = Object.fromEntries(mgr.invites.map(i => [i.token, i]));
+  let h = `<div class="card"><h2>Automatic texts and emails</h2>
+    ${n.connected ? `<p><span class="status on">Connected</span> When you invite an agent or add a manager, they're texted and emailed their link automatically through your GoHighLevel workflow.</p>` : `<p><span class="status idle">Not connected</span> Nothing is sent automatically yet. Add NOTIFY_WEBHOOK_URL in Netlify to turn it on.</p>`}
+    <p class="small">"Sent" means GoHighLevel accepted the message. If someone says they didn't get it, check their phone and email on their card, then resend. Send yourself a test to check the whole path.</p>
+    <div class="row"><button class="btn small" id="nTest" type="button">Send a test to me</button><button class="linkbtn" id="nRefresh" type="button">Refresh</button><span class="small" id="nTestMsg" role="status">${esc(mgr.noteMsg || "")}</span></div></div>`;
+  if (!n.log.length) return h + `<div class="card"><p class="small">Nothing has been sent yet. ${admin ? "Every invite, manager sign-in and password reset will show up here." : "Invites you send will show up here."}</p></div>`;
+  h += `<div class="card table-wrap"><h2>Sent ${admin ? "" : "by you"}</h2><table class="hist mgr-table"><thead><tr><th scope="col">When</th><th scope="col">Type</th><th scope="col">To</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${n.log.map((r, ix) => {
+    const by = r.by && mgr.managers.find(m => m.id === r.by);
+    let act = "";
+    if (r.event === "agent_invite" && r.token && invByTok[r.token]) act = `<button class="linkbtn" data-nresend="${esc(r.token)}" data-ix="${ix}" type="button">Resend</button>`;
+    else if ((r.event === "manager_welcome" || r.event === "manager_password_reset") && admin && r.managerId && mgr.managers.find(m => m.id === r.managerId)) act = `<button class="linkbtn" data-nmgr="${esc(r.managerId)}" data-ix="${ix}" type="button">Send new sign-in</button>`;
+    return `<tr><td>${esc(ago(r.at))}</td><td>${esc(NOTE_LABEL[r.event] || r.event)}${by && admin ? `<div class="small">by ${esc(by.name)}</div>` : ""}</td>
+      <td><b>${esc(r.name || "–")}</b><div class="small">${esc([r.phone, r.email].filter(Boolean).join(" · ") || "No phone or email")}</div></td>
+      <td>${r.sent ? `<span class="status on">Sent</span>` : `<span class="status idle">${esc(noteReason(r.reason))}</span>`}</td>
+      <td>${act}<span class="small" data-nmsg="${ix}" role="status"></span></td></tr>`; }).join("")}</tbody></table></div>`;
+  return h;
+}
+function afterNotifyRender() {
+  const t = $("#nTest"); if (t) t.onclick = async () => { t.disabled = true; mgr.noteMsg = "Sending…"; $("#nTestMsg").textContent = mgr.noteMsg;
+    try { const j = await mgrApi("/api/team/notify/test", { method: "POST", body: "{}" }); mgr.noteMsg = j.notified && j.notified.sent ? "Sent. Check your phone and email." : "Not sent: " + noteReason(j.notified && j.notified.reason); } catch (e) { mgr.noteMsg = "Not sent: " + e.message; }
+    mgr.notes = null; render(); };
+  const rf = $("#nRefresh"); if (rf) rf.onclick = () => { mgr.notes = null; mgr.noteMsg = ""; render(); };
+  const say = (ix, txt) => { const m = document.querySelector(`[data-nmsg="${ix}"]`); if (m) m.textContent = txt; };
+  document.querySelectorAll("[data-nresend]").forEach(b => b.onclick = async () => { b.disabled = true; say(b.dataset.ix, " Sending…");
+    try { const j = await mgrApi("/api/team/invite/resend", { method: "POST", body: JSON.stringify({ token: b.dataset.nresend }) }); mgr.noteMsg = j.notified && j.notified.sent ? "Invite sent again." : "Not sent: " + noteReason(j.notified && j.notified.reason); } catch (e) { mgr.noteMsg = "Not sent: " + e.message; }
+    mgr.notes = null; render(); });
+  document.querySelectorAll("[data-nmgr]").forEach(b => b.onclick = () => { const m = mgr.managers.find(x => x.id === b.dataset.nmgr); if (!m) return;
+    confirmModal("Send " + m.name + " a new sign-in?", "This sets a new temporary password and texts and emails it with the sign-in link. Their old password stops working.", "Send it", async () => {
+      const temp = tempPassword();
+      try { const j = await mgrApi("/api/team/password/reset", { method: "POST", body: JSON.stringify({ id: m.id, temp }) }); mgr.noteMsg = j.notified && j.notified.sent ? "New sign-in sent to " + m.name + "." : "Not sent (" + noteReason(j.notified && j.notified.reason) + "). Give " + m.name.split(" ")[0] + " this temporary password yourself: " + temp; } catch (e) { mgr.noteMsg = "Not sent: " + e.message; }
+      mgr.notes = null; render(); }); });
+}
 function managerView() {
   if (!mgrTok()) {
     return `<div class="page"><div class="eyebrow">Manager</div><h1>Manager sign-in</h1>
@@ -4895,7 +4939,7 @@ function managerView() {
   let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
     <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
     ${mgrTabs()}`;
-  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : traineesTab();
+  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
   return h;
 }
@@ -4910,6 +4954,7 @@ function resizePhoto(file) {
   });
 }
 function afterManagerRender() {
+  if (mgr.tab === "notify") afterNotifyRender();
   const go = $("#mgrGo"), em = $("#mgrEmail"), pw = $("#mgrPw");
   if (go && em && pw) { const f = () => { const e = em.value.trim(), p = pw.value; if (!e) { em.focus(); return; } if (!p) { pw.focus(); return; } mgrLogin(e, p); }; go.onclick = f; [em, pw].forEach(i => i.onkeydown = ev => { if (ev.key === "Enter") f(); }); if (!em.value) em.focus(); else pw.focus(); }
   const rf = $("#mgrRefresh"); if (rf) rf.onclick = () => { mgr.rows = null; mgr.error = ""; mgrLoad(); };
@@ -4949,7 +4994,7 @@ function afterManagerRender() {
     const m = mgr.managers.find(x => x.id === b.dataset.madmin); if (!m) return;
     try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(Object.assign({}, m, { admin: b.dataset.on === "1" })) }); mgrLoad(); } catch (e) { mgr.formErr = e.message; render(); }
   });
-  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; render(); });
+  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; if (mgr.tab === "notify") { mgr.notes = null; mgr.noteMsg = ""; } render(); });
   document.querySelectorAll("[data-lsub]").forEach(b => b.onclick = () => { mgr.listSub = b.dataset.lsub; render(); });
   document.querySelectorAll("[data-lrefresh]").forEach(b => b.onclick = () => { mgr.lists = null; render(); });
   document.querySelectorAll("[data-lview]").forEach(b => b.onclick = () => { mgr.listOpen = mgr.listOpen === b.dataset.lview ? null : b.dataset.lview; render(); });
