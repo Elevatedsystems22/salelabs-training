@@ -34,6 +34,14 @@ export default async (req) => {
   if (path.endsWith("/catalog") && req.method === "GET") {
     const get = async (p) => { const r = await fetch(`${API}/${p}?perPage=100`, { headers: auth() }); return r.ok ? r.json() : { data: [], error: r.status }; };
     const [avatars, voices] = await Promise.all([get("avatars"), get("voices")]);
+    // ?summary=1: just what's needed to pick faces and describe the scene (id, name, setting, look).
+    if (new URL(req.url).searchParams.get("summary")) {
+      const list = x => (x && (x.data || x.items || x)) || [];
+      return json({
+        avatars: list(avatars).map(a => ({ id: a.id, name: a.displayName, variant: a.variantName || "", desc: a.description || "", tags: (a.displayTags || []).slice(0, 10), style: a.renderStyle || "" })),
+        voices: list(voices).map(v => ({ id: v.id, name: v.displayName || v.name, gender: v.gender || "", country: v.country || "", desc: v.description || "" }))
+      });
+    }
     return json({ avatars, voices });
   }
   return json({ error: "not_found" }, 404);
