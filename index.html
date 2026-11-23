@@ -220,6 +220,22 @@ input[type=text], textarea, select { border-width: 1.5px; border-radius: 12px; }
 .toolcard { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 16px 20px; border-left: 4px solid var(--green); }
 .toolcard > div:first-child { display: flex; flex-direction: column; gap: 2px; } .toolcard span { font-size: 14px; color: var(--muted); }
 .toolchips { display: flex; gap: 8px; flex-wrap: wrap; }
+.mtabs { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; border-bottom: 2px solid var(--line, #dfe5ee); margin: 4px 0 18px; overflow-x: auto; scrollbar-width: none; }
+.mtabs::-webkit-scrollbar { display: none; }
+.mtabs-main, .mtabs-sub { display: flex; gap: 4px; flex-shrink: 0; }
+.mtab { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 15px; color: var(--muted, #5b6575); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.mtab:hover { color: var(--accent); }
+.mtab.on { color: var(--accent); border-bottom-color: var(--accent); }
+.mtab.sub { font-size: 13px; font-weight: 600; padding: 10px 10px; }
+.mtab svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mhead-act { align-items: center; }
+@media (max-width: 900px) {
+  .mtabs { gap: 2px; } .mtabs-main, .mtabs-sub { gap: 0; }
+  .mtab { padding: 9px 6px; font-size: 13.5px; } .mtab.sub { font-size: 0; gap: 0; padding: 9px 5px; } .mtab.sub svg { width: 19px; height: 19px; }
+  .mhead-act { display: flex; flex-wrap: wrap; gap: 8px 14px; width: 100%; }
+  .mhead-act .btn { width: auto !important; flex: 0 0 auto; }
+  .mhead-act .btn:first-child { flex: 1 1 100%; }
+}
 .chip { background: var(--accent-soft); color: var(--accent); border: 0; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 14px; }
 .chip:hover { filter: brightness(.96); }
 .chip.on { background: var(--accent); color: var(--on-accent); }
@@ -4694,8 +4710,13 @@ function inviteShare(inv) {
     ${inv.email ? `<a class="btn small secondary" href="mailto:${esc(inv.email)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(inviteText(inv))}">Email it</a>` : ""}
     <span class="small" data-icopied="${esc(inv.token)}" role="status"></span></div>`;
 }
+const MGR_ICON = {
+  notify: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/>',
+  voices: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>',
+  account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' };
 function mgrTabs() {
-  return `<div class="row" role="tablist" aria-label="Manager sections">${[["trainees", "Trainees"], ["calls", "Calls"], ["lists", "Lists"], ["invite", "Invite an agent"], ["managers", "Managers"], ["notify", "Notifications"], ["voices", "Voices"], ["account", "My account"]].map(([k, l]) => `<button class="chip ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" type="button">${l}</button>`).join("")}</div>`;
+  const t = (k, l, sub) => `<button class="mtab ${sub ? "sub" : ""} ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" ${sub ? `aria-label="${l}"` : ""} type="button">${sub ? `<svg viewBox="0 0 24 24" aria-hidden="true">${MGR_ICON[k]}</svg>` : ""}${l}</button>`;
+  return `<div class="mtabs" role="tablist" aria-label="Manager sections"><div class="mtabs-main">${t("trainees", "Trainees")}${t("calls", "Calls")}${t("lists", "Lists")}${t("managers", "Managers")}</div><div class="mtabs-sub">${t("notify", "Notifications", 1)}${t("voices", "Voices", 1)}${t("account", "Account", 1)}</div></div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
 function inviteTab() {
@@ -4937,7 +4958,7 @@ function managerView() {
   const me = mgr.me;
   const waiting = mgr.invites.filter(i => !i.acceptedAt).length;
   let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
-    <div class="row"><button class="btn secondary" id="mgrRefresh" type="button">Refresh</button><button class="btn secondary" id="mgrOut" type="button">Sign out</button>${store.name ? `<button class="btn" data-go="home" type="button">My course</button>` : ""}</div></div>
+    <div class="row mhead-act"><button class="btn" data-mtab="invite" type="button">+ Invite an agent</button><button class="btn small secondary" id="mgrRefresh" type="button">Refresh</button>${store.name ? `<button class="linkbtn" data-go="home" type="button">My course</button>` : ""}<button class="linkbtn" id="mgrOut" type="button">Sign out</button></div></div>
     ${mgrTabs()}`;
   h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
