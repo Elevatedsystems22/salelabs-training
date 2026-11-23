@@ -3954,8 +3954,8 @@ const GREETINGS = {
 const TELE_GREETINGS = { johnson: [["Tasha", "Hello?"]], brooks: [["Danielle", "Hello, this is Danielle."]], whitaker: [["Linda", "Hello, Whitaker residence."]], delgado: [["Angie", "Hello?"]], boone: [["Travis", "Yeah, this is Travis."]] };
 const FEMALE = { Tasha: 1, Danielle: 1, Linda: 1, Angie: 1 };
 const VOICE_TUNE = { Tasha: { pitch: 1.05, rate: 1.02 }, Marcus: { pitch: 0.9, rate: 0.98 }, Danielle: { pitch: 1.0, rate: 0.95 }, Earl: { pitch: 0.82, rate: 0.9 }, Linda: { pitch: 1.0, rate: 0.93 }, Ray: { pitch: 0.92, rate: 1.06 }, Angie: { pitch: 1.08, rate: 1.0 }, Travis: { pitch: 0.9, rate: 1.02 } };
-const PAUSES = { short: 1200, normal: 1800, long: 2600 };
-const QUICK = { short: 350, normal: 500, long: 900 };
+const PAUSES = { short: 1000, normal: 1800, long: 2600 };
+const QUICK = { short: 300, normal: 500, long: 900 };
 // Did the agent just ask them something? Then they answer right away instead of waiting out the full pause.
 function invitesReply(text) {
   const t = String(text || "").toLowerCase().trim(); if (!t) return false;
@@ -3987,7 +3987,7 @@ function pickVoice(name, taken) {
 function startCall(fam, mode, format) {
   if (!callOpen(fam, format) || (mode !== "exam" && format !== "dial" && !practiceUnlocked() && !isManager())) { view = { name: mode === "exam" ? "exam" : "practice" }; render(); return; }
   rp = { fam, mode, format: format || "zoom", phase: "lobby", msgs: [], shared: [], current: null, sharing: false, quoteShown: false, mood: 45, decision: "none", decisionNote: "",
-    sound: true, headphones: true, pause: "normal", typing: !dictApi, panel: window.innerWidth > 1100 ? "presenter" : null,
+    sound: true, headphones: true, pause: "short", typing: !dictApi, panel: window.innerWidth > 1100 ? "presenter" : null,
     buffer: "", partial: "", lastHeard: 0, turnStart: 0, lastActivity: 0, gen: 0, awaiting: false, abort: null, queue: [], familySpeaking: false,
     lastInterjectAt: 0, nudged: false, micOn: false, micMuted: false, speaking: null, voiceMap: {}, started: 0, timer: null, loop: null, ended: false, countdown: 5 };
   if (format === "dial") { rp.dial = true; rp.format = "tele"; }
@@ -4014,7 +4014,7 @@ function lobbyView() {
     <div class="lobby-opts">
       <label class="chk"><input type="checkbox" id="optPhones" ${rp.headphones ? "checked" : ""}><span>I'm wearing headphones<br><span class="msmall">Lets you talk over the family. Without headphones, your mic pauses while they speak so it doesn't hear them.</span></span></label>
       <label for="optPause">How long a pause before the family responds</label>
-      <select id="optPause"><option value="short" ${rp.pause === "short" ? "selected" : ""}>Short (1.2 seconds)</option><option value="normal" ${rp.pause === "normal" ? "selected" : ""}>Normal (1.8 seconds)</option><option value="long" ${rp.pause === "long" ? "selected" : ""}>Long (2.6 seconds)</option></select>
+      <select id="optPause"><option value="short" ${rp.pause === "short" ? "selected" : ""}>Fast (1 second, default)</option><option value="normal" ${rp.pause === "normal" ? "selected" : ""}>Normal (1.8 seconds)</option><option value="long" ${rp.pause === "long" ? "selected" : ""}>Long (2.6 seconds)</option></select>
       ${SITE_MODE ? `<p class="cap sys" data-voicestatus ${voiceStatusText() ? "" : "hidden"}>${esc(voiceStatusText())}</p>` : ""}
       ${dictApi ? "" : `<p class="cap sys">Voice input isn't available in this browser, so you'll type. For the full spoken call, open this page in Chrome or the Claude desktop app's main window.</p>`}
       ${synth || ttsApi ? "" : `<p class="cap sys">This browser can't play the family's voices, so their lines appear as captions.</p>`}
