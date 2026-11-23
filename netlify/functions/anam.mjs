@@ -1,5 +1,6 @@
 /* Video avatars (Anam).
    POST /api/anam/session  { avatarId, voiceId, name }  -> { sessionToken }  (Anam's own AI is off; the family brain talks)
+   GET  /api/anam/status                                 -> { ok }  (is ANAM_API_KEY set?)
    GET  /api/anam/catalog                                -> { avatars, voices }  (for the casting page)
    Needs the environment variable ANAM_API_KEY. */
 import { allowed, json } from "../lib/guard.mjs";
@@ -8,6 +9,7 @@ const API = "https://api.anam.ai/v1";
 const auth = () => ({ Authorization: `Bearer ${process.env.ANAM_API_KEY}`, "content-type": "application/json" });
 
 export default async (req) => {
+  if (new URL(req.url).pathname.endsWith("/status")) return json({ ok: !!process.env.ANAM_API_KEY });
   if (!allowed(req) && req.method === "POST") return json({ error: "forbidden" }, 403);
   if (!process.env.ANAM_API_KEY) return json({ error: "missing_key", message: "ANAM_API_KEY is not set in Netlify." }, 500);
   const path = new URL(req.url).pathname;
@@ -37,4 +39,4 @@ export default async (req) => {
   return json({ error: "not_found" }, 404);
 };
 
-export const config = { path: ["/api/anam/session", "/api/anam/catalog"] };
+export const config = { path: ["/api/anam/session", "/api/anam/catalog", "/api/anam/status"] };

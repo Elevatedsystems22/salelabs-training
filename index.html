@@ -726,6 +726,10 @@ tr.me-row td { background: var(--accent-soft); }
 .vrow { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .vrow select { min-width: 0; font: inherit; font-size: 14px; padding: 7px 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
 .vname { font-weight: 700; }
+.vcell.camoff { background: #2d2d2d; display: flex; align-items: center; justify-content: center; }
+.camoff-in { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #ddd; font-weight: 600; } .camoff-in small { color: #9aa3ae; font-weight: 500; }
+.camoff-av { width: 56px; height: 56px; border-radius: 50%; background: #4b5563; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; }
+.vcell.camoff.talking { box-shadow: 0 0 0 3px #4ade80 inset; }
 .refact { border: 2px solid var(--accent); }
 .refact-notes { background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0 14px; font-size: 14px; }
 .refact-notes ul { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 3px; }
@@ -2636,7 +2640,9 @@ if (/netlify\.app$|salelabs\.site$/.test(location.hostname)) document.documentEl
    FREE REALISTIC VOICES (Kokoro, runs in the agent's browser; no per-minute cost)
    Used on your own site. The first call downloads the voice model once; after that it's cached.
    ========================================================= */
-const VIDEO_ENABLED = false; // Video avatars (Anam) are off. Set true only if you go back to a paid video plan.
+// Video faces (Anam) turn on by themselves once ANAM_API_KEY is set in Netlify. Used on Zoom exams only, one face per call.
+let VIDEO_ENABLED = false;
+setTimeout(() => { if (SITE_MODE) fetch("/api/anam/status").then(r => r.json()).then(j => { VIDEO_ENABLED = !!(j && j.ok); }).catch(() => {}); }, 1200);
 const KOKORO_VOICES = {
   Tasha: { voice: "af_heart", speed: 1.02 }, Marcus: { voice: "am_michael", speed: 0.98 },
   Danielle: { voice: "af_bella", speed: 0.95 },
@@ -2859,7 +2865,29 @@ function castFor(famId) {
   Object.keys(base).forEach(n => { out[n] = Object.assign({}, base[n], over[n] || {}); });
   return out;
 }
-function castReady(fam) { const c = castFor(fam.id); return fam.speakers.every(n => c[n] && c[n].avatarId && c[n].voiceId); }
+/* Moments the family cuts in during the presentation, by slide. Exams get 4, practice calls 2. */
+const INTERRUPT_BANK = [
+  { slide: "Company Introduction", hint: "ask whether this is the same Globe Life from the commercials, or how you know they actually pay claims" },
+  { slide: "Sports Partnerships", hint: "make a quick joke or comment about the team, then ask how long this is going to take" },
+  { slide: "Accidental Death Policy", hint: "ask if this free policy is really free or if there's a catch and you'll get a bill later" },
+  { slide: "Referral Collection", hint: "hesitate about giving names because you don't want your friends getting bothered with sales calls", spouse: true },
+  { slide: "Types of Life Insurance", hint: "say you already have something through work and ask whether you even need more" },
+  { slide: "Term & Whole Life", hint: "ask which kind you have through your job, or say you heard whole life is a rip-off" },
+  { slide: "Medical Questions", hint: "ask why they need to know all this medical stuff, and mention a health thing you're worried about" },
+  { slide: "Final Expense Protection", hint: "react to the price of a funeral: you had no idea it cost that much", spouse: true },
+  { slide: "Freedom of Choice", hint: "ask if this certificate means you can use any funeral home you want" },
+  { slide: "Income Protection", hint: "ask how much all of this is going to cost per month before you go any further", spouse: true },
+  { slide: "Mortgage Protection", hint: "say your mortgage already has some kind of insurance from the bank, so isn't this covered?", spouse: true },
+  { slide: "College Education", hint: "say the kids can get scholarships or loans, so is this really necessary?" }
+];
+function planInterrupts(fam, mode) {
+  if (mode === "dial") return [];
+  const spouse = fam.speakers[1], main = fam.speakers[0], kids = /kid|son|daughter|child/i.test(fam.card || "") || /kid|son|daughter|child/i.test(JSON.stringify(fam.profile || ""));
+  const rents = /\brent/i.test((fam.card || "") + JSON.stringify(fam.profile || ""));
+  const pool = shuffle(INTERRUPT_BANK.filter(x => (x.slide !== "College Education" || kids) && (x.slide !== "Mortgage Protection" || !rents)));
+  return pool.slice(0, mode === "exam" ? 4 : 2).map(x => ({ slide: x.slide, hint: x.hint, who: x.spouse && spouse ? spouse : main }));
+}
+function castReady(fam) { const c = castFor(fam.id), n = fam.speakers[0]; return !!(c[n] && c[n].avatarId && c[n].voiceId); }
 let anamSDK = null;
 async function loadAnam() { if (!anamSDK) anamSDK = await import("https://esm.sh/@anam-ai/js-sdk@latest"); return anamSDK; }
 const VID = { people: {}, dock: null, ctx: null };
@@ -2868,7 +2896,7 @@ function vidDock() { if (!VID.dock) { VID.dock = document.createElement("div"); 
 async function startVideoFamily(fam) {
   try { VID.ctx = VID.ctx || new (window.AudioContext || window.webkitAudioContext)(); VID.ctx.resume(); } catch (e) {}
   const sdk = await loadAnam(); const cast = castFor(fam.id);
-  await Promise.all(fam.speakers.map(async name => {
+  await Promise.all(fam.speakers.slice(0, 1).map(async name => {
     const el = document.createElement("video"); el.id = "vid_" + name; el.autoplay = true; el.playsInline = true; el.className = "vperson";
     vidDock().appendChild(el);
     const p = { name, el, client: null, level: 0, lastLoud: 0, analyser: null, status: "Connecting video…" };
@@ -2882,7 +2910,11 @@ async function startVideoFamily(fam) {
     p.client = client;
     try {
       const EV0 = sdk.AnamEvent || {};
-      client.addListener(EV0.CONNECTION_CLOSED || "CONNECTION_CLOSED", (reason, details) => { vidStatus(name, "Video disconnected: " + (reason || "") + (details ? " " + details : "")); });
+      client.addListener(EV0.CONNECTION_CLOSED || "CONNECTION_CLOSED", (reason, details) => {
+        vidStatus(name, "Video disconnected: " + (reason || "") + (details ? " " + details : ""));
+        // Session ended (plan time limit or network): keep the exam going with their voice and the camera off.
+        if (VID.people[name] === p) { delete VID.people[name]; try { el.remove(); } catch (e) {} if (rp && !rp.ended) { rp.msgs.push({ who: "system", text: `${name}'s video ended. The call continues with audio.` }); rerenderCall(); } }
+      });
       client.addListener(EV0.VIDEO_PLAY_STARTED || "VIDEO_PLAY_STARTED", () => vidStatus(name, ""));
       client.addListener(EV0.SERVER_WARNING || "SERVER_WARNING", m => console.warn("Anam:", m));
     } catch (e) {}
@@ -2940,7 +2972,7 @@ function stopVideoFamily() {
   VID.people = {};
 }
 function videoTileHTML(fam, compact) {
-  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="vstatus" data-vstatus="${esc(n)}" ${VID.people[n] && VID.people[n].status ? "" : "hidden"}>${esc((VID.people[n] && VID.people[n].status) || "")}</div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
+  return `<div class="vgrid ${compact ? "compact" : ""} n${fam.speakers.length}">${fam.speakers.map(n => !VID.people[n] && n !== fam.speakers[0] ? `<div class="vcell camoff ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="camoff-in"><span class="camoff-av">${esc(n[0])}</span><span>${esc(n)}</span><small>Camera off</small></div></div>` : `<div class="vcell ${rp && rp.speaking === n ? "talking" : ""}" data-person="${esc(n)}"><div class="vslot" data-vslot="${esc(n)}"></div><div class="vstatus" data-vstatus="${esc(n)}" ${VID.people[n] && VID.people[n].status ? "" : "hidden"}>${esc((VID.people[n] && VID.people[n].status) || "")}</div><div class="tname">${esc(n)}</div></div>`).join("")}</div>`;
 }
 
 /* =========================================================
@@ -3932,7 +3964,8 @@ function startCall(fam, mode, format) {
     buffer: "", partial: "", lastHeard: 0, turnStart: 0, lastActivity: 0, gen: 0, awaiting: false, abort: null, queue: [], familySpeaking: false,
     lastInterjectAt: 0, nudged: false, micOn: false, micMuted: false, speaking: null, voiceMap: {}, started: 0, timer: null, loop: null, ended: false, countdown: 5 };
   if (format === "dial") { rp.dial = true; rp.format = "tele"; }
-  rp.video = VIDEO_ENABLED && SITE_MODE && castReady(fam); // video avatars are off unless VIDEO_ENABLED
+  rp.video = VIDEO_ENABLED && SITE_MODE && mode === "exam" && rp.format === "zoom" && castReady(fam); // live video face on Zoom exams
+  rp.planned = planInterrupts(fam, mode); rp.interrupts = [];
   rp.objections = pickObjections(fam); if (rp.dial) rp.dialObjections = pickDialObjections(fam);
   if (SITE_MODE) initEleven().then(ok => { if (!ok && !hasNaturalVoices()) loadVoiceModel(); });
   const taken = []; fam.speakers.forEach(n => { const v = pickVoice(n, taken); rp.voiceMap[n] = v; if (v) taken.push(v.name); });
@@ -4041,6 +4074,12 @@ function engineTick() {
   if (!rp || rp.phase !== "live" || rp.ended) return;
   const now = Date.now(); const pending = (rp.buffer + " " + rp.partial).trim();
   if (pending && !rp.familySpeaking && now - rp.lastHeard >= PAUSES[rp.pause]) { commitTurn(); return; }
+  // Planned interruption: the family cuts in on a specific slide once the agent is into it.
+  if (rp.current !== rp.slideSeen) { rp.slideSeen = rp.current; rp.slideAt = now; }
+  if (pending && !rp.awaiting && !rp.familySpeaking && rp.planned && rp.planned.length && (rp.sharing || rp.format === "tele") && rp.current != null && now - rp.slideAt > 7000 && words(pending) >= 14 && now - rp.lastInterjectAt > 25000) {
+    const slide = STEPS[rp.current], i = rp.planned.findIndex(p => slide.startsWith(p.slide));
+    if (i >= 0) { const p = rp.planned.splice(i, 1)[0]; rp.plannedNow = { slide, who: p.who, hint: p.hint }; rp.interrupts.push({ slide, hint: p.hint, who: p.who, agentWasSaying: pending.slice(-160) }); rp.lastInterjectAt = now; requestFamily("interject").finally(() => { if (rp) rp.plannedNow = null; }); return; }
+  }
   // Long monologue: give the family a chance to cut in.
   if (pending && !rp.awaiting && rp.turnStart && (now - rp.turnStart > 50000 || words(pending) > 140) && now - rp.lastInterjectAt > 45000) { rp.lastInterjectAt = now; requestFamily("interject"); return; }
   // Long silence after the family spoke: they check in.
@@ -4154,7 +4193,10 @@ function transcriptText() {
 function familyPrompt(kind) {
   if (rp.dial) return dialFamilyPrompt(kind);
   const f = rp.fam; const pending = (rp.buffer + " " + rp.partial).trim();
-  const task = kind === "interject"
+  const task = kind === "interject" && rp.plannedNow
+    ? `The agent is presenting "${rp.plannedNow.slide}" and is STILL talking. Their words so far: "${pending}"
+CUT IN NOW, mid-sentence, the way a real person in this household would. ${rp.plannedNow.who ? rp.plannedNow.who + " says it. " : ""}What you want to say: ${rp.plannedNow.hint} Say it in your own words, in character, 1 short line. Do not write #NONE. Then the #STATE line.`
+    : kind === "interject"
     ? `The agent has been talking without a break for a while and is STILL talking. Their words so far in this stretch: "${pending}"
 Decide whether a real person in this household would cut in right now: confused by something, a question, an objection forming, losing patience, a distraction at home, or needing something repeated. If yes, write 1 short interjection line. If no, write only the line #NONE. Then the #STATE line.`
     : kind === "nudge"
@@ -4162,7 +4204,7 @@ Decide whether a real person in this household would cut in right now: confused 
     : `Respond to the agent's latest words as the family.`;
   const fmt = rp.format === "tele"
     ? `FORMAT: TELESALES PHONE CALL. You are on the phone${f.speakers.length > 1 ? " on speaker together" : ""}. You CANNOT see anything: no video, no slides, no screen. If the agent says "as you can see", "on your screen", "this slide" or asks if you can see something, be honestly confused ("Uh, I can't see anything, we're on the phone") and lower mood a little. You understand numbers and ideas only when the agent says them clearly; if they rush through numbers, ask them to repeat.`
-    : `FORMAT: ZOOM VIDEO CALL. You are on camera together on one device. [SCREEN: ...] lines tell you which slide the agent is sharing; you can see it.`;
+    : `FORMAT: ZOOM VIDEO CALL. ${rp.video && f.speakers.length > 1 ? `${f.speakers[0]} is on camera. ${f.speakers.slice(1).join(" and ")} is in the room with the camera pointed away, so they can hear everything and jump in, but the agent can't see them.` : "You are on camera together on one device."} [SCREEN: ...] lines tell you which slide the agent is sharing; you can see it.`;
   return `${fmt}
 
 You are role-playing a household on a live life insurance appointment. This is a training simulation for a new Globe Life Liberty National agent. The agent is SPEAKING (their words are live speech-to-text, so ignore small transcription errors and missing punctuation). Your lines are spoken aloud immediately. Stay fully in character. Never mention AI, never coach the agent, never break character, never write stage directions or actions.
@@ -4462,7 +4504,9 @@ Quote: Option 1 $${f.quote.opt1}/mo (Final Expense $30,000, inflation built in),
 FORMAT: ${rp.format === "tele" ? "TELESALES (phone only, nothing shared). The agent must describe each slide in words, check in often (\"Does that make sense?\"), say numbers slowly, and must NOT refer to a screen or slide (\"as you can see\"). Score this inside company, benefits and conduct." : "ZOOM (video, screen shared). The agent should build rapport before sharing, share the right slide at the right time, and confirm the family can see it."}
 OUTCOME: ${rp.decision}${rp.decisionNote ? " (" + rp.decisionNote + ")" : ""}. Call length: ${Math.round(rp.duration / 60)} min. ${rp.format === "tele" ? "Steps the agent marked in order" : "Slides shared in order"}: ${rp.shared.map(i => STEPS[i]).join(" > ") || "none"}.
 
-REFERRALS THE AGENT TYPED IN DURING THE CALL (${(rp.refs || []).length}): ${(rp.refs || []).length ? rp.refs.map(r => `${r.name} [relationship: ${r.rel || "-"}; status: ${r.status || "-"}; spouse: ${r.spouse || "-"}; kids: ${r.kids || "-"}; kids' names: ${r.kidNames || "-"}; work: ${r.work || "-"}; off at: ${r.off || "-"}]`).join("; ") : "none"}.
+${(rp.interrupts || []).length ? `PLANNED INTERRUPTIONS (the family cut in mid-presentation on purpose): ${rp.interrupts.map(x => `on "${x.slide}" ${x.who || "the family"} cut in (${x.hint})`).join("; ")}.
+Judge how the agent handled each interruption: did they stop and listen, acknowledge it, answer briefly and correctly, and then smoothly bring it back to the presentation? Ignoring it, talking over them, getting flustered, or getting derailed for minutes should cost points in the rapport and objection-handling areas, and call it out in your feedback and key moments.
+` : ""}REFERRALS THE AGENT TYPED IN DURING THE CALL (${(rp.refs || []).length}): ${(rp.refs || []).length ? rp.refs.map(r => `${r.name} [relationship: ${r.rel || "-"}; status: ${r.status || "-"}; spouse: ${r.spouse || "-"}; kids: ${r.kids || "-"}; kids' names: ${r.kidNames || "-"}; work: ${r.work || "-"}; off at: ${r.off || "-"}]`).join("; ") : "none"}.
 When scoring the "company" category's referral part, credit asking for referrals the right way (gift the no-cost benefit, minimum of 10, start with the beneficiary, use F.O.R.M. names, "Who's next?") AND actually capturing the names: names the family gave in the transcript that the agent did not type in count as missed. Also grade the F.O.R.M. notes the agent typed for each referral (relationship status, spouse name, kids, kids' names, work, what time they get off) against what the family actually said: missing or wrong notes cost points, and so does not asking for them. Credit asking in F.O.R.M. order and using "What are the kids' names so I can also assign them a child safe kit?" and "So I don't catch them at a bad time, what time do they get off?". In your feedback, give the referral count and name any notes the agent missed.
 
 RUBRIC (score each 0..max; be strict: a step that was skipped scores 0, rushed or partial scores about half):
