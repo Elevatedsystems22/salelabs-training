@@ -650,6 +650,19 @@ tr.me-row td { background: var(--accent-soft); }
 .slide.rp-slide-refs { aspect-ratio: auto; flex: 1; min-height: 0; overflow-y: auto; max-height: 100%; align-items: stretch !important; justify-content: flex-start !important; text-align: left !important; padding: 16px !important; }
 .rp-slide-refs .rf-group { background: #f3f6fa; } .rp-slide-refs { --bg: #f3f6fa; --surface: #fff; --ink: #0f1b2d; --line: #dde3ec; --accent: #0b4fb3; color: #0f1b2d; background: #fff; }
 @media (max-width: 760px) { .rf-top, .rf-notes { grid-template-columns: 1fr; } }
+.od-crit { grid-template-columns: repeat(4, 1fr); }
+.od-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.od-chip { display: flex; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font-size: 14px; background: var(--surface); }
+.od-chip b { font-size: 14px; color: var(--muted); } .od-chip.good b { color: var(--good); } .od-chip.low b { color: var(--warn); }
+.od-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid #8a96a8; border-radius: 0 14px 14px 0; padding: 16px 18px; margin-bottom: 12px; }
+.od-who { font-size: 12.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.od-obj { margin: 0; font-size: 22px; font-weight: 600; color: var(--ink); line-height: 1.4; }
+.od-answer { background: var(--accent-soft, #e9f1fc); border-left: 4px solid var(--accent); border-radius: 0 14px 14px 0; padding: 14px 18px; margin-bottom: 12px; min-height: 70px; }
+.od-answer p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--ink); }
+.od-checks { list-style: none; padding: 0; margin: 10px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-weight: 600; font-size: 14.5px; }
+.od-checks .ok { color: var(--good); } .od-checks .no { color: var(--bad, #b42318); }
+.od-model { margin-top: 10px; } .od-model summary { cursor: pointer; font-weight: 700; color: var(--accent); } .od-model p { margin: 8px 0 0; line-height: 1.55; }
+@media (max-width: 900px) { .od-crit { grid-template-columns: 1fr 1fr; } .od-obj { font-size: 19px; } .od-checks { grid-template-columns: 1fr; } }
 .rp-page { max-width: 860px; }
 .rp-crit { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .rp-crit div { background: var(--bg); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
@@ -1786,6 +1799,179 @@ function rplFinish() {
   render();
 }
 
+/* =========================================================
+   OBJECTION DRILLS
+   A lead says an objection out loud (voiced), the agent answers out loud, and Claude grades the answer
+   against the agency's rebuttal: acknowledge it, make the key point, move the call forward, sound confident.
+   Phone objections (first calls) and presentation objections (at the close).
+   ========================================================= */
+const OBJ_BANK = [{"id": "adp_i_m_not_interested", "track": "phone", "lead": "adp", "obj": "I'm not interested.", "model": "Totally get it. Just so you know, it's not something you're buying… I'm only reaching out because {sponsor} figured you'd want it too after they claimed theirs. My job is just to deliver it and show you how it works. After that, you decide if it's a fit… Is now a good time for a quick run-through, or is later better for you?", "tip": ""}, {"id": "adp_i_already_have_insurance", "track": "phone", "lead": "adp", "obj": "I already have insurance.", "model": "Perfect, I assumed as much… I'm only calling you because {sponsor} asked me to make sure you got the no-cost benefit. It doesn't compete with or replace what you've got, and it doesn't take long to sign it over to you and explain how it works… Are you home now to knock this out?", "tip": ""}, {"id": "adp_not_a_good_time", "track": "phone", "lead": "adp", "obj": "Not a good time.", "model": "Makes sense. That's why I'm calling: to get a good time to get this knocked out with you on behalf of your {rel}, {sponsor}. What time are you and your spouse home from work… later this evening or tomorrow?", "tip": "Find out their after-work routine."}, {"id": "adp_wrong_number", "track": "phone", "lead": "adp", "obj": "Wrong number.", "model": "Totally get it; this happens sometimes. An old friend or family member likely listed your number, maybe by mistake. Either way, the no-cost accidental death policy is tied to this number, so by default it's now yours to claim. It's quick, and we do it over the phone or by Zoom. Are you home now to knock yours out real fast?", "tip": ""}, {"id": "adp_i_don_t_know_who_that_is", "track": "phone", "lead": "adp", "obj": "I don't know who that is.", "model": "Totally get it; this happens sometimes. Someone must have had this number down for someone else in their contacts and referred them to us to claim their no-cost insurance. Either way, the policy is tied to this number, so by default it's now yours to claim. It's quick and easy since we do this over the phone or on a quick Zoom. Are you home now to knock yours out real fast?", "tip": ""}, {"id": "adp_why_is_it_free", "track": "phone", "lead": "adp", "obj": "Why is it free?", "model": "We get that a lot. It's free to YOU because {sponsor} gifted it to you by being a great client with us. Instead of paying millions of dollars on advertising, we invest in our communities through programs like this and empower others to pay it forward… Are you home now to knock yours out?", "tip": ""}, {"id": "adp_i_m_at_work_right_now", "track": "phone", "lead": "adp", "obj": "I'm at work right now.", "model": "I completely understand, so am I. I'll try to make this as fast as possible.", "tip": ""}, {"id": "presubmit_i_don_t_know_what_you_re", "track": "phone", "lead": "presubmit", "obj": "I don't know what you're talking about.", "model": "I can't tell you how many times I get this. That was your address, right? Ok, so you probably started this request at some point, either scrolling or just doing some research, and didn't give it a second thought… Either way, the only reason I'm reaching out is that you never claimed the no-cost insurance policy you're entitled to for simply showing interest in our company, and it's my job to set it up for you. It's pretty simple and we can knock this out really quick. Are you home now?", "tip": "Verify the address first. It kills the skepticism."}, {"id": "presubmit_i_m_just_looking_for_quo", "track": "phone", "lead": "presubmit", "obj": "I'm just looking for quotes.", "model": "Ok, so to get you what you're looking for, I'll need to get your no-cost insurance set up first, and then I can generate those quotes and see what you qualify for. That way, whether or not we can cover you or meet your budget, you didn't waste your time…. So, to get started, let's verify the spelling of your first name.", "tip": "Verify the name on the lead."}, {"id": "presubmit_i_already_got_it_taken_c", "track": "phone", "lead": "presubmit", "obj": "I already got it taken care of.", "model": "Great! So which one of our no-cost insurance benefits did you get set up with us?", "tip": ""}, {"id": "presubmit_i_can_t_talk_right_now", "track": "phone", "lead": "presubmit", "obj": "I can't talk right now.", "model": "Makes sense. That's actually why I'm calling: to get a good time to get this knocked out with you. What time are you and your spouse home from work… later this evening or tomorrow?", "tip": "Find out their after-work routine."}, {"id": "lapsed_i_m_not_interested", "track": "phone", "lead": "lapsed", "obj": "I'm not interested.", "model": "Like I said, I'm not calling for any reason other than to notify you of your lapsed coverage and set up the free benefits the company sent me to do. This will at least give you something until you can figure something else out. It's at no cost to you, and there's no obligation to purchase anything else. Would you at least like to have some basic protection in place while you decide what you want to do long term?", "tip": ""}, {"id": "lapsed_i_canceled_it_on_purpose", "track": "phone", "lead": "lapsed", "obj": "I canceled it on purpose.", "model": "I completely understand that you made a deliberate decision, {client}, and I respect that. Since you were a policyholder with us, the company still wants to provide you with some basic protection at absolutely no cost. This is separate from your previous policy and requires no payment from you. Even if you don't want to continue with a paid policy, would you accept this complimentary coverage? It's already been approved for you.", "tip": ""}, {"id": "lapsed_i_found_better_coverage", "track": "phone", "lead": "lapsed", "obj": "I found better coverage.", "model": "Congratulations on finding coverage that better suits your needs! Making sure your family is protected is what matters most. The free benefit I'm offering would supplement your current coverage. It specifically covers accidental death, which is a good complement to most standard life insurance policies. Since it's at no cost and only takes a few minutes to set up, would you like to add this extra layer of protection to what you already have?", "tip": ""}, {"id": "lapsed_is_this_a_debt_collector", "track": "phone", "lead": "lapsed", "obj": "Is this a debt collector?", "model": "I want to be absolutely clear, {client}: this is NOT a debt collection call. You don't owe us anything. I'm calling from the benefits department at Globe Life. When policies lapse, we follow up to offer a complimentary accidental death policy as a courtesy to former policyholders. It's completely free, requires no payment information, and has no obligation attached. It's simply our way of providing some basic protection to families who had coverage with us in the past.", "tip": ""}, {"id": "lapsed_i_can_t_talk_now", "track": "phone", "lead": "lapsed", "obj": "I can't talk now.", "model": "I completely understand. Timing is everything, and I appreciate that you're busy right now. This only takes about 5 minutes to set up, but I'm happy to call back at a more convenient time. The important thing is making sure you don't miss out on these free benefits. What would be a better time for me to reach you? Evening? Weekend? I'll work around your schedule.", "tip": ""}, {"id": "policy_why_do_you_need_to_verif", "track": "phone", "lead": "policy", "obj": "Why do you need to verify?", "model": "{client}, I appreciate the question. Regular verification is crucial because outdated information could delay benefit payments to your loved ones if a claim needs to be filed. People move, family situations change, and beneficiary information may need updating. The insurance you invested in was important to you, and we want to make sure it works as intended when your family needs it most. This quick review keeps your records accurate and gives you access to the free benefits you're entitled to as a policyholder. Does that make sense?", "tip": ""}, {"id": "policy_i_m_too_busy_right_now", "track": "phone", "lead": "policy", "obj": "I'm too busy right now.", "model": "I completely understand how valuable your time is, {client}. Most of our policyholders are busy too. The good news is this only takes a few minutes, and it makes sure your policy is up to date should your family ever need to make a claim. Plus, we need to renew the complimentary benefits that come with being a policyholder. Would you prefer I call back at a specific time, or would you rather take care of it quickly right now?", "tip": ""}, {"id": "policy_what_free_benefits", "track": "phone", "lead": "policy", "obj": "What free benefits?", "model": "As a policyholder with Globe Life, you're entitled to several complimentary benefits each year that many people aren't aware of: a free policy review, beneficiary updates at no charge, a coverage gap analysis to find any areas where your family might not be fully protected, and an additional no-cost accidental death benefit. I'd be happy to go through these with you and make sure you're taking full advantage of everything available to you.", "tip": ""}, {"id": "policy_wrong_number", "track": "phone", "lead": "policy", "obj": "Wrong number.", "model": "I apologize for the confusion. I was trying to reach {client} about their Globe Life insurance policy. Do you know {client} or how I might reach them? It's important that we update their policy information.", "tip": "Confirmed wrong number? Offer them the complimentary $3,000 accidental death policy for the inconvenience, and update the records."}, {"id": "policy_someone_just_reviewed_it", "track": "phone", "lead": "policy", "obj": "Someone just reviewed it.", "model": "That's excellent to hear! It's great that you're staying on top of your coverage. Just to confirm: during that review, did they renew your annual no-cost accidental death benefit? It's separate from your main policy and needs to be renewed each year. Also, have there been any changes in your family since that review? New address, family additions, or anything else that might affect your coverage or beneficiaries?", "tip": ""}, {"id": "lapsed_too_expensive", "track": "phone", "lead": "lapsed", "obj": "It just got too expensive.", "model": "I completely understand. It can be pretty expensive, especially if you have too much or the wrong coverage. The good news is that the company is giving you some free benefits at no cost! Are you married?", "tip": ""}, {"id": "lapsed_no_policy", "track": "phone", "lead": "lapsed", "obj": "I don't remember having a policy with y'all.", "model": "We get that all the time. Usually what happens is you either had some through work and didn't realize it was with Globe Life, or it's been a little while and you just forgot. Either way, the good news is that the company is giving you some free benefits at no cost! Are you married?", "tip": ""}, {"id": "pres_already", "obj": "I already have insurance.", "model": "Yes, and the Needs Analysis has already taken that into consideration, and it has exposed the need for more coverage. What you currently have is good, but it's not enough to ensure your family is protected. It's better to find out that your protection is too little now than when it's too late, because you can do something about it now. The last thing you'd want is to leave your family open to severe financial strain when you're not around anymore to protect them. Your family will be protected with either option you pick, so which one works best?", "tip": "", "track": "pres", "lead": "any"}, {"id": "pres_think", "obj": "This all makes sense, but I need to think about it.", "model": "I completely understand; this is a big decision for your family, and you must do it right. I help many families make this decision each day. Now, I have found that when someone needs to think about it, it usually comes down to one or two things: do they see the need for this? Which you already told me you did. Or can they afford this? I don't pretend to know any family's financial situation, but what would make a bigger impact on your family on the day you die: having this monthly premium in the bank, or having all these needs taken care of? The good news is that there are two options, so if Option 1 is too much, you can always start with Option 2 and add later. The important thing is to get something started now. Which option would be better for you to get started today?", "tip": "", "track": "pres", "lead": "any"}, {"id": "pres_afford", "obj": "Honestly, I just can't afford that right now.", "model": "OK, I understand. Let me ask you: do you understand how important this is? So here's what we can do: adjust the Final Expense benefit to $15,000. That should help cover the cost of a funeral. Your income protection will remain the same, along with your mortgage coverage and the college education benefit. Let's recalculate and see where we're at. Does this make you feel better?", "tip": "Lower Final Expense first; keep income protection.", "track": "pres", "lead": "any"}, {"id": "pres_email", "obj": "Can you just email me something to look over?", "model": "I completely understand wanting to look it over. Earlier I mentioned that after I answered your questions, I'd expect a simple yes or no, and you said that was fair. Everything an email would show you is what we just went over together. What part would you want to look at again? Let's go over it right now. (Answer the question they name, then:) Your family's protected with either option, so which one works best to get started today?", "tip": "Ask what part they'd want to look at, answer it, re-close.", "track": "pres", "lead": "any"}, {"id": "pres_spouse", "obj": "I need to talk to my spouse first.", "model": "That makes sense; this affects you both. Let me ask: if {spouse} were here right now, what do you think their biggest question would be? (Answer it, then:) Most spouses want to know two things: that the family's protected, and that it fits the budget. Option 2 does both. Can {spouse} hop on for a minute so I can answer any questions directly? If not, let's set a quick time today when you're both available.", "tip": "Get the spouse on the call or book a time with both.", "needsSpouse": true, "track": "pres", "lead": "any"}, {"id": "pres_bad", "obj": "We had a policy before and it didn't work out.", "model": "I appreciate you telling me that. What happened? (Listen fully. Don't defend or interrupt.) That's exactly why I'm here today: to make sure your coverage fits where you are now, not where you were then. We built today's plan around your current needs and budget, and you have two options. Which one feels right for where you are now?", "tip": "Ask what happened and listen before you answer.", "track": "pres", "lead": "any"}, {"id": "pres_busy", "obj": "I'm getting kind of busy. Can we finish this another time?", "model": "I understand, and I respect your time. We're close to done, and it's just a few more minutes to get your family protected. Do you have those few minutes now, or would later today or tomorrow be better so we can finish properly?", "tip": "If later, book a specific time before you hang up.", "track": "pres", "lead": "any"}];
+const OBJ_LESSON = {
+  c02: { track: "phone", leads: ["adp"], reps: 3 }, c03: { track: "phone", leads: ["presubmit"], reps: 3 },
+  c04: { track: "phone", leads: ["lapsed"], reps: 3 }, c05: { track: "phone", leads: ["policy"], reps: 3 },
+  c06: { track: "phone", reps: 5 }, c07: { track: "phone", reps: 5 },
+  s18: { track: "pres", reps: 5, ids: ["pres_already", "pres_think", "pres_email", "pres_spouse", "pres_bad", "pres_busy"] },
+  s19: { track: "pres", reps: 5 }
+};
+const OBJ_PASS = 75;
+function objPassed(id) { return !!(store.objDrill && store.objDrill[id] && store.objDrill[id].pass); }
+let od = null;
+function objPool(cfg) {
+  return OBJ_BANK.filter(o => o.track === cfg.track && (!cfg.leads || cfg.leads.includes(o.lead) || o.lead === "any") && (!cfg.ids || cfg.ids.includes(o.id)));
+}
+function objPlan(cfg) {
+  // Weakest objections first, then fill randomly, so practice goes where it's needed.
+  const m = store.objMastery || {}, pool = objPool(cfg);
+  const sorted = shuffle(pool).sort((a, b) => (m[a.id] == null ? -1 : m[a.id]) - (m[b.id] == null ? -1 : m[b.id]));
+  const reps = [], n = Math.min(cfg.reps || 5, pool.length);
+  for (const o of sorted) { if (reps.length >= n) break; const leadKey = o.lead !== "any" ? o.lead : (cfg.lead || shuffle(RP_LEAD_ORDER.filter(k => !o.needsSpouse || RP_LEADS[k].spouse))[0]); if (o.needsSpouse && !RP_LEADS[leadKey].spouse) continue; reps.push({ o, leadKey }); }
+  return reps;
+}
+function objOpen(id) {
+  if (od && od.id === id) return;
+  const cfg = OBJ_LESSON[id] || { track: "phone", reps: 5 };
+  od = { id, cfg: Object.assign({}, cfg), phase: "setup", lead: "all" };
+}
+function objDrillView(id) {
+  objOpen(id);
+  const lesson = OBJ_LESSON[id], m = lesson ? MODULES.find(x => x.id === id) : null, r = od, cfg = r.cfg;
+  let h = `<div class="page rp-page"><div class="eyebrow">${m ? `Module ${MODULES.indexOf(m) + 1} · ` : ""}Objection drill</div><h1>${m ? esc(m.title) : "Objection drills"}</h1>`;
+  if (r.phase === "setup") {
+    const mast = store.objMastery || {};
+    const pool = lesson ? objPool(cfg) : OBJ_BANK.filter(o => o.track === cfg.track && (r.lead === "all" || o.lead === r.lead || o.lead === "any"));
+    h += `<p class="lead">${cfg.track === "phone" ? "The lead hits you with a phone objection." : "The family hits you with an objection at the close."} Answer out loud like you're on the call. You don't have to say the script word for word: handle it the way it teaches.</p>
+      <div class="card"><h2>What a strong answer does</h2><div class="rp-crit od-crit"><div><b>Acknowledge</b><span>Agree, don't argue</span></div><div><b>Key point</b><span>The rebuttal's main idea</span></div><div><b>Move forward</b><span>End with a question</span></div><div><b>Confident</b><span>Clear, no rambling</span></div></div><p class="small">${lesson ? `${cfg.reps} objections. Pass with an average of ${OBJ_PASS} or better.` : "Your weakest objections come up first."}</p></div>`;
+    if (!lesson) h += `<div class="card"><h2>Pick your drill</h2><div class="row"><span class="small"><b>Type:</b></span>${[["phone", "Phone objections"], ["pres", "Presentation objections"]].map(([k, l]) => `<button class="chip ${cfg.track === k ? "on" : ""}" data-odtrack="${k}" type="button" aria-pressed="${cfg.track === k}">${l}</button>`).join("")}</div>
+      ${cfg.track === "phone" ? `<div class="row"><span class="small"><b>Lead type:</b></span>${[["all", "All"]].concat(RP_LEAD_ORDER.map(k => [k, RP_LEADS[k].name])).map(([k, l]) => `<button class="chip ${r.lead === k ? "on" : ""}" data-odlead="${k}" type="button" aria-pressed="${r.lead === k}">${l}</button>`).join("")}</div>` : ""}</div>`;
+    h += `<div class="card"><h2>${lesson ? "Objections in this drill" : "Your objections"}</h2><div class="od-grid">${pool.map(o => { const b = mast[o.id]; return `<div class="od-chip ${b == null ? "" : b >= OBJ_PASS ? "good" : "low"}"><span>${esc(o.obj)}</span><b>${b == null ? "–" : b}</b></div>`; }).join("")}</div>
+      ${dictApi ? "" : `<div class="warn"><b>Your browser can't hear you</b>Objection drills need the microphone. Use Chrome on a computer or an Android phone.</div>`}
+      <div class="row"><button class="btn" id="odStart" type="button" ${dictApi ? "" : "disabled"}>Start</button>${lesson ? `<button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button>` : ""}</div></div>`;
+  } else if (r.phase === "rep" || r.phase === "grading" || r.phase === "review") {
+    const rep = r.reps[r.k], L = RP_LEADS[rep.leadKey], g = rep.grade;
+    h += `<div class="rp-top"><span>${esc(L.family)} · ${esc(L.name)}</span><span>Objection ${r.k + 1} of ${r.reps.length}</span></div>
+      <div class="rp-bar"><span style="width:${Math.round(r.k / r.reps.length * 100)}%"></span></div>
+      <div class="od-card"><div class="od-who">${esc(L.voice)} says</div><p class="od-obj">“${esc(rpFill(rep.o.obj, L))}”</p></div>`;
+    if (r.phase === "rep") h += `<div class="od-answer"><div class="od-who">You</div><p>${esc(r.live || "") || `<span class="small">${r.listening ? "Answer out loud…" : "Listen…"}</span>`}</p></div>
+      <div class="rp-status"><span class="rp-dot ${r.listening ? "on" : ""}"></span>${r.listening ? (r.live ? "Listening… pause when you're done." : "Your turn. Answer out loud.") : `${esc(L.voice)} is talking…`}</div>
+      <div class="row"><button class="btn" id="odDone" type="button" ${r.listening ? "" : "disabled"}>I'm done (Space)</button><button class="btn secondary" id="odStop" type="button">Stop</button></div>`;
+    else if (r.phase === "grading") h += `<div class="od-answer"><div class="od-who">You said</div><p>${esc(rep.said || "(nothing)")}</p></div><p class="small">Grading your answer…</p>`;
+    else h += `<div class="od-answer"><div class="od-who">You said</div><p>${esc(rep.said || "(nothing)")}</p></div>
+      <div class="card"><div class="row spread"><h2 style="margin:0">Score</h2><span class="pill ${g.score >= OBJ_PASS ? "pass" : "fail"}" style="font-size:16px">${g.score}</span></div>
+      <ul class="od-checks">${[["acknowledged", "Acknowledged it"], ["key_point", "Made the key point"], ["moved_forward", "Moved the call forward"], ["confident", "Sounded confident"]].map(([k, l]) => `<li class="${g[k] ? "ok" : "no"}">${g[k] ? "✓" : "✗"} ${l}</li>`).join("")}</ul>
+      ${g.notes && g.notes.length ? `<p class="small">${g.notes.map(esc).join(" ")}</p>` : ""}
+      <p>${esc(g.feedback || "")}</p>${g.better ? `<div class="tip"><b>Try saying</b>“${esc(g.better)}”</div>` : ""}
+      <details class="od-model"><summary>The script's rebuttal</summary><p>${esc(rpFill(rep.o.model, L))}</p>${rep.o.tip ? `<p class="small"><b>Tip:</b> ${esc(rep.o.tip)}</p>` : ""}</details>
+      <div class="row"><button class="btn" id="odNext" type="button">${r.k + 1 < r.reps.length ? "Next objection" : "See my results"}</button><button class="btn secondary" id="odRetry" type="button">Try this one again</button></div></div>`;
+  } else if (r.phase === "done") {
+    const sc = r.reps.map(x => x.grade ? x.grade.score : 0), avg = Math.round(sc.reduce((a, b) => a + b, 0) / Math.max(1, sc.length)), pass = avg >= OBJ_PASS;
+    h += `<div class="result-banner ${pass ? "pass" : "fail"}"><div class="row spread"><div class="big">${pass ? "Passed" : "Not yet"}</div><div class="big">${avg}</div></div><p>${pass ? "You handled those like a pro. Keep drilling the ones under " + OBJ_PASS + "." : "Average " + OBJ_PASS + " to pass. Read the script's rebuttal for the low ones, then run it again."}</p></div>
+      <div class="card"><h2>Your answers</h2>${r.reps.map(x => `<div class="rp-fix"><div class="row spread"><span>“${esc(rpFill(x.o.obj, RP_LEADS[x.leadKey]))}”</span><span class="pill ${x.grade && x.grade.score >= OBJ_PASS ? "pass" : "fail"}">${x.grade ? x.grade.score : "–"}</span></div>${x.grade && x.grade.feedback ? `<p class="small">${esc(x.grade.feedback)}</p>` : ""}</div>`).join("")}</div>
+      <div class="row"><button class="btn" id="odAgain" type="button">Run it again</button>${lesson ? `<button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button>` : ""}</div>`;
+  }
+  return h + `</div>`;
+}
+function bindObjDrill() {
+  document.querySelectorAll("[data-odtrack]").forEach(b => b.onclick = () => { od.cfg.track = b.dataset.odtrack; od.lead = "all"; render(); });
+  document.querySelectorAll("[data-odlead]").forEach(b => b.onclick = () => { od.lead = b.dataset.odlead; render(); });
+  const s = $("#odStart"); if (s) s.onclick = objStart;
+  const d = $("#odDone"); if (d) d.onclick = () => objEndAnswer();
+  const x = $("#odStop"); if (x) x.onclick = () => { objStopAll(); od.phase = "setup"; render(); };
+  const n = $("#odNext"); if (n) n.onclick = () => { od.k++; if (od.k >= od.reps.length) objFinish(); else objRep(); };
+  const t = $("#odRetry"); if (t) t.onclick = () => objRep();
+  const a = $("#odAgain"); if (a) a.onclick = () => { od.phase = "setup"; render(); };
+}
+document.addEventListener("keydown", e => { if (e.code === "Space" && view.name === "objdrill" && od && od.phase === "rep" && od.listening && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || "")) { e.preventDefault(); objEndAnswer(); } });
+async function objStart() {
+  const r = od, cfg = Object.assign({}, r.cfg); if (!OBJ_LESSON[r.id] && r.lead !== "all" && cfg.track === "phone") cfg.leads = [r.lead];
+  r.reps = objPlan(cfg); r.k = 0;
+  if (!r.reps.length) return;
+  try { await dictApi.start(); dictApi.stop().catch(() => {}); } catch (e) { alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
+  if (EL.status === "idle") initEleven();
+  objRep();
+}
+function objRep() {
+  const r = od, rep = r.reps[r.k], L = RP_LEADS[rep.leadKey];
+  rep.said = ""; rep.grade = null; r.live = ""; r.listening = false; r.phase = "rep"; render();
+  const text = rpFill(rep.o.obj, L);
+  objSay(L.voice, text, () => { if (od !== r || r.phase !== "rep") return; r.leadEnd = Date.now(); objListen(); });
+}
+function objSay(speaker, text, done) {
+  let fin = false; const end = () => { if (fin) return; fin = true; od && (od.audio = null); setTimeout(done, 200); };
+  const synthIt = () => { if (!synth) { setTimeout(end, 600 + words(text) * 330); return; } try { const u = new SpeechSynthesisUtterance(text); const v = pickVoice(speaker, []); if (v) u.voice = v; u.onend = end; u.onerror = end; synth.speak(u); setTimeout(end, 3000 + words(text) * 600); } catch (e) { end(); } };
+  if (EL.ok && EL.cast[speaker]) elFetch(text, EL.cast[speaker]).then(url => { if (!url) return synthIt(); const au = new Audio(url); od.audio = au; au.onended = end; au.onerror = end; au.play().catch(synthIt); setTimeout(end, 4000 + words(text) * 700); });
+  else synthIt();
+}
+async function objListen() {
+  const r = od; r.finals = ""; r.part = ""; r.firstAt = 0; r.lastAt = 0;
+  try { await dictApi.start(); r.listening = true; } catch (e) { r.listening = false; }
+  render();
+  if (r.tick) clearInterval(r.tick);
+  r.tick = setInterval(() => { if (od !== r || r.phase !== "rep") return clearInterval(r.tick); const now = Date.now(), n = words(r.live || "");
+    if ((n >= 6 && r.lastAt && now - r.lastAt > 1800) || (!r.firstAt && now - r.leadEnd > 15000) || (r.firstAt && now - r.firstAt > 75000)) objEndAnswer(); }, 200);
+}
+function objHeard(text, final) {
+  const r = od; if (!r || r.phase !== "rep" || !r.listening) return;
+  const now = Date.now(); if (!r.firstAt && text.trim()) r.firstAt = now;
+  if (text.trim()) r.lastAt = now;
+  if (final) { r.finals = (r.finals + " " + text).trim(); r.part = ""; } else r.part = text;
+  r.live = (r.finals + " " + r.part).trim();
+  const el = document.querySelector(".od-answer p"); if (el) el.textContent = r.live; else render();
+}
+function objStopAll() { const r = od; if (!r) return; if (r.tick) clearInterval(r.tick); try { r.audio && r.audio.pause(); } catch (e) {} try { synth && synth.cancel(); } catch (e) {} if (dictApi) dictApi.stop().catch(() => {}); r.listening = false; }
+async function objEndAnswer() {
+  const r = od; if (!r || r.phase !== "rep") return;
+  objStopAll();
+  const rep = r.reps[r.k], L = RP_LEADS[rep.leadKey];
+  rep.said = r.live || ""; rep.dead = r.firstAt ? (r.firstAt - r.leadEnd) / 1000 - 0.6 : null;
+  r.phase = "grading"; render();
+  const notes = [];
+  if (rep.dead == null) notes.push("You didn't say anything.");
+  else if (rep.dead > 3) notes.push(`${rep.dead.toFixed(1)} seconds of dead air before you answered (−8).`);
+  if (rep.said && words(rep.said) < 10) notes.push("That answer was very short.");
+  let g;
+  if (!rep.said.trim()) g = { acknowledged: false, key_point: false, moved_forward: false, confident: false, score: 0, feedback: "Answer out loud as soon as they finish. Silence on a call reads as \"they don't know what to say.\"", better: rpFill(rep.o.model, L).split(/(?<=[.?!])\s/)[0] };
+  else {
+    try {
+      g = await askClaude(objGradePrompt(rep, L), "default");
+      g.score = Math.max(0, Math.min(100, Math.round(Number(g.score) || 0)));
+    } catch (e) { g = { score: 0, feedback: "Couldn't grade that one. Check your connection and try it again.", acknowledged: false, key_point: false, moved_forward: false, confident: false }; }
+  }
+  if (rep.dead > 3) g.score = Math.max(0, g.score - 8);
+  g.notes = notes; rep.grade = g;
+  if (!store.objMastery) store.objMastery = {};
+  store.objMastery[rep.o.id] = Math.max(store.objMastery[rep.o.id] || 0, g.score); save();
+  if (od === r) { r.phase = "review"; render(); }
+}
+function objGradePrompt(rep, L) {
+  const phone = rep.o.track === "phone";
+  return `You are a sales coach grading a new Globe Life Liberty National agent's spoken answer to an objection.
+SITUATION: ${phone ? `A first phone call to a ${L.name} lead (${L.family}). The goal of the call is to set up the no-cost benefit now, or book a specific time.` : `The close of a life insurance presentation with ${L.family} (${L.name} lead). The goal is for them to pick Option 1 or Option 2 today, or book a time if they truly can't finish.`}
+OBJECTION: "${rpFill(rep.o.obj, L)}"
+THE AGENCY'S REBUTTAL (the model answer): "${rpFill(rep.o.model, L)}"
+${rep.o.tip ? `COACHING NOTE: ${rep.o.tip}\n` : ""}AGENT'S ANSWER (speech-to-text, so ignore small transcription mistakes): "${rep.said}"
+
+Grade it like a coach who wants them to sound natural, not memorized. They do not have to match the model word for word; judge whether they handled it the way the model teaches.
+- acknowledged: true if they acknowledged or agreed with the concern instead of arguing with it or ignoring it.
+- key_point: true if they made the model rebuttal's core point (for example: it's free and a gift, it's not a collection call, quotes come after the free benefit, verification protects their claim, two options so start with Option 2, adjust Final Expense to fit the budget).
+- moved_forward: true if they ended by moving the call forward with a question (start now, book a specific time, or which option works best).
+- confident: true if it sounded clear and confident: no rambling, no apologizing, no pushiness.
+score: 0-100. Each of the four is worth about 25. Deduct for wrong information, made-up promises, or being rude or pushy.
+feedback: one or two plain sentences on the most important thing to fix (or what made it strong).
+better: one line they could say next time, natural and under 40 words.
+Return only JSON: {"acknowledged":true,"key_point":true,"moved_forward":true,"confident":true,"score":0,"feedback":"","better":""}`;
+}
+function objFinish() {
+  const r = od; objStopAll();
+  const sc = r.reps.map(x => x.grade ? x.grade.score : 0), avg = Math.round(sc.reduce((a, b) => a + b, 0) / Math.max(1, sc.length)), pass = avg >= OBJ_PASS;
+  r.phase = "done";
+  if (!store.objDrill) store.objDrill = {};
+  const key = OBJ_LESSON[r.id] ? r.id : "free_" + r.cfg.track, prev = store.objDrill[key] || {};
+  store.objDrill[key] = { pass: prev.pass || pass, best: Math.max(prev.best || 0, avg), tries: (prev.tries || 0) + 1, last: avg, at: new Date().toISOString() };
+  save(); try { notify("objection_drill", { module: key, score: avg, passed: pass }); } catch (e) {}
+  if (OBJ_LESSON[r.id]) checkModuleDone(r.id);
+  render();
+}
+
 const DRILL_PASS = 0.8;
 /* Matching steps in the agency presentation tool (presentation.html; numbers are its slide ids). */
 const TOOL_STEPS = { "dial-adp": "Make the call: ADP Referral", "dial-presubmit": "Make the call: Pre-Submit", "dial-lapsed": "Make the call: Globe Lapsed", "dial-policy": "Make the call: Policy Owner", 0: "Presentation Setup", 1: "General Introduction", 2: "Rapport Building", 3: "Policy Owner", 4: "Pre-Submit", 5: "Globe Lapsed", 6: "ADP Referral", 7: "No-Cost Renewal", 8: "Company Introduction", 9: "Make Tomorrow Better", 10: "Sports Partnerships", 11: "Accidental Death Policy", 12: "Referral Collection", 13: "Word of Thanks", 14: "Insurance Types", 15: "Term & Whole Life", 16: "Needs Survey", 17: "Medical Questions", 18: "Final Expense", 19: "Freedom of Choice", 20: "Final Expense Recap", 21: "Income Protection", 22: "Mortgage Protection", 23: "College Education", 24: "Final Recap & Close" };
@@ -2078,7 +2264,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&am
 
 function quizPassed(id) { return (store.quiz[id] || 0) >= PASS_QUIZ; }
 function drillPassed(id) { return !!(store.drill && store.drill[id] && store.drill[id].pass); }
-function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)); }
+function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)) && (!OBJ_LESSON[id] || objPassed(id)); }
 function checkModuleDone(id) {
   if (!moduleDone(id)) return;
   store.doneNotified = store.doneNotified || {};
@@ -2579,8 +2765,8 @@ async function initCaps() {
 }
 function wireDict() {
   if (dictApi) {
-    dictApi.onPartial(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, false); return; } if (rp && view.name === "call") { micPartial(text); } else if (view.name === "drill" && drillState) { const t = $("#drillInput"); if (t) { t.value = ((drillState.dictBase || "") + " " + text).trim(); drillState.text = t.value; } } });
-    dictApi.onFinal(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, true); return; } if (rp && view.name === "call") { micFinal(text); } else if (view.name === "drill" && drillState) { drillState.dictBase = ((drillState.dictBase || "") + " " + text).trim(); const t = $("#drillInput"); if (t) { t.value = drillState.dictBase; drillState.text = t.value; } } });
+    dictApi.onPartial(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, false); return; } if (view.name === "objdrill" && od) { objHeard(text, false); return; } if (rp && view.name === "call") { micPartial(text); } else if (view.name === "drill" && drillState) { const t = $("#drillInput"); if (t) { t.value = ((drillState.dictBase || "") + " " + text).trim(); drillState.text = t.value; } } });
+    dictApi.onFinal(({ text }) => { if (view.name === "roleplay" && rpl) { rplHeard(text, true); return; } if (view.name === "objdrill" && od) { objHeard(text, true); return; } if (rp && view.name === "call") { micFinal(text); } else if (view.name === "drill" && drillState) { drillState.dictBase = ((drillState.dictBase || "") + " " + text).trim(); const t = $("#drillInput"); if (t) { t.value = drillState.dictBase; drillState.text = t.value; } } });
     dictApi.onState(({ state, reason }) => { if (rp && view.name === "call") micState(state, reason); if (drillState) drillState.listening = state === "listening"; const dm = $("#drillMic"); if (dm) { dm.classList.toggle("on", state === "listening"); dm.setAttribute("aria-pressed", state === "listening"); } });
   }
 }
@@ -2602,6 +2788,7 @@ function renderRail() {
   h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">▦</span><span>Dashboard</span><span></span></button>`;
   h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></button>`;
   h += `<button class="navbtn main ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button"><span class="badge">▶</span><span>Practice calls</span><span class="count">${callsTotal || ""}</span></button>`;
+  h += `<button class="navbtn main ${view.name === "objdrill" && view.id === "free" ? "active" : ""}" data-go="objdrill" data-id="free" type="button"><span class="badge">⚡</span><span>Objection drills</span><span></span></button>`;
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
   {
   h += `<button class="navbtn main ${view.name === "history" || view.name === "results" ? "active" : ""}" data-go="history" type="button"><span class="badge">≡</span><span>My results</span><span></span></button>`;
@@ -2621,7 +2808,7 @@ function renderRail() {
     h += `<button class="group group-btn" type="button" data-railsec="${esc(g.name)}" aria-expanded="${open}" aria-controls="railsec${gi}"><span class="caret" aria-hidden="true">${open ? "▾" : "▸"}</span><span>${esc(g.name)}</span><span class="gcount">${doneN === g.items.length ? "✓" : doneN + "/" + g.items.length}</span></button><div id="railsec${gi}" ${open ? "" : "hidden"}>`;
     g.items.forEach(([m, i]) => {
       const done = moduleDone(m.id); const un = moduleUnlocked(i);
-      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0);
+      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0) + (OBJ_LESSON[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0) + (OBJ_LESSON[m.id] && objPassed(m.id) ? 1 : 0);
       const active = inLesson && view.id === m.id;
       h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
@@ -2648,12 +2835,14 @@ function render() {
   if (view.name === "manager") { main.innerHTML = managerView(); afterManagerRender(); main.scrollTop = 0; return; }
   if (!store.name) { main.innerHTML = signInView(); bindSignIn(); return; }
   if (rpl && rpl.phase === "run" && view.name !== "roleplay") { rplStopAudio(); rpl.phase = "setup"; }
+  if (od && od.phase === "rep" && view.name !== "objdrill") { objStopAll(); od.phase = "setup"; }
   if (view.name === "launch") { main.innerHTML = launchView(); main.scrollTop = 0; return; }
   if (view.name === "home") main.innerHTML = homeView();
   else if (view.name === "module") main.innerHTML = moduleView(view.id);
   else if (view.name === "quiz") main.innerHTML = quizView(view.id);
   else if (view.name === "drill") { main.innerHTML = drillView(view.id); bindDrill(); }
   else if (view.name === "roleplay") { main.innerHTML = roleplayView(view.id); bindRoleplay(); }
+  else if (view.name === "objdrill") { main.innerHTML = objDrillView(view.id); bindObjDrill(); }
   else if (view.name === "practice" || view.name === "exam") main.innerHTML = familyPickView(view.name);
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
@@ -2709,7 +2898,8 @@ function todayList() {
   Object.entries(store.doneNotified || {}).forEach(([id, at]) => { if (new Date(at).toDateString() === today) items.push({ done: true, t: `Lesson: ${modTitle(id)}` }); });
   MODULES.filter(m => !moduleDone(m.id)).slice(0, 2).forEach(m => {
     const i = MODULES.indexOf(m), un = moduleUnlocked(i);
-    if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && ROLEPLAYS[m.id]) items.push({ t: `Role-play: ${m.title}`, btn: un ? `<button class="btn small" data-go="roleplay" data-id="${m.id}" type="button">Start</button>` : "" });
+    if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && (!ROLEPLAYS[m.id] || rplPassed(m.id)) && OBJ_LESSON[m.id]) items.push({ t: `Objection drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="objdrill" data-id="${m.id}" type="button">Start</button>` : "" });
+    else if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && ROLEPLAYS[m.id]) items.push({ t: `Role-play: ${m.title}`, btn: un ? `<button class="btn small" data-go="roleplay" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
     else items.push({ t: `Lesson: ${m.title}`, btn: un ? `<button class="btn small" data-go="module" data-id="${m.id}" type="button">Open</button>` : "", locked: !un });
   });
@@ -2974,12 +3164,14 @@ function moduleView(id) {
     <p class="lead">${m.summary}</p>
     <div class="card">${m.blocks.map(blockHTML).join("")}</div>
     <div class="card"><h2>Check your knowledge</h2>
-      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
+      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
       <button class="btn ${quizPassed(id) ? "secondary" : ""}" data-go="quiz" data-id="${id}" type="button">${sc != null ? "Retake quiz" : "Take the quiz"}</button></div>
       ${DRILLS[id] ? `<div class="row spread"><div><h3>2. Say-it drill ${drillPassed(id) ? `<span class="pill pass">Passed</span>` : (store.drill && store.drill[id]) ? `<span class="pill fail">Try again</span>` : ""}</h3><p class="small">Deliver a key part of this script from memory. The lesson is hidden while you answer.</p></div>
       <button class="btn ${drillPassed(id) ? "secondary" : ""}" data-go="drill" data-id="${id}" type="button">${drillPassed(id) ? "Practice again" : "Start the drill"}</button></div>` : ""}
       ${ROLEPLAYS[id] ? (() => { const rr = (store.roleplay || {})[id]; return `<div class="row spread"><div><h3>${DRILLS[id] ? "3" : "2"}. Script role-play ${rplPassed(id) ? `<span class="pill pass">Passed ${rr.best}</span>` : rr ? `<span class="pill fail">Best ${rr.best}</span>` : ""}</h3><p class="small">${ROLEPLAYS[id].track === "dial" ? "Read the call script out loud with a lead on the line" : "Read the presentation out loud from the opening through this lesson"}. Graded on how you sound: accuracy, pace, flow and energy.</p></div>
       <button class="btn ${rplPassed(id) ? "secondary" : ""}" data-go="roleplay" data-id="${id}" type="button">${rplPassed(id) ? "Run it again" : "Start the role-play"}</button></div>`; })() : ""}
+      ${OBJ_LESSON[id] ? (() => { const oo = (store.objDrill || {})[id], c = OBJ_LESSON[id]; const nStep = 2 + (DRILLS[id] ? 1 : 0) + (ROLEPLAYS[id] ? 1 : 0); return `<div class="row spread"><div><h3>${nStep}. Objection drill ${objPassed(id) ? `<span class="pill pass">Passed ${oo.best}</span>` : oo ? `<span class="pill fail">Best ${oo.best}</span>` : ""}</h3><p class="small">${c.reps} ${c.track === "phone" ? "phone" : "presentation"} objections, out loud. Graded on how you handle each one.</p></div>
+      <button class="btn ${objPassed(id) ? "secondary" : ""}" data-go="objdrill" data-id="${id}" type="button">${objPassed(id) ? "Drill again" : "Start the drill"}</button></div>`; })() : ""}
     </div>
   </div>`;
 }
@@ -4732,6 +4924,7 @@ document.addEventListener("click", e => {
     if (t.dataset.go === "quiz") quizState = null;
     if (t.dataset.go === "drill") drillState = null;
     if (t.dataset.go === "roleplay" && rpl && rpl.mod !== t.dataset.id) rpl = null;
+    if (t.dataset.go === "objdrill" && od && od.id !== t.dataset.id) od = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
   }
   if (t.dataset.q !== undefined) {
