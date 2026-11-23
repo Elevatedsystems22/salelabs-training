@@ -650,6 +650,46 @@ tr.me-row td { background: var(--accent-soft); }
 .slide.rp-slide-refs { aspect-ratio: auto; flex: 1; min-height: 0; overflow-y: auto; max-height: 100%; align-items: stretch !important; justify-content: flex-start !important; text-align: left !important; padding: 16px !important; }
 .rp-slide-refs .rf-group { background: #f3f6fa; } .rp-slide-refs { --bg: #f3f6fa; --surface: #fff; --ink: #0f1b2d; --line: #dde3ec; --accent: #0b4fb3; color: #0f1b2d; background: #fff; }
 @media (max-width: 760px) { .rf-top, .rf-notes { grid-template-columns: 1fr; } }
+.zs-page .lead { max-width: 760px; }
+.zs-list { margin: 6px 0 10px; padding-left: 22px; columns: 2; font-size: 14.5px; } .zs-list li { margin-bottom: 4px; }
+.zs-task { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 0 12px 12px 0; padding: 12px 16px; margin-bottom: 10px; }
+.zs-task b { font-size: 17px; color: var(--ink); display: block; } .zs-num { font-size: 12.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.zs-hint { margin-top: 6px; font-size: 14px; color: #7a5200; background: #fff6e5; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+.zs-meta { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; color: var(--muted); white-space: nowrap; text-align: right; }
+.zs-win { position: relative; background: #1a1a1a; border-radius: 12px; overflow: hidden; color: #eee; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.zs-titlebar { display: flex; justify-content: space-between; padding: 7px 12px; font-size: 12.5px; color: #aaa; background: #242424; }
+.zs-sharebar { background: #23a455; color: #fff; text-align: center; padding: 6px; font-size: 13.5px; font-weight: 600; display: flex; justify-content: center; gap: 10px; align-items: center; }
+.zs-body { display: flex; height: 340px; overflow: hidden; position: relative; } .zs-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 14px; min-width: 0; overflow: hidden; }
+.zs-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; height: 100%; }
+.zs-tile { background: #2d2d2d; border-radius: 10px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 120px; }
+.zs-tile.empty { color: #888; font-size: 14px; } .zs-cam { font-size: 54px; } .zs-name-big { font-size: 24px; font-weight: 700; color: #ddd; }
+.zs-label { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,.6); padding: 2px 8px; border-radius: 4px; font-size: 12.5px; }
+.zs-shared { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; } .zs-shared.bad { outline: 3px solid #e5484d; outline-offset: -3px; }
+.zs-slide { background: #fff; color: #0f1b2d; border-radius: 6px; height: 92%; max-width: 92%; aspect-ratio: 16/9; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; }
+.zs-slide b { font-size: 22px; color: #0b4fb3; } .zs-slide.eapp b { color: #217a3b; } .zs-slide.tool { background: #fff7e6; } .zs-slide.tool b { color: #b42318; } .zs-slide span { font-size: 13.5px; padding: 0 16px; text-align: center; color: #3d4a5c; }
+.zs-ended { font-size: 22px; color: #aaa; }
+.zs-panel { width: 250px; background: #fff; color: #0f1b2d; padding: 12px; overflow-y: auto; } .zs-ph { font-weight: 700; margin-bottom: 8px; color: #0f1b2d; }
+.zs-sub { font-size: 12px; font-weight: 700; color: #5b6676; text-transform: uppercase; margin: 10px 0 4px; } .zs-muted { color: #5b6676; font-size: 13px; }
+.zs-prow { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: 14px; } .zs-prow span { flex: 1; }
+.zs-sb { font: inherit; font-size: 12.5px; font-weight: 600; border: 1px solid #c8ced8; background: #fff; color: #0f1b2d; border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+.zs-sb.blue { background: #0b5cff; border-color: #0b5cff; color: #fff; } .zs-sb.red { background: #e5484d; border-color: #e5484d; color: #fff; }
+.zs-bar { display: flex; justify-content: space-between; align-items: center; background: #242424; padding: 6px 10px; gap: 6px; flex-wrap: wrap; }
+.zs-grp { display: flex; gap: 2px; align-items: center; } .zs-split { display: flex; align-items: flex-start; }
+.zs-btn { font: inherit; background: none; border: 0; color: #eee; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 18px; min-width: 64px; }
+.zs-btn span { font-size: 11.5px; color: #ddd; } .zs-btn:hover, .zs-caret:hover { background: #333; } .zs-btn.green span { color: #4ade80; }
+.zs-caret { font: inherit; background: none; border: 0; color: #ccc; cursor: pointer; padding: 6px 4px; border-radius: 6px; font-size: 13px; }
+.zs-badge { font-style: normal; background: #e5484d; color: #fff; border-radius: 99px; padding: 0 6px; font-size: 11px; }
+.zs-end { font: inherit; background: #e5484d; color: #fff; border: 0; border-radius: 8px; padding: 8px 16px; font-weight: 700; cursor: pointer; }
+.zs-menu { position: absolute; bottom: 64px; background: #fff; color: #0f1b2d; border-radius: 10px; padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.35); display: flex; flex-direction: column; min-width: 220px; z-index: 3; }
+.zs-menu button { font: inherit; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: #0f1b2d; font-size: 14px; } .zs-menu button:hover { background: #eef2f7; } .zs-menu button.red { color: #b42318; font-weight: 700; }
+.zs-modal { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 4; }
+.zs-pick { background: #fff; color: #0f1b2d; border-radius: 12px; padding: 16px; width: min(640px, 94%); }
+.zs-pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+.zs-pgrid button { font: inherit; border: 2px solid #dde3ec; background: #fff; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; text-align: left; color: #0f1b2d; }
+.zs-pgrid button:hover { border-color: #0b5cff; } .zs-pgrid small { color: #5b6676; font-size: 12px; }
+.zs-thumb { height: 60px; border-radius: 6px; background: #e9eef5; display: block; } .zs-thumb.client { background: linear-gradient(135deg, #0b4fb3, #3b82f6); } .zs-thumb.tool { background: linear-gradient(135deg, #fff7e6, #f5c26b); } .zs-thumb.eapp { background: linear-gradient(135deg, #217a3b, #4ade80); } .zs-thumb.mail { background: linear-gradient(135deg, #ea4335, #fbbc05); } .zs-thumb.screen { background: linear-gradient(135deg, #334155, #64748b); }
+.zs-choice { margin-top: 12px; } .zs-opt { display: block; width: 100%; text-align: left; font: inherit; font-size: 15px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; cursor: pointer; } .zs-opt:hover { border-color: var(--accent); }
+@media (max-width: 900px) { .zs-body { height: 260px; } .zs-panel { position: absolute; right: 0; top: 30px; bottom: 60px; width: 210px; z-index: 2; } .zs-btn { min-width: 48px; padding: 4px 4px; font-size: 16px; } .zs-btn span { font-size: 10px; } .zs-list { columns: 1; } .zs-task { flex-direction: column; } .zs-meta { flex-direction: row; gap: 12px; } }
 .od-crit { grid-template-columns: repeat(4, 1fr); }
 .od-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin-bottom: 12px; }
 .od-chip { display: flex; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; font-size: 14px; background: var(--surface); }
@@ -1896,9 +1936,9 @@ function objRep() {
   objSay(L.voice, text, () => { if (od !== r || r.phase !== "rep") return; r.leadEnd = Date.now(); objListen(); });
 }
 function objSay(speaker, text, done) {
-  let fin = false; const end = () => { if (fin) return; fin = true; od && (od.audio = null); setTimeout(done, 200); };
+  let fin = false; const end = () => { if (fin) return; fin = true; if (od) od.audio = null; setTimeout(done, 200); };
   const synthIt = () => { if (!synth) { setTimeout(end, 600 + words(text) * 330); return; } try { const u = new SpeechSynthesisUtterance(text); const v = pickVoice(speaker, []); if (v) u.voice = v; u.onend = end; u.onerror = end; synth.speak(u); setTimeout(end, 3000 + words(text) * 600); } catch (e) { end(); } };
-  if (EL.ok && EL.cast[speaker]) elFetch(text, EL.cast[speaker]).then(url => { if (!url) return synthIt(); const au = new Audio(url); od.audio = au; au.onended = end; au.onerror = end; au.play().catch(synthIt); setTimeout(end, 4000 + words(text) * 700); });
+  if (EL.ok && EL.cast[speaker]) elFetch(text, EL.cast[speaker]).then(url => { if (!url) return synthIt(); const au = new Audio(url); if (od) od.audio = au; au.onended = end; au.onerror = end; au.play().catch(synthIt); setTimeout(end, 4000 + words(text) * 700); });
   else synthIt();
 }
 async function objListen() {
@@ -1969,6 +2009,158 @@ function objFinish() {
   store.objDrill[key] = { pass: prev.pass || pass, best: Math.max(prev.best || 0, avg), tries: (prev.tries || 0) + 1, last: avg, at: new Date().toISOString() };
   save(); try { notify("objection_drill", { module: key, score: avg, passed: pass }); } catch (e) {}
   if (OBJ_LESSON[r.id]) checkModuleDone(r.id);
+  render();
+}
+
+/* =========================================================
+   ZOOM PRACTICE
+   A mock meeting window. The agent completes real tasks against the clock: admit the family,
+   unmute, start video, pick the right microphone, share the CLIENT SCREEN window (never the tool),
+   switch to the eApp and back, stop sharing and end the meeting. Wrong clicks cost points;
+   sharing the window with your script is a critical mistake.
+   ========================================================= */
+const ZS_STEPS = {
+  admit: { prompt: "Tasha is in the waiting room. Let her in.", hint: "Open Participants, then press Admit next to Tasha.", path: ["participants", "admit"], done: s => s.inMeeting.length > 0 },
+  unmute: { prompt: "You joined muted. Unmute your microphone.", hint: "Press Unmute at the bottom left.", path: ["mute"], done: s => !s.muted, say: ["Tasha", "Hi! Can you hear me?"] },
+  video: { prompt: "Turn your camera on so they can see you.", hint: "Press Start Video.", path: ["video"], done: s => s.video },
+  confirm: { prompt: "Confirm they can see and hear you before you hang up the phone.", type: "choice", choices: ["Can you see and hear me okay on your end?", "Okay, let's jump right into the slides.", "Hang on, let me find my notes."], correct: 0, why: "Confirm video and sound first, then hang up the phone." },
+  rapport: { prompt: "Tasha and Marcus are on. Marcus says, “So what's this all about?” What do you do?", type: "choice", choices: ["Share my screen and start the presentation", "Build rapport on camera for 8 to 10 minutes first", "Ask them to turn their cameras off"], correct: 1, why: "Rapport first. Share your screen after 8 to 10 minutes.", say: ["Marcus", "So what's this all about?"] },
+  share: { prompt: "Rapport's done. Share your presentation.", hint: "Press Share Screen, then pick the Client screen window. Never the tool.", path: ["share", "pick:client"], done: s => s.sharing === "client" },
+  check: { prompt: "You changed slides. Keep them with you.", type: "choice", choices: ["Can you see that on your screen?", "Any questions so far? No? Great, moving on.", "(Keep reading the script)"], correct: 0, why: "Ask “Can you see that on your screen?” when you change slides." },
+  eapp: { prompt: "Time for the Needs Survey. Switch your share to the eApp.", hint: "Press New Share in the green bar, then pick eApp.", path: ["newshare", "pick:eapp"], done: s => s.sharing === "eapp" },
+  hear: { prompt: "Tasha says they suddenly can't hear you. Your headset is plugged in. Fix it.", hint: "Press the ^ next to Mute and choose Headset microphone.", path: ["audiomenu", "mic:headset"], done: s => s.mic === "headset" && !s.muted, say: ["Tasha", "Hello? We can't hear you anymore."] },
+  back: { prompt: "Survey's done. Go back to the client screen for the benefits.", hint: "New Share, then Client screen.", path: ["newshare", "pick:client"], done: s => s.sharing === "client" },
+  stop: { prompt: "The presentation's over. Stop sharing.", hint: "Press Stop Share in the green bar.", path: ["stopshare"], done: s => !s.sharing },
+  end: { prompt: "Thank them and end the meeting for everyone.", hint: "Press End, then End meeting for all.", path: ["end", "endall"], done: s => s.ended }
+};
+const ZOOM_LESSON = { s01: ["admit", "unmute", "video", "confirm", "rapport", "end"], s02z: ["admit", "unmute", "video", "confirm", "rapport", "share", "check", "eapp", "hear", "back", "stop", "end"] };
+const ZS_WINDOWS = [["screen", "Entire screen", "Desktop 1"], ["tool", "Presentation tool", "Script, notes & rebuttals"], ["client", "Client screen", "Slides only"], ["eapp", "eApp", "Globe Life application"], ["mail", "Gmail", "Inbox"]];
+function zoomPassed(id) { return !!(store.zoomSim && store.zoomSim[id] && store.zoomSim[id].pass); }
+let zs = null;
+function zsOpen(id) { if (zs && zs.id === id) return; zs = { id, phase: "intro" }; }
+function zsReset() {
+  Object.assign(zs, { phase: "run", k: 0, mistakes: 0, critical: 0, log: [], wrongHere: 0, t0: Date.now(), stepT: Date.now(), times: [],
+    st: { muted: true, video: false, panel: null, waiting: ["Tasha Johnson"], inMeeting: [], picker: false, sharing: null, audioMenu: false, mic: "headset", endMenu: false, ended: false, flash: null } });
+}
+function zsStepId() { return ZOOM_LESSON[zs.id][zs.k]; }
+function zsStep() { return ZS_STEPS[zsStepId()]; }
+function zoomSimView(id) {
+  zsOpen(id);
+  const m = MODULES.find(x => x.id === id), steps = ZOOM_LESSON[id];
+  let h = `<div class="page wide zs-page"><div class="eyebrow">Module ${MODULES.indexOf(m) + 1} · Zoom practice</div><h1>${esc(m.title)}</h1>`;
+  if (zs.phase === "intro") {
+    const best = (store.zoomSim || {})[id];
+    h += `<p class="lead">This is a practice Zoom window. Complete each task like you would on a real call with the Johnsons. Wrong clicks cost points, and sharing the wrong window costs a lot.</p>
+      <div class="card"><h2>${steps.length} tasks</h2><ol class="zs-list">${steps.map(s => `<li>${esc(ZS_STEPS[s].prompt.replace(/“.*?”/, "").split(". ").slice(-1)[0])}</li>`).join("")}</ol>
+      <p class="small">Pass with 80 or better.${best ? ` Your best: ${best.best}.` : ""} Stuck? The hint shows after two wrong clicks.</p>
+      <div class="row"><button class="btn" id="zsStart" type="button">Start</button><button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div></div>`;
+  } else if (zs.phase === "run") h += zsRunHTML();
+  else if (zs.phase === "done") {
+    const g = zs.result;
+    h += `<div class="result-banner ${g.pass ? "pass" : "fail"}"><div class="row spread"><div class="big">${g.pass ? "Passed" : "Not yet"}</div><div class="big">${g.score}</div></div><p>${g.critical ? "You shared a window that showed your script and notes. On a real call the family would have seen everything. Always share the Client screen." : g.pass ? "Smooth. That's how a Zoom call should run." : "Run it again until the clicks are automatic."}</p></div>
+      <div class="stats"><div class="stat"><span class="stat-l">Time</span><b>${g.secs}s</b></div><div class="stat"><span class="stat-l">Wrong clicks</span><b>${g.mistakes}</b></div><div class="stat"><span class="stat-l">Critical mistakes</span><b>${g.critical}</b></div><div class="stat"><span class="stat-l">Slow steps</span><b>${g.slow}</b><span class="small">over 20 seconds</span></div></div>
+      ${zs.log.length ? `<div class="card"><h2>What to work on</h2><ul>${zs.log.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div>` : ""}
+      <div class="row"><button class="btn" id="zsAgain" type="button">Run it again</button><button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div>`;
+  }
+  return h + `</div>`;
+}
+function zsRunHTML() {
+  const s = zs.st, step = zsStep(), steps = ZOOM_LESSON[zs.id];
+  const showHint = zs.wrongHere >= 2 && step.hint;
+  const tile = (name, sub, me) => `<div class="zs-tile ${me ? "me" : ""}">${me && !s.video ? `<div class="zs-name-big">${esc(name)}</div>` : me ? `<div class="zs-cam">🙂</div>` : `<div class="zs-cam fam">👩🏾‍🦱👨🏾</div>`}<div class="zs-label">${me && s.muted ? "🔇 " : ""}${esc(name)}${sub ? ` · ${esc(sub)}` : ""}</div></div>`;
+  const shareView = w => w === "client" ? `<div class="zs-shared"><div class="zs-slide"><b>Globe Life</b><span>No-Cost Accidental Death Benefit</span></div></div>`
+    : w === "eapp" ? `<div class="zs-shared"><div class="zs-slide eapp"><b>eApp · Needs Survey</b><span>Household · Income · Coverage</span></div></div>`
+    : w === "tool" ? `<div class="zs-shared bad"><div class="zs-slide tool"><b>Script & rebuttals</b><span>“If they say they need to think about it…” · Notes: Marcus worried about money</span></div></div>`
+    : w === "screen" ? `<div class="zs-shared bad"><div class="zs-slide tool"><b>Your whole desktop</b><span>Script, notes, email and everything else</span></div></div>`
+    : `<div class="zs-shared bad"><div class="zs-slide"><b>Gmail</b><span>Inbox (42)</span></div></div>`;
+  let h = `<div class="zs-task"><div><span class="zs-num">Task ${zs.k + 1} of ${steps.length}</span><b>${esc(step.prompt)}</b>${showHint ? `<div class="zs-hint">Hint: ${esc(step.hint)}</div>` : ""}</div><div class="zs-meta"><span>⏱ <b id="zsClock">0s</b></span><span>Wrong clicks: <b>${zs.mistakes}</b></span></div></div>`;
+  if (s.flash) h += `<div class="note ${s.flash.bad ? "w" : "g"}" role="status">${esc(s.flash.text)}</div>`;
+  h += `<div class="zs-win" role="application" aria-label="Practice Zoom meeting"><div class="zs-titlebar"><span>● ● ●</span><span>Zoom Meeting</span><span>${s.sharing ? "" : "Gallery view"}</span></div>
+    ${s.sharing ? `<div class="zs-sharebar">You are screen sharing <button type="button" class="zs-sb" data-zs="newshare">New Share</button><button type="button" class="zs-sb red" data-zs="stopshare">Stop Share</button></div>` : ""}
+    <div class="zs-body"><div class="zs-stage">${s.ended ? `<div class="zs-ended">Meeting ended</div>` : s.sharing ? shareView(s.sharing) : `<div class="zs-gallery">${tile("You", "", true)}${s.inMeeting.length ? tile("Tasha & Marcus Johnson", "") : `<div class="zs-tile empty">Waiting for others to join…</div>`}</div>`}</div>
+    ${s.panel === "participants" ? `<div class="zs-panel"><div class="zs-ph">Participants (${1 + s.inMeeting.length})</div>${s.waiting.length ? `<div class="zs-sub">Waiting room (${s.waiting.length})</div>${s.waiting.map(n => `<div class="zs-prow"><span>${esc(n)}</span><button type="button" class="zs-sb blue" data-zs="admit">Admit</button><button type="button" class="zs-sb" data-zs="remove">Remove</button></div>`).join("")}` : ""}<div class="zs-sub">In the meeting</div><div class="zs-prow"><span>You (Host)</span></div>${s.inMeeting.map(n => `<div class="zs-prow"><span>${esc(n)}</span></div>`).join("")}</div>` : ""}
+    ${s.panel === "chat" ? `<div class="zs-panel"><div class="zs-ph">Chat</div><p class="zs-muted">No messages yet.</p></div>` : ""}</div>
+    <div class="zs-bar"><div class="zs-grp"><span class="zs-split"><button type="button" class="zs-btn" data-zs="mute">${s.muted ? "🔇" : "🎙️"}<span>${s.muted ? "Unmute" : "Mute"}</span></button><button type="button" class="zs-caret" data-zs="audiomenu" aria-label="Audio settings">^</button></span>
+      <button type="button" class="zs-btn" data-zs="video">${s.video ? "📹" : "🚫"}<span>${s.video ? "Stop Video" : "Start Video"}</span></button></div>
+      <div class="zs-grp"><button type="button" class="zs-btn" data-zs="participants">👥<span>Participants${s.waiting.length ? ` <i class="zs-badge">${s.waiting.length}</i>` : ""}</span></button><button type="button" class="zs-btn" data-zs="chat">💬<span>Chat</span></button>
+      <button type="button" class="zs-btn green" data-zs="share">⬆️<span>Share Screen</span></button><button type="button" class="zs-btn" data-zs="record">⏺<span>Record</span></button></div>
+      <div class="zs-grp"><button type="button" class="zs-end" data-zs="end">End</button></div></div>
+    ${s.audioMenu ? `<div class="zs-menu" style="left:16px"><div class="zs-sub">Select a microphone</div>${[["builtin", "Built-in microphone"], ["headset", "Headset microphone"], ["webcam", "Webcam microphone"]].map(([k, l]) => `<button type="button" data-zs="mic:${k}">${s.mic === k ? "✓ " : ""}${l}</button>`).join("")}<div class="zs-sub">Speaker</div><button type="button" data-zs="noop">✓ Headset</button></div>` : ""}
+    ${s.endMenu ? `<div class="zs-menu" style="right:16px"><button type="button" class="red" data-zs="endall">End meeting for all</button><button type="button" data-zs="leave">Leave meeting</button><button type="button" data-zs="cancelend">Cancel</button></div>` : ""}
+    ${s.picker ? `<div class="zs-modal"><div class="zs-pick"><div class="zs-ph">Select a window or an application to share</div><div class="zs-pgrid">${ZS_WINDOWS.map(([k, l, sub]) => `<button type="button" data-zs="pick:${k}"><span class="zs-thumb ${k}"></span><b>${l}</b><small>${sub}</small></button>`).join("")}</div><div class="row"><button type="button" class="zs-sb" data-zs="closepicker">Cancel</button></div></div></div>` : ""}
+  </div>`;
+  if (step.type === "choice") h += `<div class="card zs-choice"><h2>What do you say or do?</h2>${step.choices.map((c, i) => `<button type="button" class="zs-opt" data-zschoice="${i}">${esc(c)}</button>`).join("")}</div>`;
+  return h;
+}
+function bindZoomSim() {
+  const s = $("#zsStart"); if (s) s.onclick = () => { zsReset(); render(); zsSayStep(); zsClock(); };
+  const a = $("#zsAgain"); if (a) a.onclick = () => { zs.phase = "intro"; render(); };
+  document.querySelectorAll("[data-zs]").forEach(b => b.onclick = () => zsAct(b.dataset.zs));
+  document.querySelectorAll("[data-zschoice]").forEach(b => b.onclick = () => zsChoose(+b.dataset.zschoice));
+}
+function zsClock() { if (zs.clock) clearInterval(zs.clock); zs.clock = setInterval(() => { if (!zs || zs.phase !== "run") return clearInterval(zs.clock); const el = $("#zsClock"); if (el) el.textContent = Math.round((Date.now() - zs.t0) / 1000) + "s"; }, 500); }
+function zsSayStep() { const st = zsStep(); if (st && st.say) objSay(st.say[0], st.say[1], () => {}); }
+function zsFlash(text, bad) { zs.st.flash = { text, bad }; clearTimeout(zs.flashT); zs.flashT = setTimeout(() => { if (zs && zs.st) { zs.st.flash = null; render(); } }, 3500); }
+// Apply the click to the fake meeting, then check it against the current task.
+function zsAct(a) {
+  if (!zs || zs.phase !== "run") return;
+  const s = zs.st, step = zsStep();
+  if (step.type === "choice") { zsMistake(`Answer the question first: ${step.prompt}`); return render(); }
+  const prevSharing = s.sharing;
+  if (a === "mute") s.muted = !s.muted;
+  else if (a === "video") s.video = !s.video;
+  else if (a === "participants") s.panel = s.panel === "participants" ? null : "participants";
+  else if (a === "chat") s.panel = s.panel === "chat" ? null : "chat";
+  else if (a === "admit") { s.inMeeting = s.inMeeting.concat(s.waiting); s.waiting = []; }
+  else if (a === "remove") { }
+  else if (a === "share" || a === "newshare") { s.picker = true; s.audioMenu = false; s.endMenu = false; }
+  else if (a === "closepicker") s.picker = false;
+  else if (a.startsWith("pick:")) { s.sharing = a.slice(5); s.picker = false; s.panel = null; }
+  else if (a === "stopshare") s.sharing = null;
+  else if (a === "audiomenu") { s.audioMenu = !s.audioMenu; s.endMenu = false; }
+  else if (a.startsWith("mic:")) { s.mic = a.slice(4); s.audioMenu = false; }
+  else if (a === "end") { s.endMenu = !s.endMenu; s.audioMenu = false; }
+  else if (a === "cancelend") s.endMenu = false;
+  else if (a === "endall" || a === "leave") { s.endMenu = false; if (a === "endall") s.ended = true; }
+  // Sharing anything but the client screen or the eApp shows the family things they shouldn't see.
+  if (a.startsWith("pick:") && !["client", "eapp"].includes(s.sharing)) { zs.critical++; zs.log.push(`You shared “${ZS_WINDOWS.find(w => w[0] === s.sharing)[1]}”. The family could see ${s.sharing === "mail" ? "your email" : "your script and notes"}. Share the Client screen.`); zsFlash("Stop! The family can see your " + (s.sharing === "mail" ? "email." : "script and notes."), true); render(); return; }
+  const norm = x => x === "newshare" ? "share" : x, path = (step.path || []).map(norm);
+  if (step.done && step.done(s)) return zsNext();
+  if (!path.includes(norm(a)) && !["closepicker", "cancelend", "noop", "leave"].includes(a)) zsMistake(zsWhy(a, step));
+  if (a === "mic:builtin" || a === "mic:webcam") zsFlash("That mic isn't the one you're wearing. They still can't hear you.", true);
+  if (a === "leave") { zsMistake("Leaving keeps the meeting open without you. End it for everyone."); }
+  render();
+}
+function zsWhy(a, step) {
+  const names = { mute: "Mute", video: "Video", participants: "Participants", admit: "Admit", share: "Share Screen", newshare: "New Share", stopshare: "Stop Share", audiomenu: "Audio settings", end: "End", record: "Record", remove: "Remove" };
+  return `Clicked ${names[a] || a.replace(/^(pick|mic):/, "")} during “${step.prompt.split(".")[0]}.”`;
+}
+function zsMistake(text) { zs.mistakes++; zs.wrongHere++; if (zs.log.length < 8) zs.log.push(text); }
+function zsChoose(i) {
+  const step = zsStep(); if (step.type !== "choice") return;
+  if (i === step.correct) { zsFlash(step.why, false); zsNext(); }
+  else { zsMistake(`“${step.choices[i]}”: ${step.why}`); zsFlash(step.why, true); render(); }
+}
+function zsNext() {
+  const id = zsStepId();
+  // Set up the next scenario where a task depends on the meeting state.
+  zs.times.push((Date.now() - zs.stepT) / 1000); zs.stepT = Date.now(); zs.k++; zs.pathPos = 0; zs.wrongHere = 0;
+  const nxt = ZOOM_LESSON[zs.id][zs.k];
+  if (nxt === "hear") { zs.st.mic = "builtin"; }
+  if (nxt === "check" && zs.st.sharing !== "client") zs.st.sharing = "client";
+  if (zs.k >= ZOOM_LESSON[zs.id].length) return zsFinish();
+  const ns = ZS_STEPS[nxt]; if (ns.done && ns.done(zs.st)) return zsNext();
+  render(); zsSayStep();
+}
+function zsFinish() {
+  clearInterval(zs.clock);
+  const secs = Math.round((Date.now() - zs.t0) / 1000), slow = zs.times.filter(t => t > 20).length;
+  const score = Math.max(0, 100 - zs.mistakes * 6 - zs.critical * 15 - slow * 3), pass = score >= 80 && !zs.critical;
+  zs.result = { score, pass, secs, slow, mistakes: zs.mistakes, critical: zs.critical }; zs.phase = "done";
+  if (!store.zoomSim) store.zoomSim = {};
+  const prev = store.zoomSim[zs.id] || {};
+  store.zoomSim[zs.id] = { pass: prev.pass || pass, best: Math.max(prev.best || 0, score), tries: (prev.tries || 0) + 1, at: new Date().toISOString() };
+  save(); try { notify("zoom_practice", { module: zs.id, score, passed: pass }); } catch (e) {} checkModuleDone(zs.id);
   render();
 }
 
@@ -2264,7 +2456,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&am
 
 function quizPassed(id) { return (store.quiz[id] || 0) >= PASS_QUIZ; }
 function drillPassed(id) { return !!(store.drill && store.drill[id] && store.drill[id].pass); }
-function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)) && (!OBJ_LESSON[id] || objPassed(id)); }
+function moduleDone(id) { return quizPassed(id) && (!DRILLS[id] || drillPassed(id)) && (!ROLEPLAYS[id] || rplPassed(id)) && (!OBJ_LESSON[id] || objPassed(id)) && (!ZOOM_LESSON[id] || zoomPassed(id)); }
 function checkModuleDone(id) {
   if (!moduleDone(id)) return;
   store.doneNotified = store.doneNotified || {};
@@ -2808,7 +3000,7 @@ function renderRail() {
     h += `<button class="group group-btn" type="button" data-railsec="${esc(g.name)}" aria-expanded="${open}" aria-controls="railsec${gi}"><span class="caret" aria-hidden="true">${open ? "▾" : "▸"}</span><span>${esc(g.name)}</span><span class="gcount">${doneN === g.items.length ? "✓" : doneN + "/" + g.items.length}</span></button><div id="railsec${gi}" ${open ? "" : "hidden"}>`;
     g.items.forEach(([m, i]) => {
       const done = moduleDone(m.id); const un = moduleUnlocked(i);
-      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0) + (OBJ_LESSON[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0) + (OBJ_LESSON[m.id] && objPassed(m.id) ? 1 : 0);
+      const total = 1 + (DRILLS[m.id] ? 1 : 0) + (ROLEPLAYS[m.id] ? 1 : 0) + (OBJ_LESSON[m.id] ? 1 : 0) + (ZOOM_LESSON[m.id] ? 1 : 0); const prog = (quizPassed(m.id) ? 1 : 0) + (DRILLS[m.id] && drillPassed(m.id) ? 1 : 0) + (ROLEPLAYS[m.id] && rplPassed(m.id) ? 1 : 0) + (OBJ_LESSON[m.id] && objPassed(m.id) ? 1 : 0) + (ZOOM_LESSON[m.id] && zoomPassed(m.id) ? 1 : 0);
       const active = inLesson && view.id === m.id;
       h += `<button class="navbtn ${done ? "done" : ""} ${active ? "active" : ""}" data-go="module" data-id="${m.id}" ${un ? "" : "disabled"} type="button">
       <span class="badge">${done ? "✓" : i + 1}</span><span>${esc(m.title)}</span>${done ? `<span class="score-chip">Done</span>` : (un ? `<span class="lock">${prog}/${total}</span>` : `<span class="lock">Locked</span>`)}</button>`;
@@ -2843,6 +3035,7 @@ function render() {
   else if (view.name === "drill") { main.innerHTML = drillView(view.id); bindDrill(); }
   else if (view.name === "roleplay") { main.innerHTML = roleplayView(view.id); bindRoleplay(); }
   else if (view.name === "objdrill") { main.innerHTML = objDrillView(view.id); bindObjDrill(); }
+  else if (view.name === "zoomsim") { main.innerHTML = zoomSimView(view.id); bindZoomSim(); }
   else if (view.name === "practice" || view.name === "exam") main.innerHTML = familyPickView(view.name);
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
@@ -2898,7 +3091,8 @@ function todayList() {
   Object.entries(store.doneNotified || {}).forEach(([id, at]) => { if (new Date(at).toDateString() === today) items.push({ done: true, t: `Lesson: ${modTitle(id)}` }); });
   MODULES.filter(m => !moduleDone(m.id)).slice(0, 2).forEach(m => {
     const i = MODULES.indexOf(m), un = moduleUnlocked(i);
-    if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && (!ROLEPLAYS[m.id] || rplPassed(m.id)) && OBJ_LESSON[m.id]) items.push({ t: `Objection drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="objdrill" data-id="${m.id}" type="button">Start</button>` : "" });
+    if (quizPassed(m.id) && ZOOM_LESSON[m.id] && !zoomPassed(m.id)) items.push({ t: `Zoom practice: ${m.title}`, btn: un ? `<button class="btn small" data-go="zoomsim" data-id="${m.id}" type="button">Start</button>` : "" });
+    else if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && (!ROLEPLAYS[m.id] || rplPassed(m.id)) && OBJ_LESSON[m.id]) items.push({ t: `Objection drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="objdrill" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && (!DRILLS[m.id] || drillPassed(m.id)) && ROLEPLAYS[m.id]) items.push({ t: `Role-play: ${m.title}`, btn: un ? `<button class="btn small" data-go="roleplay" data-id="${m.id}" type="button">Start</button>` : "" });
     else if (quizPassed(m.id) && DRILLS[m.id]) items.push({ t: `Drill: ${m.title}`, btn: un ? `<button class="btn small" data-go="drill" data-id="${m.id}" type="button">Start</button>` : "" });
     else items.push({ t: `Lesson: ${m.title}`, btn: un ? `<button class="btn small" data-go="module" data-id="${m.id}" type="button">Open</button>` : "", locked: !un });
@@ -3164,7 +3358,7 @@ function moduleView(id) {
     <p class="lead">${m.summary}</p>
     <div class="card">${m.blocks.map(blockHTML).join("")}</div>
     <div class="card"><h2>Check your knowledge</h2>
-      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
+      <div class="row spread"><div><h3>${DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] || ZOOM_LESSON[id] ? "1. " : ""}Quiz ${quizPassed(id) ? `<span class="pill pass">Passed ${sc}%</span>` : sc != null ? `<span class="pill fail">Best ${sc}%</span>` : ""}</h3><p class="small">${Math.min(QUIZ_DRAW, m.quiz.length)} questions drawn from a pool of ${m.quiz.length} · ${PASS_QUIZ}% to pass</p></div>
       <button class="btn ${quizPassed(id) ? "secondary" : ""}" data-go="quiz" data-id="${id}" type="button">${sc != null ? "Retake quiz" : "Take the quiz"}</button></div>
       ${DRILLS[id] ? `<div class="row spread"><div><h3>2. Say-it drill ${drillPassed(id) ? `<span class="pill pass">Passed</span>` : (store.drill && store.drill[id]) ? `<span class="pill fail">Try again</span>` : ""}</h3><p class="small">Deliver a key part of this script from memory. The lesson is hidden while you answer.</p></div>
       <button class="btn ${drillPassed(id) ? "secondary" : ""}" data-go="drill" data-id="${id}" type="button">${drillPassed(id) ? "Practice again" : "Start the drill"}</button></div>` : ""}
@@ -3172,6 +3366,8 @@ function moduleView(id) {
       <button class="btn ${rplPassed(id) ? "secondary" : ""}" data-go="roleplay" data-id="${id}" type="button">${rplPassed(id) ? "Run it again" : "Start the role-play"}</button></div>`; })() : ""}
       ${OBJ_LESSON[id] ? (() => { const oo = (store.objDrill || {})[id], c = OBJ_LESSON[id]; const nStep = 2 + (DRILLS[id] ? 1 : 0) + (ROLEPLAYS[id] ? 1 : 0); return `<div class="row spread"><div><h3>${nStep}. Objection drill ${objPassed(id) ? `<span class="pill pass">Passed ${oo.best}</span>` : oo ? `<span class="pill fail">Best ${oo.best}</span>` : ""}</h3><p class="small">${c.reps} ${c.track === "phone" ? "phone" : "presentation"} objections, out loud. Graded on how you handle each one.</p></div>
       <button class="btn ${objPassed(id) ? "secondary" : ""}" data-go="objdrill" data-id="${id}" type="button">${objPassed(id) ? "Drill again" : "Start the drill"}</button></div>`; })() : ""}
+      ${ZOOM_LESSON[id] ? (() => { const zz = (store.zoomSim || {})[id]; const nStep = 2 + (DRILLS[id] ? 1 : 0) + (ROLEPLAYS[id] ? 1 : 0) + (OBJ_LESSON[id] ? 1 : 0); return `<div class="row spread"><div><h3>${nStep}. Zoom practice ${zoomPassed(id) ? `<span class="pill pass">Passed ${zz.best}</span>` : zz ? `<span class="pill fail">Best ${zz.best}</span>` : ""}</h3><p class="small">Run a practice Zoom meeting: ${ZOOM_LESSON[id].length} timed tasks, from admitting the family to ending the call.</p></div>
+      <button class="btn ${zoomPassed(id) ? "secondary" : ""}" data-go="zoomsim" data-id="${id}" type="button">${zoomPassed(id) ? "Practice again" : "Start Zoom practice"}</button></div>`; })() : ""}
     </div>
   </div>`;
 }
@@ -4925,6 +5121,7 @@ document.addEventListener("click", e => {
     if (t.dataset.go === "drill") drillState = null;
     if (t.dataset.go === "roleplay" && rpl && rpl.mod !== t.dataset.id) rpl = null;
     if (t.dataset.go === "objdrill" && od && od.id !== t.dataset.id) od = null;
+    if (t.dataset.go === "zoomsim" && zs && zs.id !== t.dataset.id) zs = null;
     view = { name: t.dataset.go, id: t.dataset.id }; $("#rail").classList.remove("open"); render(); return;
   }
   if (t.dataset.q !== undefined) {
