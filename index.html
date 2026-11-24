@@ -4637,7 +4637,7 @@ function mgrStatus(t) {
   const idle = (Date.now() - new Date(t.lastActive || t.savedAt).getTime()) / 864e5;
   if (idle >= 2) return ["Inactive", "idle"];
   const day = Math.max(1, Math.floor((Date.now() - new Date(t.joinedAt || t.savedAt).getTime()) / 864e5) + 1);
-  const expected = Math.min(t.lessonsTotal, Math.floor(day * t.lessonsTotal / 10));
+  const expected = Math.min(t.lessonsTotal, Math.floor(day * t.lessonsTotal / (t.course === "6day" ? 6 : 10)));
   return t.lessons + 4 < expected ? ["Behind", "behind"] : ["On track", "on"];
 }
 function ago(iso) {
@@ -4698,10 +4698,12 @@ function sentNote(n, who) {
   if (n.reason === "not_set") return `<p class="small" style="color:var(--warn);font-weight:600" role="status">Automatic texts and emails aren't connected yet, so nothing was sent. Use the buttons to send it yourself.</p>`;
   return `<p class="small" style="color:var(--bad);font-weight:600" role="status">GoHighLevel didn't take the message (${esc(n.reason)}). Use the buttons to send it yourself.</p>`;
 }
-function inviteLink(token) { return location.origin + location.pathname + "?invite=" + encodeURIComponent(token); }
+function inviteLink(token, course) { if (course === undefined) { const iv = (mgr.invites || []).find(x => x.token === token); course = iv ? iv.course : ""; } return location.origin + (course === "6day" ? "/6-day" : "/") + "?invite=" + encodeURIComponent(token); }
+const COURSE_NAME = { "": "Full Academy", "6day": "6-Day Quick Start" };
+function courseTag(c) { return c === "6day" ? ` <span class="pill">6-Day</span>` : ""; }
 function inviteText(inv) {
   const m = mgr.managers.find(x => x.id === inv.managerId);
-  return `Hi ${inv.first}, welcome to the team! Here's your personal link to start your Virtual Presentation Academy training: ${inviteLink(inv.token)}${m ? `\n\nIf you get stuck, reach out to ${m.name}${m.phone ? " at " + m.phone : ""}.` : ""}`;
+  return `Hi ${inv.first}, welcome to the team! Here's your personal link to start your Virtual Presentation Academy training: ${inviteLink(inv.token, inv.course)}${m ? `\n\nIf you get stuck, reach out to ${m.name}${m.phone ? " at " + m.phone : ""}.` : ""}`;
 }
 function inviteShare(inv) {
   const subj = "Your training invite: Virtual Presentation Academy";
@@ -4722,14 +4724,15 @@ const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="$
 function inviteTab() {
   let h = `<div class="card"><h2>Invite a new agent</h2><p class="small">They get a personal link. When they open it, the course knows who they are and shows their manager's contact card.</p>
     <div class="fld-grid">${field("invFirst", "First name", "text", "", true, "off")}${field("invLast", "Last name", "text", "", true, "off")}${field("invPhone", "Phone", "tel", "", true, "off")}${field("invEmail", "Email", "email", "", true, "off")}</div>
+    <div class="fld"><label for="invCourse">Course</label><select id="invCourse"><option value="">Full Academy (about 2 weeks)</option><option value="6day" ${typeof QS_COURSE !== "undefined" ? "selected" : ""}>6-Day Quick Start</option></select></div>
     <div class="fld"><label for="invMgr">Their manager</label><select id="invMgr">${byRank(mgr.managers).map(m => `<option value="${esc(m.id)}" ${m.id === meId() ? "selected" : ""}>${esc(m.name)}${m.position ? " · " + esc(m.position) : ""}</option>`).join("")}</select></div>
     ${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}
     <div class="row"><button class="btn" id="invCreate" type="button">Create invite</button><button class="linkbtn" data-mtab="managers" type="button">Add another manager</button></div></div>`;
-  if (mgr.last) h += `<div class="card" style="border:2px solid var(--good)"><h2>Invite ready for ${esc(mgr.last.first)} ${esc(mgr.last.last)}</h2>${sentNote(mgr.lastNotified, mgr.last.first)}<p class="small" style="word-break:break-all">${esc(inviteLink(mgr.last.token))}</p>${inviteShare(mgr.last)}<p class="small">Text it and Email it open your own phone or email app with the message filled in, if you want to send it personally too.</p></div>`;
+  if (mgr.last) h += `<div class="card" style="border:2px solid var(--good)"><h2>Invite ready for ${esc(mgr.last.first)} ${esc(mgr.last.last)}</h2>${sentNote(mgr.lastNotified, mgr.last.first)}<p class="small" style="word-break:break-all">${esc(inviteLink(mgr.last.token, mgr.last.course))}</p>${inviteShare(mgr.last)}<p class="small">Text it and Email it open your own phone or email app with the message filled in, if you want to send it personally too.</p></div>`;
   const pending = mgr.invites;
   if (pending.length) h += `<div class="card table-wrap"><h2>Sent invites</h2><table class="hist mgr-table"><thead><tr><th scope="col">Agent</th><th scope="col">Contact</th><th scope="col">Manager</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${pending.map(inv => {
     const m = mgr.managers.find(x => x.id === inv.managerId);
-    return `<tr><td><b>${esc(inv.first)} ${esc(inv.last)}</b><div class="small">Sent ${esc(ago(inv.createdAt))}</div></td><td>${inv.phone ? `<div>${esc(inv.phone)}</div>` : ""}${inv.email ? `<div class="small">${esc(inv.email)}</div>` : ""}</td><td>${m ? esc(m.name) : "–"}</td>
+    return `<tr><td><b>${esc(inv.first)} ${esc(inv.last)}</b>${courseTag(inv.course)}<div class="small">Sent ${esc(ago(inv.createdAt))}</div></td><td>${inv.phone ? `<div>${esc(inv.phone)}</div>` : ""}${inv.email ? `<div class="small">${esc(inv.email)}</div>` : ""}</td><td>${m ? esc(m.name) : "–"}</td>
       <td>${inv.acceptedAt ? `<span class="status on">Started ${esc(ago(inv.acceptedAt))}</span>` : `<span class="status behind">Not started</span>`}</td>
       <td><div class="row" style="flex-wrap:nowrap"><button class="linkbtn" data-iresend="${esc(inv.token)}" data-iname="${esc(inv.first)}" type="button">Resend</button><button class="linkbtn" data-icopy="${esc(inv.token)}" type="button">Copy link</button><button class="linkbtn" data-iremove="${esc(inv.token)}" data-iname="${esc(inv.first + " " + inv.last)}" type="button">Remove</button></div><span class="small" data-icopied="${esc(inv.token)}" role="status"></span></td></tr>`;
   }).join("")}</tbody></table></div>`;
@@ -4881,7 +4884,7 @@ function traineesTab() {
     <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
   if (!rows.length && !notStarted.length) h += `<div class="card"><h2>Invite your first agent</h2><p>Trainees show up here after they open their invite link or sign in on your site.</p><div><button class="btn" data-mtab="invite" type="button">Invite an agent</button></div></div>`;
   else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Role-plays</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
-      <td><b>${esc(r.name)}</b>${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
+      <td><b>${esc(r.name)}</b>${courseTag(r.course)}${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
       <td>${r.inv ? esc(mName(r.inv.managerId)) : "–"}</td>
       <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
       <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td>
@@ -5048,7 +5051,7 @@ function afterManagerRender() {
   const ic = $("#invCreate");
   if (ic) ic.onclick = async () => {
     const v = id => ($("#" + id).value || "").trim();
-    const body = { first: v("invFirst"), last: v("invLast"), phone: v("invPhone"), email: v("invEmail"), managerId: v("invMgr") };
+    const body = { first: v("invFirst"), last: v("invLast"), phone: v("invPhone"), email: v("invEmail"), managerId: v("invMgr"), course: v("invCourse") };
     if (!body.first || !body.last) { mgr.formErr = "Enter their first and last name."; render(); return; }
     if (!body.phone && !body.email) { mgr.formErr = "Add a phone number or an email so you can send the link."; render(); return; }
     if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { mgr.formErr = "That email doesn't look right."; render(); return; }

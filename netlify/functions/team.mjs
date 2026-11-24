@@ -55,7 +55,7 @@ export default async (req) => {
   const mgrs = managersStore();
   const invites = getStore({ name: "invites", consistency: "strong" });
   const body = async () => { try { return await req.json(); } catch (e) { return null; } };
-  const inviteUrl = t => url.origin + "/?invite=" + encodeURIComponent(t);
+  const inviteUrl = (t, course) => url.origin + (course === "6day" ? "/6-day" : "/") + "?invite=" + encodeURIComponent(t);
   const managerUrl = url.origin + "/#manager";
   const nlog = getStore({ name: "notifylog", consistency: "strong" });
   let byId = "";
@@ -68,7 +68,7 @@ export default async (req) => {
   };
   const sendInvite = async inv => {
     const m = inv.managerId ? await mgrs.get(inv.managerId, { type: "json" }).catch(() => null) : null;
-    return logged(agentInviteMsg({ first: inv.first, last: inv.last, phone: inv.phone, email: inv.email, link: inviteUrl(inv.token), manager: m }), { token: inv.token });
+    return logged(agentInviteMsg({ first: inv.first, last: inv.last, phone: inv.phone, email: inv.email, link: inviteUrl(inv.token, inv.course), manager: m }), { token: inv.token });
   };
   const sendManager = (m, temp, reset) => { const [first, ...rest] = String(m.name || "").split(" "); return logged(managerWelcomeMsg({ first, last: rest.join(" "), phone: m.phone, email: m.email, link: managerUrl, temp, reset }), { managerId: m.id }); };
 
@@ -191,7 +191,7 @@ export default async (req) => {
     const first = str(b.first, 40), last = str(b.last, 40);
     if (!first || !last) return json({ error: "bad_request", message: "First and last name are required." }, 400);
     const token = randomBytes(12).toString("base64url");
-    const rec = { token, first, last, phone: str(b.phone, 30), email: str(b.email, 120), managerId: str(b.managerId, 64), invitedBy: me.id, createdAt: new Date().toISOString(), acceptedAt: "", uid: "" };
+    const rec = { token, first, last, phone: str(b.phone, 30), email: str(b.email, 120), managerId: str(b.managerId, 64), course: b.course === "6day" ? "6day" : "", invitedBy: me.id, createdAt: new Date().toISOString(), acceptedAt: "", uid: "" };
     await invites.setJSON(token, rec);
     const notified = b.send === false ? { sent: false, reason: "skipped" } : await sendInvite(rec);
     return json({ invite: rec, notified });

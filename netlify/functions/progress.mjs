@@ -21,6 +21,7 @@ function clean(s) {
     savedAt: new Date().toISOString(),
     lessons: num(s.lessons, 0, 200),
     lessonsTotal: num(s.lessonsTotal, 1, 200),
+    course: s.course === "6day" ? "6day" : "",
     quizAvg: num(s.quizAvg, 0, 100),
     calls: num(s.calls, 0, 100000),
     avgScore: num(s.avgScore, 0, 100),
