@@ -3237,7 +3237,7 @@ function signInView() {
     <img class="hero-logo" src="globe.png" alt="">
     <div class="eyebrow">Welcome</div>
     <h1>Learn to sell virtually, then prove it live.</h1>
-    <p class="lead">Six days, ${qsReqCount()} short lessons: Zoom and Google Meet basics, the phone call, then the full presentation. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one by phone and one on video.</p>
+    <p class="lead">Six days, ${qsReqCount()} short lessons: Zoom basics, the ADP phone call and its rebuttals, then the full presentation on Zoom or by phone. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one Telesales and one Zoom.</p>
     <div class="card">
       <label for="nameInput">Your full name (shows on your results)</label>
       <input type="text" id="nameInput" placeholder="e.g. Jordan Williams" autocomplete="name">
@@ -5495,15 +5495,15 @@ const QS_DAYS = 6;
 const QS_NEW = {
   q_join: {
     id: "q_join", title: "Getting the Client on the Call", minutes: 4,
-    summary: "Zoom or Google Meet is our main way to present, and phone is the backup. Most trouble on a live call happens in the first two minutes, while the client is trying to join. Here's how to get them on fast.",
+    summary: "Zoom is our main way to present, and the phone (Telesales) is the backup. Most trouble on a live call happens in the first two minutes, while the client is trying to join. Here's how to get them on fast.",
     blocks: [
       { h: "Pick the format before you dial" },
-      { list: ["<b>Video (Zoom or Google Meet):</b> the main way we present. They see each slide while you talk.", "<b>Telesales (phone only):</b> the backup, for when video isn't available or convenient. You describe every slide out loud."] },
+      { list: ["<b>Zoom:</b> the main way we present. They see each slide while you talk.", "<b>Telesales (phone only):</b> the backup, for when video isn't available or convenient. You describe every slide out loud."] },
       { h: "Walk them in, step by step" },
-      { list: ["Stay on the phone the whole time. Don't hang up until they can see and hear you.", "Text the link while you're still talking: <i>\"I just sent you a text with a link. Go ahead and tap it for me.\"</i>", "On a phone, they may need to install the app or tap <b>Join</b>, then allow the microphone and camera. Tell them what they'll see before they see it.", "Once they're in, admit them, and confirm: <i>\"Can you see and hear me okay on your end?\"</i> Then hang up the phone call."] },
+      { list: ["Stay on the phone the whole time. Don't hang up until they can see and hear you.", "Text the link while you're still talking: <i>\"I just sent you a text with a link. Go ahead and tap it for me.\"</i>", "On a phone, they may need to install the Zoom app or tap <b>Join</b>, then allow the microphone and camera. Tell them what they'll see before they see it.", "Once they're in, admit them, and confirm: <i>\"Can you see and hear me okay on your end?\"</i> Then hang up the phone call."] },
       { say: "I just texted you a link. Go ahead and tap it for me and it'll pull right up. If it asks to use your microphone and camera, just tap Allow.", tag: "Say it like this" },
       { h: "Stay in control when it doesn't work" },
-      { list: ["Phone audio and video audio both on? Ask them to mute the phone call or hang it up, or you'll get an echo.", "Can't find the text? Read the link out loud, or send it again and stay on the line.", "Still not in after about 3 minutes? Switch to Telesales and keep going. Don't lose the presentation over the format."] },
+      { list: ["Phone audio and Zoom audio both on? Ask them to mute the phone call or hang it up, or you'll get an echo.", "Can't find the text? Read the link out loud, or send it again and stay on the line.", "Still not in after about 3 minutes? Switch to Telesales (present by phone) and keep going. Don't lose the presentation over the format."] },
       { tip: "Calm and confident sells. If you sound stressed about the technology, they will be too. Talk them through it like you've done it a thousand times." }
     ],
     quiz: []
@@ -5527,7 +5527,7 @@ const QS_NEW = {
       { h: "What to expect" },
       { list: ["Opening, rapport, the reason for the call, company story, the no-cost benefit, referrals, needs survey, the benefits, and the close, all in one run.", "The lead type and format change every time you run it.", "Plan on 20 to 25 minutes. Use a headset and find a quiet spot."] },
       { h: "Then get certified" },
-      { list: ["<b>Telesales exam:</b> a full call by phone with an AI family that pushes back.", "<b>Video exam:</b> a full presentation on a video call with a realistic person who interrupts and objects."] },
+      { list: ["<b>Telesales exam:</b> a full call by phone with an AI family that pushes back.", "<b>Zoom exam:</b> a full presentation on Zoom with a realistic person who interrupts and objects."] },
       { tip: "Don't aim for perfect. Aim for smooth. If you lose your place, keep talking and find it. That's exactly what you'll do on a live call." }
     ],
     quiz: []
@@ -5538,7 +5538,6 @@ const QS_NEW = {
 const QS_PLAN = [
   ["Day 1 · The Tools", [
     { id: "s02z", title: "Zoom Basics: Mic, Camera & Screen Share" },
-    { id: "q_meet" },
     { id: "q_join", refs: ["s01"] }
   ]],
   ["Day 2 · The Call", [
@@ -5547,7 +5546,8 @@ const QS_PLAN = [
     { id: "c07" }
   ]],
   ["Day 3 · Open the Presentation", [
-    { id: "s02", refs: ["s02t"] },
+    { id: "s02" },
+    { id: "s02t" },
     { id: "s04", refs: ["s03"] },
     { id: "s05", title: "The Reason for the Call", refs: ["s06"] }
   ]],
@@ -5588,11 +5588,11 @@ const QS_PLAN = [
   /* exercises for the new and merged lessons */
   ZOOM_LESSON.q_meet = ZOOM_LESSON.s02z.slice();
   SCENARIOS.q_join = [
-    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on video and share your screen", "Telesales: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Video is our main format. If they're at a computer, get them on video so they see every slide." },
+    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Telesales: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on Zoom so they see every slide." },
     { sit: "You text Danielle the link. She says, “Okay, I got it… now what?”", q: "What do you say?", o: ["“Just figure it out and I'll wait.”", "“Tap the link for me. If it asks to use your microphone and camera, tap Allow.”", "“Let me call you back when you're on.”"], a: 1, why: "Stay on the phone and tell them exactly what to tap and what they'll see." },
-    { sit: "Ray is on the video call, but you hear a loud echo of your own voice.", q: "What's the fix?", o: ["Talk louder", "Ask him to hang up the phone call now that he's on video", "End the video call and start over"], a: 1, why: "The phone and video audio are both on. Once they can see and hear you on video, hang up the phone." },
+    { sit: "Ray is on the Zoom call, but you hear a loud echo of your own voice.", q: "What's the fix?", o: ["Talk louder", "Ask him to hang up the phone call now that he's on Zoom", "End the Zoom call and start over"], a: 1, why: "The phone audio and Zoom audio are both on. Once they can see and hear you on Zoom, hang up the phone." },
     { sit: "Earl has been trying to join for 3 minutes and still can't get in.", q: "What do you do?", o: ["Keep trying until it works", "Switch to Telesales and present by phone", "Reschedule for when his son can help"], a: 1, why: "Don't lose the presentation over the format. Phone is the backup." },
-    { sit: "Linda just joined the video call. You're about to hang up the phone.", q: "What do you say first?", o: ["“Can you see and hear me okay on your end?”", "“Great, let me share my screen.”", "“Hang on, let me find my notes.”"], a: 0, why: "Confirm video and sound before you hang up the phone." }
+    { sit: "Linda just joined the Zoom call. You're about to hang up the phone.", q: "What do you say first?", o: ["“Can you see and hear me okay on your end?”", "“Great, let me share my screen.”", "“Hang on, let me find my notes.”"], a: 0, why: "Confirm she can see and hear you on Zoom before you hang up the phone." }
   ];
   /* ADP is the main call: one rebuttal on the first call, then every ADP phone rebuttal. */
   const adpObj = OBJ_BANK.filter(o => o.track === "phone" && o.lead === "adp");
