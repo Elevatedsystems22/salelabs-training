@@ -3,6 +3,7 @@
    GET  /api/usage/owner                           -> {owner}  (signed-in manager: may this person see costs?)
    GET  /api/usage/report?month=YYYY-MM            owner only: per-trainee costs, plan totals, month-end estimate
    POST /api/usage/settings                        owner only: plan prices {elPlan, elCredits, elRate, anamPlan, anamMin, anamRate, otherFixed}
+   ANTHROPIC_ADMIN_KEY (optional) reads actual Claude charges from Anthropic billing; ANTHROPIC_WORKSPACE_ID limits it to one workspace.
    OWNER_MANAGER_ID (optional) changes whose login is the owner; default "brandon-carter". */
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
@@ -18,8 +19,31 @@ async function elevenSubscription() {
     const r = await fetch((process.env.ELEVENLABS_API_BASE || "https://api.elevenlabs.io/v1") + "/user/subscription", { headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY } });
     if (!r.ok) return { error: r.status };
     const j = await r.json();
-    return { tier: j.tier || "", used: j.character_count || 0, limit: j.character_limit || 0, resetsAt: j.next_character_count_reset_unix ? new Date(j.next_character_count_reset_unix * 1000).toISOString() : "" };
+    const inv = j.next_invoice || null, over = j.current_overage || null;
+    return { tier: j.tier || "", status: j.status || "", used: j.character_count || 0, limit: j.character_limit || 0, resetsAt: j.next_character_count_reset_unix ? new Date(j.next_character_count_reset_unix * 1000).toISOString() : "",
+      nextInvoice: inv && Number.isFinite(inv.amount_due_cents) ? { amount: inv.amount_due_cents / 100, subtotal: (inv.subtotal_cents || 0) / 100, tax: (inv.tax_cents || 0) / 100, dueAt: inv.next_payment_attempt_unix ? new Date(inv.next_payment_attempt_unix * 1000).toISOString() : "" } : null,
+      overage: over && over.amount != null ? Number(over.amount) : null };
   } catch (e) { return { error: "unreachable" }; }
+}
+
+/* Actual Claude spend from Anthropic's billing (needs ANTHROPIC_ADMIN_KEY, an Admin key from the Claude Console).
+   ANTHROPIC_WORKSPACE_ID (optional) counts only that workspace, so other projects on the same account aren't included. */
+async function anthropicCost(month) {
+  const key = process.env.ANTHROPIC_ADMIN_KEY; if (!key) return null;
+  const [y, m] = month.split("-").map(Number);
+  const start = new Date(Date.UTC(y, m - 1, 1)).toISOString(), end = new Date(Date.UTC(y, m, 1)).toISOString(), ws = process.env.ANTHROPIC_WORKSPACE_ID || "";
+  let total = 0, page = "", days = 0, refreshed = "";
+  try {
+    for (let i = 0; i < 5; i++) {
+      const q = new URLSearchParams({ starting_at: start, ending_at: end, bucket_width: "1d", limit: "31" }); q.append("group_by[]", "workspace_id"); if (page) q.set("page", page);
+      const r = await fetch("https://api.anthropic.com/v1/organizations/cost_report?" + q, { headers: { "x-api-key": key, "anthropic-version": "2023-06-01" } });
+      if (!r.ok) return { error: r.status, detail: (await r.text()).slice(0, 200) };
+      const j = await r.json(); refreshed = j.data_refreshed_at || refreshed;
+      (j.data || []).forEach(b => { const day = (b.results || []).filter(x => !ws || x.workspace_id === ws).reduce((a, x) => a + Number(x.amount || 0), 0); if (day) days++; total += day; });
+      if (!j.has_more || !j.next_page) break; page = j.next_page;
+    }
+  } catch (e) { return { error: "unreachable" }; }
+  return { amount: total / 100, workspace: ws || "all", daysWithCost: days, refreshedAt: refreshed };
 }
 
 export default async (req) => {
@@ -57,7 +81,8 @@ export default async (req) => {
     const rows = (await Promise.all(blobs.map(b => store.get(b.key, { type: "json" }).catch(() => null)))).filter(Boolean);
     const months = new Set([thisMonth]);
     try { const all = await store.list({ directories: true }); (all.directories || []).forEach(d => /^\d{4}-\d{2}$/.test(d) && months.add(d)); } catch (e) {}
-    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven: month === thisMonth ? await elevenSubscription() : null });
+    const [eleven, anthropic] = await Promise.all([month === thisMonth ? elevenSubscription() : null, anthropicCost(month)]);
+    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven, anthropic });
   }
   return json({ error: "not_found" }, 404);
 };
