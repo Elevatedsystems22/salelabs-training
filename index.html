@@ -499,6 +499,7 @@ html.nb-safe .tooldrawer { padding-bottom: 56px; }
 .page.wide { max-width: 1140px; }
 .dash-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px; }
 .dash-head h1 { font-size: 28px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 16px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 14px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
 .stat .k { font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -2708,9 +2709,10 @@ function initEleven() {
   EL.p = fetch("/api/tts/status?speakers=" + encodeURIComponent(sp)).then(r => r.json()).then(j => { EL.ok = !!(j && j.ok); EL.cast = (j && j.cast) || {}; EL.status = EL.ok ? "ready" : "off"; voiceStatusRender(); return EL.ok; }).catch(() => { EL.status = "off"; EL.ok = false; return false; });
   return EL.p;
 }
-function elUrl(text, voiceId) { return "/api/tts/play?v=" + encodeURIComponent(voiceId) + "&t=" + encodeURIComponent(String(text).slice(0, 600)); }
+function whoHeaders() { return { "x-vpa-uid": store.uid || "", "x-vpa-name": encodeURIComponent(store.name || "") }; }
+function elUrl(text, voiceId) { return "/api/tts/play?v=" + encodeURIComponent(voiceId) + "&t=" + encodeURIComponent(String(text).slice(0, 600)) + "&u=" + encodeURIComponent(store.uid || "") + "&n=" + encodeURIComponent(store.name || ""); }
 function elFetch(text, voiceId) {
-  return fetch("/api/tts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, voiceId }) })
+  return fetch("/api/tts", { method: "POST", headers: Object.assign({ "content-type": "application/json" }, whoHeaders()), body: JSON.stringify({ text, voiceId }) })
     .then(r => r.ok ? r.blob() : null).then(b => b && b.size > 200 ? URL.createObjectURL(b) : null).catch(() => null);
 }
 /* Start making a line's audio as soon as the line arrives, so it's ready when its turn comes. */
@@ -2818,7 +2820,7 @@ function siteSample() {
   return async (prompt, opts = {}) => {
     let r;
     try {
-      r = await fetch("/api/claude", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(siteBody(prompt, opts)), signal: opts.signal });
+      r = await fetch("/api/claude", { method: "POST", headers: Object.assign({ "content-type": "application/json" }, whoHeaders()), body: JSON.stringify(siteBody(prompt, opts)), signal: opts.signal });
     } catch (e) {
       if (e && e.name === "AbortError") throw e;
       const er = new Error("network"); er.code = "network"; throw er;
@@ -2946,7 +2948,7 @@ async function startVideoFamily(fam) {
       client.addListener(EV0.CONNECTION_CLOSED || "CONNECTION_CLOSED", (reason, details) => {
         vidStatus(name, "Video disconnected: " + (reason || "") + (details ? " " + details : ""));
         // Session ended (plan time limit or network): keep the exam going with their voice and the camera off.
-        if (VID.people[name] === p) { delete VID.people[name]; try { el.remove(); } catch (e) {} if (rp && !rp.ended) { rp.msgs.push({ who: "system", text: `${name}'s video ended. The call continues with audio.` }); rerenderCall(); } }
+        if (VID.people[name] === p) { reportVideo(p); delete VID.people[name]; try { el.remove(); } catch (e) {} if (rp && !rp.ended) { rp.msgs.push({ who: "system", text: `${name}'s video ended. The call continues with audio.` }); rerenderCall(); } }
       });
       client.addListener(EV0.VIDEO_PLAY_STARTED || "VIDEO_PLAY_STARTED", () => vidStatus(name, ""));
       client.addListener(EV0.SERVER_WARNING || "SERVER_WARNING", m => console.warn("Anam:", m));
@@ -2958,6 +2960,7 @@ async function startVideoFamily(fam) {
       });
     } catch (e) {}
     await Promise.race([client.streamToVideoElement(el.id), new Promise((_, rej) => setTimeout(() => rej(new Error("video took too long to start")), 25000))]);
+    p.startedAt = Date.now();
   }));
   clearInterval(VID.meter); VID.meter = setInterval(vidMeter, 80);
 }
@@ -2999,7 +3002,15 @@ function mountVideos() {
     if (p.el.parentNode !== slot) { slot.appendChild(p.el); try { p.el.play(); } catch (e) {} }
   });
 }
+function reportVideo(p, label, uid) {
+  if (!p || !p.startedAt || p.reported || !SITE_MODE) return; p.reported = true;
+  const seconds = Math.round((Date.now() - p.startedAt) / 1000); if (seconds < 1) return;
+  const body = JSON.stringify({ uid: uid || store.uid || "", name: label || store.name || "", seconds });
+  try { if (!(navigator.sendBeacon && navigator.sendBeacon("/api/usage/video", new Blob([body], { type: "text/plain" })))) fetch("/api/usage/video", { method: "POST", body, keepalive: true }); } catch (e) {}
+}
+addEventListener("pagehide", () => { try { Object.values(VID.people).forEach(p => reportVideo(p)); } catch (e) {} });
 function stopVideoFamily() {
+  Object.values(VID.people).forEach(p => reportVideo(p));
   clearInterval(VID.meter);
   Object.values(VID.people).forEach(p => { try { p.client.stopStreaming(); } catch (e) {} try { p.el.remove(); } catch (e) {} });
   VID.people = {};
@@ -3062,17 +3073,18 @@ let castTestClient = null;
 async function castTest(famId, name) {
   const c = castFor(famId)[name]; const msg = $("#castMsg"); if (msg) msg.textContent = "Starting " + name + "…";
   try {
-    if (castTestClient) { try { castTestClient.stopStreaming(); } catch (e) {} castTestClient = null; }
+    if (castTestClient) { reportVideo(castTestClient._vpa, "Face testing (managers)", "face-testing"); try { castTestClient.stopStreaming(); } catch (e) {} castTestClient = null; }
     const sdk = await loadAnam();
     const r = await fetch("/api/anam/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, avatarId: c.avatarId, voiceId: c.voiceId }) });
     if (!r.ok) throw new Error((await r.text()).slice(0, 200));
     const { sessionToken } = await r.json();
     castTestClient = sdk.createClient(sessionToken, { disableInputAudio: true });
     await castTestClient.streamToVideoElement("castVideo");
+    castTestClient._vpa = { startedAt: Date.now() };
     const fam = FAMILIES.find(f => f.id === famId);
     setTimeout(() => { try { castTestClient.talk(`Hi, I'm ${name}. ${fam.speakers.length > 1 ? "We got your message about the life insurance." : "I got your message about the life insurance."} So what's this all about?`); } catch (e) {} }, 1200);
     if (msg) msg.textContent = name + " is live. The test ends after a minute.";
-    setTimeout(() => { if (castTestClient) { try { castTestClient.stopStreaming(); } catch (e) {} castTestClient = null; } }, 60000);
+    setTimeout(() => { if (castTestClient) { reportVideo(castTestClient._vpa, "Face testing (managers)", "face-testing"); try { castTestClient.stopStreaming(); } catch (e) {} castTestClient = null; } }, 60000);
   } catch (e) { if (msg) msg.textContent = "Couldn't start: " + e.message; }
 }
 function bindCast() {
@@ -4662,7 +4674,7 @@ async function mgrLoad() {
     const j1 = await r1.json().catch(() => ({})), j2 = await r2.json().catch(() => ({}));
     if (r1.status === 401 || r2.status === 401) { setMgrTok(""); mgrReset("Your sign-in expired. Sign in again."); }
     else if (!r1.ok || !r2.ok) mgr.error = j1.message || j2.message || "The manager view isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
-    else { mgr.calls = null; mgr.lists = null; mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; }
+    else { mgr.calls = null; mgr.lists = null; mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; mgrApi("/api/usage/owner").then(j => { if (mgr.owner !== !!j.owner) { mgr.owner = !!j.owner; render(); } }).catch(() => {}); }
   } catch (e) { mgr.error = "Couldn't reach the server. The manager view works on your live site, not inside claude.ai."; }
   mgr.loading = false; render();
 }
@@ -4715,10 +4727,11 @@ function inviteShare(inv) {
 const MGR_ICON = {
   notify: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/>',
   voices: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>',
-  account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' };
+  account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  costs: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' };
 function mgrTabs() {
   const t = (k, l, sub) => `<button class="mtab ${sub ? "sub" : ""} ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" ${sub ? `aria-label="${l}"` : ""} type="button">${sub ? `<svg viewBox="0 0 24 24" aria-hidden="true">${MGR_ICON[k]}</svg>` : ""}${l}</button>`;
-  return `<div class="mtabs" role="tablist" aria-label="Manager sections"><div class="mtabs-main">${t("trainees", "Trainees")}${t("calls", "Calls")}${t("lists", "Lists")}${t("managers", "Managers")}</div><div class="mtabs-sub">${t("notify", "Notifications", 1)}${t("voices", "Voices", 1)}${t("account", "Account", 1)}</div></div>`;
+  return `<div class="mtabs" role="tablist" aria-label="Manager sections"><div class="mtabs-main">${t("trainees", "Trainees")}${t("calls", "Calls")}${t("lists", "Lists")}${t("managers", "Managers")}</div><div class="mtabs-sub">${mgr.owner ? t("costs", "Costs", 1) : ""}${t("notify", "Notifications", 1)}${t("voices", "Voices", 1)}${t("account", "Account", 1)}</div></div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
 function inviteTab() {
@@ -4942,6 +4955,64 @@ function afterNotifyRender() {
       try { const j = await mgrApi("/api/team/password/reset", { method: "POST", body: JSON.stringify({ id: m.id, temp }) }); mgr.noteMsg = j.notified && j.notified.sent ? "New sign-in sent to " + m.name + "." : "Not sent (" + noteReason(j.notified && j.notified.reason) + "). Give " + m.name.split(" ")[0] + " this temporary password yourself: " + temp; } catch (e) { mgr.noteMsg = "Not sent: " + e.message; }
       mgr.notes = null; render(); }); });
 }
+/* Costs tab (owner only; the server refuses everyone else). */
+const usd = n => "$" + (Math.round((n || 0) * 100) / 100).toFixed(2);
+const fmtN = n => Math.round(n || 0).toLocaleString();
+async function loadCosts(month) {
+  mgr.costsLoading = true;
+  try { mgr.costs = await mgrApi("/api/usage/report" + (month ? "?month=" + month : "")); } catch (e) { mgr.costs = { error: e.message }; }
+  mgr.costsLoading = false; render();
+}
+function costsCalc(c) {
+  const st = c.settings, rows = c.rows.filter(r => r.uid !== "unknown" || r.claudeCost || r.ttsCredits || r.videoSeconds);
+  const sum = k => rows.reduce((a, r) => a + (r[k] || 0), 0);
+  const [y, m] = c.month.split("-").map(Number), days = new Date(y, m, 0).getDate();
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+  const current = c.month === c.thisMonth, elapsed = current ? Math.max(1, now.getDate() - 1 + now.getHours() / 24) : days, f = current ? days / elapsed : 1;
+  const claude = sum("claudeCost"), credits = c.eleven && c.eleven.used != null && !c.eleven.error ? c.eleven.used : sum("ttsCredits"), myCredits = sum("ttsCredits"), mins = sum("videoSeconds") / 60;
+  const elOver = cr => Math.max(0, cr - st.elCredits) / 1000 * st.elRate, anOver = mn => Math.max(0, mn - st.anamMin) * st.anamRate;
+  const svc = [
+    { name: "Claude (AI family + grading)", usage: `${fmtN(sum("claudeIn") + sum("claudeCacheRead") + sum("claudeCacheWrite"))} tokens in, ${fmtN(sum("claudeOut"))} out · ${fmtN(sum("calls"))} replies`, now: claude, est: claude * f, how: "Pay per token. Exact counts from Anthropic." },
+    { name: "ElevenLabs (voices)", usage: `${fmtN(credits)} of ${fmtN(st.elCredits)} credits${c.eleven && c.eleven.tier ? " · " + esc(c.eleven.tier) + " plan" : ""}`, now: st.elPlan + elOver(credits), est: st.elPlan + elOver(credits + myCredits * (f - 1)), how: `${usd(st.elPlan)}/month plan${c.eleven && c.eleven.resetsAt ? `, credits reset ${new Date(c.eleven.resetsAt).toLocaleDateString()}` : ""}. Over the plan: ${usd(st.elRate)} per 1,000 credits.`, warn: credits > st.elCredits * 0.8 },
+    { name: "Anam (video faces)", usage: `${mins.toFixed(1)} of ${fmtN(st.anamMin)} minutes`, now: st.anamPlan + anOver(mins), est: st.anamPlan + anOver(mins * f), how: `${usd(st.anamPlan)}/month plan. Over the plan: ${usd(st.anamRate)} a minute.`, warn: mins * f > st.anamMin }
+  ];
+  if (st.otherFixed) svc.push({ name: "Other fixed costs", usage: "", now: st.otherFixed, est: st.otherFixed, how: "Set below." });
+  const perCredit = st.elCredits ? st.elPlan / st.elCredits : 0, perMin = st.anamMin ? st.anamPlan / st.anamMin : st.anamRate;
+  const people = rows.map(r => { const v = (r.ttsCredits || 0) * perCredit, w = (r.videoSeconds || 0) / 60 * perMin; return Object.assign({}, r, { voice: v, video: w, total: (r.claudeCost || 0) + v + w }); }).sort((a, b) => b.total - a.total);
+  return { svc, people, current, f, total: svc.reduce((a, x) => a + x.now, 0), est: svc.reduce((a, x) => a + x.est, 0), variable: people.reduce((a, p) => a + p.total, 0) };
+}
+function costsTab() {
+  if (!mgr.costs || (mgr.costs.month && mgr.costsMonth && mgr.costs.month !== mgr.costsMonth)) { if (!mgr.costsLoading) setTimeout(() => loadCosts(mgr.costsMonth), 0); return `<div class="card"><p class="small">Loading costs…</p></div>`; }
+  const c = mgr.costs; if (c.error) return `<div class="warn"><b>Couldn't load costs</b>${esc(c.error)}</div>`;
+  const k = costsCalc(c), st = c.settings;
+  const cert = new Set((mgr.rows || []).filter(r => r.certified).map(r => r.uid));
+  const certPeople = k.people.filter(p => cert.has(p.uid));
+  let h = `<div class="card"><div class="row spread"><div><h2>What the AI costs you</h2><p class="small">Only you can see this page.</p></div>
+    <select id="costMonth" aria-label="Month" style="width:auto;min-width:180px">${c.months.map(m => `<option value="${m}" ${m === c.month ? "selected" : ""}>${new Date(m + "-15").toLocaleDateString("en-US", { month: "long", year: "numeric" })}</option>`).join("")}</select></div>
+    <div class="stats" style="margin-top:12px"><div class="stat"><div class="k">${k.current ? "Charged so far" : "Charged"}</div><div class="v">${usd(k.total)}</div><div class="small">Plans plus usage</div></div>
+    ${k.current ? `<div class="stat"><div class="k">Estimated for the month</div><div class="v">${usd(k.est)}</div><div class="small">At this month's pace</div></div>` : ""}
+    <div class="stat"><div class="k">Usage by trainees</div><div class="v">${usd(k.variable)}</div><div class="small">${k.people.length} ${k.people.length === 1 ? "person" : "people"} used the AI</div></div>
+    <div class="stat"><div class="k">Per certified agent</div><div class="v">${certPeople.length ? usd(certPeople.reduce((a, p) => a + p.total, 0) / certPeople.length) : "–"}</div><div class="small">${certPeople.length} certified this month</div></div></div></div>`;
+  h += `<div class="card table-wrap"><h2>By service</h2><table class="hist mgr-table"><thead><tr><th scope="col">Service</th><th scope="col">Used</th><th scope="col">${k.current ? "So far" : "Charged"}</th>${k.current ? `<th scope="col">Month estimate</th>` : ""}<th scope="col">How it's billed</th></tr></thead><tbody>${k.svc.map(x => `<tr><td><b>${x.name}</b>${x.warn ? `<div><span class="status behind">Near the plan limit</span></div>` : ""}</td><td>${x.usage}</td><td>${usd(x.now)}</td>${k.current ? `<td>${usd(x.est)}</td>` : ""}<td class="small">${x.how}</td></tr>`).join("")}</tbody></table></div>`;
+  h += k.people.length ? `<div class="card table-wrap"><h2>By person</h2><p class="small">Voice and video are shared plans, so each person gets their share at the plan's rate (${usd(st.elCredits ? st.elPlan / st.elCredits * 1000 : 0)} per 1,000 voice credits, ${usd(st.anamMin ? st.anamPlan / st.anamMin : st.anamRate)} a video minute).</p>
+    <table class="hist mgr-table"><thead><tr><th scope="col">Person</th><th scope="col">AI replies</th><th scope="col">Claude</th><th scope="col">Voice</th><th scope="col">Video</th><th scope="col">Total</th></tr></thead><tbody>${k.people.map(p => `<tr><td><b>${esc(p.name || (p.uid === "unknown" ? "Not signed in" : "Unnamed"))}</b>${cert.has(p.uid) ? ` <span class="pill pass">Certified</span>` : ""}</td><td>${fmtN(p.calls)}</td><td>${usd(p.claudeCost)}</td><td>${usd(p.voice)}<div class="small">${fmtN(p.ttsCredits)} credits</div></td><td>${usd(p.video)}<div class="small">${((p.videoSeconds || 0) / 60).toFixed(1)} min</div></td><td><b>${usd(p.total)}</b></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="card"><p class="small">No AI usage recorded for this month yet. Costs are tracked from the moment this meter went live.</p></div>`;
+  const fld = (id, label, v, step) => `<div class="fld"><label for="${id}">${label}</label><input id="${id}" type="number" min="0" step="${step}" value="${v}"></div>`;
+  h += `<details class="card"><summary><b>Your plans</b> <span class="small">Update these when you change a plan</span></summary><div class="grid2" style="margin-top:12px">
+    ${fld("csElPlan", "ElevenLabs monthly price ($)", st.elPlan, "0.01")}${fld("csElCredits", "ElevenLabs credits included", st.elCredits, "1")}${fld("csElRate", "ElevenLabs overage ($ per 1,000 credits)", st.elRate, "0.01")}
+    ${fld("csAnPlan", "Anam monthly price ($)", st.anamPlan, "0.01")}${fld("csAnMin", "Anam minutes included", st.anamMin, "1")}${fld("csAnRate", "Anam overage ($ per minute)", st.anamRate, "0.01")}
+    ${fld("csOther", "Other fixed monthly costs ($)", st.otherFixed, "0.01")}</div>
+    <div class="row"><button class="btn small" id="csSave" type="button">Save plans</button><span class="small" id="csMsg" role="status"></span></div>
+    <p class="small">Claude costs are exact, from the token counts Anthropic reports on every reply. ElevenLabs credits come straight from your ElevenLabs account when it can be reached. Video minutes are measured by the site, so check Anam's dashboard for the final bill.</p></details>`;
+  return h;
+}
+function afterCostsRender() {
+  const sel = $("#costMonth"); if (sel) sel.onchange = () => { mgr.costsMonth = sel.value; mgr.costs = null; render(); };
+  const sv = $("#csSave"); if (sv) sv.onclick = async () => {
+    const g = id => Number($("#" + id).value);
+    try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther") }) }); mgr.costs = null; render(); }
+    catch (e) { $("#csMsg").textContent = "Couldn't save: " + e.message; } };
+}
 function managerView() {
   if (!mgrTok()) {
     return `<div class="page"><div class="eyebrow">Manager</div><h1>Manager sign-in</h1>
@@ -4963,7 +5034,7 @@ function managerView() {
   let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
     <div class="row mhead-act"><button class="btn" data-mtab="invite" type="button">+ Invite an agent</button><button class="btn small secondary" id="mgrRefresh" type="button">Refresh</button>${store.name ? `<button class="linkbtn" data-go="home" type="button">My course</button>` : ""}<button class="linkbtn" id="mgrOut" type="button">Sign out</button></div></div>
     ${mgrTabs()}`;
-  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : traineesTab();
+  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : mgr.tab === "costs" && mgr.owner ? costsTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
   return h;
 }
@@ -4978,6 +5049,7 @@ function resizePhoto(file) {
   });
 }
 function afterManagerRender() {
+  if (mgr.tab === "costs") afterCostsRender();
   if (mgr.tab === "notify") afterNotifyRender();
   const go = $("#mgrGo"), em = $("#mgrEmail"), pw = $("#mgrPw");
   if (go && em && pw) { const f = () => { const e = em.value.trim(), p = pw.value; if (!e) { em.focus(); return; } if (!p) { pw.focus(); return; } mgrLogin(e, p); }; go.onclick = f; [em, pw].forEach(i => i.onkeydown = ev => { if (ev.key === "Enter") f(); }); if (!em.value) em.focus(); else pw.focus(); }
@@ -5018,7 +5090,7 @@ function afterManagerRender() {
     const m = mgr.managers.find(x => x.id === b.dataset.madmin); if (!m) return;
     try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(Object.assign({}, m, { admin: b.dataset.on === "1" })) }); mgrLoad(); } catch (e) { mgr.formErr = e.message; render(); }
   });
-  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; if (mgr.tab === "notify") { mgr.notes = null; mgr.noteMsg = ""; } render(); });
+  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; if (mgr.tab === "notify") { mgr.notes = null; mgr.noteMsg = ""; } if (mgr.tab === "costs") mgr.costs = null; render(); });
   document.querySelectorAll("[data-lsub]").forEach(b => b.onclick = () => { mgr.listSub = b.dataset.lsub; render(); });
   document.querySelectorAll("[data-lrefresh]").forEach(b => b.onclick = () => { mgr.lists = null; render(); });
   document.querySelectorAll("[data-lview]").forEach(b => b.onclick = () => { mgr.listOpen = mgr.listOpen === b.dataset.lview ? null : b.dataset.lview; render(); });

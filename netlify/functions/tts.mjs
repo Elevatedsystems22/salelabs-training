@@ -5,6 +5,7 @@
    POST /api/tts/cast       admins: { cast:{name:voiceId} } saves voice picks for every agent
    Needs ELEVENLABS_API_KEY. Optional: ELEVENLABS_MODEL (default eleven_flash_v2_5),
    TTS_DAILY_CHAR_LIMIT (default 400000 characters a day across the whole team, roughly 130 practice calls). */
+import { addUsage, whoFrom } from "../lib/usage.mjs";
 import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
@@ -79,6 +80,9 @@ export default async (req) => {
       signal: req.signal
     });
     if (!r.ok || !r.body) return json({ error: "elevenlabs_error", status: r.status, detail: (await r.text()).slice(0, 300) }, 502);
+    // Cost meter: Flash/Turbo bill 0.5 credits per character, other models 1.
+    const model = process.env.ELEVENLABS_MODEL || "eleven_flash_v2_5";
+    await addUsage(whoFrom(req), { ttsChars: text.length, ttsCredits: text.length * (/flash|turbo/.test(model) ? 0.5 : 1) });
     return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
   }
 

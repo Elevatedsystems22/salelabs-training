@@ -4,6 +4,7 @@
    and MODEL_SMART (final call grading; default Sonnet).
    The family's instructions are sent as a cached "system" block so each turn of a call only pays full price for the new part. */
 import { allowed, json } from "../lib/guard.mjs";
+import { addUsage, claudePrice, whoFrom } from "../lib/usage.mjs";
 
 const MAX_PROMPT = 120000;
 
@@ -15,6 +16,7 @@ export default async (req) => {
   try { body = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
   const prompt = String(body.prompt || "");
   if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad_request" }, 400);
+  const who = whoFrom(req);
   const smart = body.tier === "complex", family = body.tier === "family";
   const model = smart ? (process.env.MODEL_SMART || "claude-sonnet-5-5") : family ? (process.env.MODEL_FAMILY || "claude-sonnet-5-5") : (process.env.MODEL_FAST || "claude-haiku-5-5");
   // The conversation so far arrives in stable chunks; caching up to the last one means each turn only processes what's new.
@@ -39,7 +41,7 @@ export default async (req) => {
   const reader = upstream.body.getReader();
   const out = new ReadableStream({
     async start(controller) {
-      let buf = "";
+      let buf = "", u = {};
       try {
         for (;;) {
           const { done, value } = await reader.read();
@@ -52,10 +54,16 @@ export default async (req) => {
             try {
               const ev = JSON.parse(line.slice(5));
               if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") controller.enqueue(enc.encode(ev.delta.text));
+              else if (ev.type === "message_start" && ev.message && ev.message.usage) u = Object.assign({}, ev.message.usage);
+              else if (ev.type === "message_delta" && ev.usage) Object.assign(u, ev.usage);
             } catch (e) {}
           }
         }
       } catch (e) {}
+      // Cost meter: exact token counts Anthropic reported for this reply.
+      const [pi, pw, pr, po] = claudePrice(model);
+      const ti = u.input_tokens || 0, tw = u.cache_creation_input_tokens || 0, tr = u.cache_read_input_tokens || 0, to = u.output_tokens || 0;
+      if (ti || to) await addUsage(who, { calls: 1, claudeIn: ti, claudeCacheWrite: tw, claudeCacheRead: tr, claudeOut: to, claudeCost: (ti * pi + tw * pw + tr * pr + to * po) / 1e6 });
       controller.close();
     },
     cancel() { try { reader.cancel(); } catch (e) {} }
