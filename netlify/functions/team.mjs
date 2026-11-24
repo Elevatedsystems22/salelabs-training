@@ -55,7 +55,7 @@ export default async (req) => {
   const mgrs = managersStore();
   const invites = getStore({ name: "invites", consistency: "strong" });
   const body = async () => { try { return await req.json(); } catch (e) { return null; } };
-  const inviteUrl = (t, course) => url.origin + (course === "6day" ? "/6-day" : "/") + "?invite=" + encodeURIComponent(t);
+  const inviteUrl = (t, course) => url.origin + (course === "6day" ? "/" : "/full") + "?invite=" + encodeURIComponent(t);
   const managerUrl = url.origin + "/#manager";
   const nlog = getStore({ name: "notifylog", consistency: "strong" });
   let byId = "";

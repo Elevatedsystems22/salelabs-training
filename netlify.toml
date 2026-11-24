@@ -5,7 +5,25 @@
 [functions]
   node_bundler = "esbuild"
 
+# The 6-Day Quick Start is the main site; the full Academy lives at /full.
+[[redirects]]
+  from = "/"
+  to = "/quickstart.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/index.html"
+  to = "/quickstart.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/6-day"
   to = "/quickstart.html"
+  status = 200
+
+[[redirects]]
+  from = "/full"
+  to = "/academy-full.html"
   status = 200

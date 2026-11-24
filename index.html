@@ -1691,18 +1691,18 @@ function rpScoreLine(m) {
   const al = rpAlign(S, H), acc = S.length ? al.lcs / S.length : 1;
   const out = { acc, accScore: Math.round(Math.max(0, Math.min(1, (acc - 0.5) / 0.45)) * 100), hit: al.hit, words: S.length };
   const dur = (m.tLast - m.tFirst) / 1000;
-  if (S.length >= 8 && dur >= 2 && H.length >= 6) { out.wpm = Math.round(H.length / (dur / 60)); const d = out.wpm < 130 ? 130 - out.wpm : out.wpm > 175 ? out.wpm - 175 : 0; out.paceScore = Math.max(0, Math.round(100 - d * 2.5)); }
+  if (S.length >= 8 && dur >= 2 && H.length >= 6) { out.wpm = Math.round(H.length / (dur / 60)); const d = out.wpm < 155 ? 155 - out.wpm : out.wpm > 195 ? out.wpm - 195 : 0; out.paceScore = Math.max(0, Math.round(100 - d * 2.5)); }
   out.hes = m.hes || 0; out.flowScore = Math.max(0, 100 - out.hes * 25);
   const v = rpVariety(m.pitch || []); if (v && S.length >= 8) { out.sd = v.sd; out.varScore = v.score; }
   out.dead = m.dead || 0;
   const parts = [[out.accScore, 40], [out.paceScore, 25], [out.flowScore, 20], [out.varScore, 15]].filter(p => p[0] != null);
   out.score = Math.round(parts.reduce((a, p) => a + p[0] * p[1], 0) / parts.reduce((a, p) => a + p[1], 0));
-  if (out.wpm && out.wpm > 210) out.score = Math.min(out.score, 70);
+  if (out.wpm && out.wpm > 225) out.score = Math.min(out.score, 70);
   const missed = S.filter((w, i) => !al.hit[i]);
   out.tips = [];
   if (acc < 0.85 && missed.length) out.tips.push(`Missed words: “${missed.slice(0, 8).join(" ")}${missed.length > 8 ? "…" : ""}”`);
-  if (out.wpm && out.wpm > 175) out.tips.push(`Too fast (${out.wpm} words a minute). Slow down so they can follow.`);
-  if (out.wpm && out.wpm < 130) out.tips.push(`A little slow (${out.wpm} words a minute). Keep it moving.`);
+  if (out.wpm && out.wpm > 195) out.tips.push(`Too fast (${out.wpm} words a minute). Aim for about 175 so they can follow.`);
+  if (out.wpm && out.wpm < 155) out.tips.push(`A little slow (${out.wpm} words a minute). Aim for about 175.`);
   if (out.hes) out.tips.push(`Stalled ${out.hes} time${out.hes > 1 ? "s" : ""} mid-sentence. Read a few words ahead.`);
   if (out.varScore != null && out.varScore < 60) out.tips.push(`Flat delivery. Let your voice rise and fall, and smile while you talk.`);
   if (out.dead) out.tips.push(`${out.dead.toFixed(1)} seconds of dead air before you came in.`);
@@ -1759,7 +1759,7 @@ function roleplayView(id) {
     const tile = (l, v, sub) => `<div class="stat"><span class="stat-l">${l}</span><b>${v == null ? "–" : v}</b><span class="small">${sub || ""}</span></div>`;
     const bad = g.lines.map((s, k) => ({ s, k, text: r.lines[k].text })).filter(x => x.s.score < 80 || x.s.tips.length).sort((a, b) => a.s.score - b.s.score).slice(0, 6);
     h += `<div class="result-banner ${g.pass ? "pass" : "fail"}"><div class="row spread"><div class="big">${g.pass ? "Passed" : "Not yet"}</div><div class="big">${g.overall}</div></div><p>${g.pass ? "That sounded like a real call. Keep the same pace and energy on the phone." : g.rawAcc < 80 ? `You said ${g.rawAcc}% of the script's words. You need 80% and an overall 80 to pass.` : "Close. Work on the lines below, then run it again."}</p></div>
-      <div class="stats">${tile("Accuracy", g.rawAcc + "%", "of the script's words")}${tile("Pace", g.wpm ? g.wpm + " wpm" : null, "aim for 130–175")}${tile("Flow", g.flow, "stalls cost points")}${tile("Vocal variety", g.variety, g.variety == null ? "mic level unavailable" : "pitch movement")}${tile("Dead air", g.deadN, "times you waited 3s+")}</div>
+      <div class="stats">${tile("Accuracy", g.rawAcc + "%", "of the script's words")}${tile("Pace", g.wpm ? g.wpm + " wpm" : null, "aim for about 175")}${tile("Flow", g.flow, "stalls cost points")}${tile("Vocal variety", g.variety, g.variety == null ? "mic level unavailable" : "pitch movement")}${tile("Dead air", g.deadN, "times you waited 3s+")}</div>
       ${bad.length ? `<div class="card"><h2>Lines to work on</h2>${bad.map(x => `<div class="rp-fix"><div class="row spread"><span class="small">${esc(x.text.slice(0, 140))}${x.text.length > 140 ? "…" : ""}</span><span class="pill ${x.s.score >= 80 ? "pass" : "fail"}">${x.s.score}</span></div><ul>${x.s.tips.map(t => `<li>${esc(t)}</li>`).join("") || "<li>Read it again with a little more energy.</li>"}</ul></div>`).join("")}</div>` : ""}
       <div class="row"><button class="btn" id="rplAgain" type="button">Run it again</button>${g.pass && MODULES[i + 1] ? `<button class="btn secondary" data-go="module" data-id="${MODULES[i + 1].id}" type="button">Next: ${esc(MODULES[i + 1].title)}</button>` : ""}<button class="btn secondary" data-go="module" data-id="${id}" type="button">Back to the lesson</button></div>`;
   }
@@ -2636,7 +2636,7 @@ function rpSnapshot() {
   const lasts = done.map(id => Object.assign({ id }, all[id].last || {})).sort((a, b) => (b.at || "").localeCompare(a.at || ""));
   const avg = k => { const xs = lasts.map(x => x[k]).filter(v => typeof v === "number"); return xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null; };
   const acc = avg("acc"), wpm = avg("wpm"), flow = avg("flow"), variety = avg("variety");
-  const weak = acc != null && acc < 85 ? "Skips words" : wpm != null && wpm > 175 ? "Talks too fast" : flow != null && flow < 80 ? "Stalls mid-sentence" : variety != null && variety < 60 ? "Monotone" : wpm != null && wpm < 130 ? "Reads too slowly" : "";
+  const weak = acc != null && acc < 85 ? "Skips words" : wpm != null && wpm > 195 ? "Talks too fast" : flow != null && flow < 80 ? "Stalls mid-sentence" : variety != null && variety < 60 ? "Monotone" : wpm != null && wpm < 155 ? "Reads too slowly" : "";
   const l = lasts[0];
   return { passed: ids.filter(id => all[id] && all[id].pass).length, total: ids.length, tries: done.reduce((n, id) => n + (all[id].tries || 0), 0), acc, wpm, weak,
     last: { title: modTitle(l.id), score: l.overall || 0, pass: !!(all[l.id] && all[l.id].pass), at: l.at || "" } };
@@ -4712,7 +4712,7 @@ function sentNote(n, who) {
   if (n.reason === "not_set") return `<p class="small" style="color:var(--warn);font-weight:600" role="status">Automatic texts and emails aren't connected yet, so nothing was sent. Use the buttons to send it yourself.</p>`;
   return `<p class="small" style="color:var(--bad);font-weight:600" role="status">GoHighLevel didn't take the message (${esc(n.reason)}). Use the buttons to send it yourself.</p>`;
 }
-function inviteLink(token, course) { if (course === undefined) { const iv = (mgr.invites || []).find(x => x.token === token); course = iv ? iv.course : ""; } return location.origin + (course === "6day" ? "/6-day" : "/") + "?invite=" + encodeURIComponent(token); }
+function inviteLink(token, course) { if (course === undefined) { const iv = (mgr.invites || []).find(x => x.token === token); course = iv ? iv.course : ""; } return location.origin + (course === "6day" ? "/" : "/full") + "?invite=" + encodeURIComponent(token); }
 const COURSE_NAME = { "": "Full Academy", "6day": "6-Day Quick Start" };
 function courseTag(c) { return c === "6day" ? ` <span class="pill">6-Day</span>` : ""; }
 function inviteText(inv) {
@@ -4739,7 +4739,7 @@ const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="$
 function inviteTab() {
   let h = `<div class="card"><h2>Invite a new agent</h2><p class="small">They get a personal link. When they open it, the course knows who they are and shows their manager's contact card.</p>
     <div class="fld-grid">${field("invFirst", "First name", "text", "", true, "off")}${field("invLast", "Last name", "text", "", true, "off")}${field("invPhone", "Phone", "tel", "", true, "off")}${field("invEmail", "Email", "email", "", true, "off")}</div>
-    <div class="fld"><label for="invCourse">Course</label><select id="invCourse"><option value="">Full Academy (about 2 weeks)</option><option value="6day" ${typeof QS_COURSE !== "undefined" ? "selected" : ""}>6-Day Quick Start</option></select></div>
+    <div class="fld"><label for="invCourse">Course</label><select id="invCourse"><option value="6day">6-Day Quick Start</option><option value="" ${typeof QS_COURSE === "undefined" ? "selected" : ""}>Full Academy (about 2 weeks)</option></select></div>
     <div class="fld"><label for="invMgr">Their manager</label><select id="invMgr">${byRank(mgr.managers).map(m => `<option value="${esc(m.id)}" ${m.id === meId() ? "selected" : ""}>${esc(m.name)}${m.position ? " · " + esc(m.position) : ""}</option>`).join("")}</select></div>
     ${mgr.formErr ? `<p class="small" style="color:var(--bad)" role="alert">${esc(mgr.formErr)}</p>` : ""}
     <div class="row"><button class="btn" id="invCreate" type="button">Create invite</button><button class="linkbtn" data-mtab="managers" type="button">Add another manager</button></div></div>`;

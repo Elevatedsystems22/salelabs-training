@@ -1148,8 +1148,8 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
     <div class="globe-life-presentation" id="glp">
         <!-- Start Button -->
         <div class="glp-topbar">
-            <a class="glp-home" href="index.html#home" aria-label="Back to home">← Home</a>
-            <a class="glp-home glp-acad" href="index.html#academy">🎓 Train</a>
+            <a class="glp-home" href="/#home" aria-label="Back to home">← Home</a>
+            <a class="glp-home glp-acad" href="/#academy">🎓 Train</a>
             <div class="glp-brand"><img src="globe.png" alt=""><div><b>Call Clinic &amp; Presentation</b><span id="glpBrandSub">Live</span></div></div>
             <button id="togglePresentationBtn" class="toggle-btn" type="button">Start Presentation</button>
         </div>
@@ -1163,13 +1163,13 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
                 <button class="glp-choice call" type="button" id="landingDial"><span class="ic" aria-hidden="true">📞</span><b>Make the call</b><span>You haven't reached them yet. Get the opening for their lead type, the rebuttals, and book the appointment or start now.</span><span class="go">Start dialing →</span></button>
                 <button class="glp-choice" type="button" id="landingStart"><span class="ic" aria-hidden="true">🖥️</span><b>Start the presentation</b><span>They're ready. Present by phone or on Zoom, with the client slides on their screen and your script on yours.</span><span class="go">Start presenting →</span></button>
             </div>
-            <p class="glp-links" id="glpLinks"><a href="index.html#numbers">📊 My numbers</a><a href="index.html#standings">🏆 Standings</a><a href="index.html#docs">📄 Documents</a><a href="index.html#help">👥 My team</a></p>
+            <p class="glp-links" id="glpLinks"><a href="/#numbers">📊 My numbers</a><a href="/#standings">🏆 Standings</a><a href="/#docs">📄 Documents</a><a href="/#help">👥 My team</a></p>
             <p class="glp-keys">Tip: during the presentation, use the ← and → arrow keys to move between steps.</p>
         </section>
         <section class="glp-lock" id="glpLock" hidden>
             <div class="glp-lock-card"><span class="ic" aria-hidden="true">🔒</span><div class="eyebrow">Locked until you're certified</div><h1>Finish training to unlock the live Call Clinic</h1>
             <p class="lead" id="glpLockText">Pass all lessons, then one Telesales and one Zoom exam call.</p>
-            <div class="glp-lock-actions"><a class="toggle-btn" href="index.html#academy">🎓 Go to training</a><a class="glp-home" href="index.html#home">← Home</a></div></div>
+            <div class="glp-lock-actions"><a class="toggle-btn" href="/#academy">🎓 Go to training</a><a class="glp-home" href="/#home">← Home</a></div></div>
         </section>
 
         <!-- Main Presentation Container -->
@@ -2220,10 +2220,11 @@ window.addEventListener("hashchange", dialFromHash);
 (function () {
     try { if (window.top !== window.self) document.documentElement.classList.add("framed"); } catch (e) { document.documentElement.classList.add("framed"); }
     function access() {
-        let st = null; try { st = JSON.parse(localStorage.getItem("vpa_v2") || "null"); } catch (e) {}
+        // The 6-Day Quick Start (vpa_qs1) and the full Academy (vpa_v2) save progress separately; either one counts.
+        const sts = ["vpa_qs1", "vpa_v2"].map(k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }).filter(Boolean);
         const mgr = (() => { try { return !!localStorage.getItem("vpa_mgr_tok"); } catch (e) { return false; } })();
-        const pass = f => !!(st && (st.attempts || []).some(a => a.mode === "exam" && a.pass && (a.format || "zoom") === f));
-        return { signedIn: !!(st && st.name), cert: pass("tele") && pass("zoom"), mgr };
+        const pass = (st, f) => (st.attempts || []).some(a => a.mode === "exam" && a.pass && (a.format || "zoom") === f);
+        return { signedIn: sts.some(st => st.name), cert: sts.some(st => pass(st, "tele") && pass(st, "zoom")), mgr };
     }
     function wire() {
         const framed = document.documentElement.classList.contains("framed"), ac = access();
@@ -2255,7 +2256,7 @@ window.addEventListener("hashchange", dialFromHash);
     const API = "/api/calls", ON = /^https?:$/.test(location.protocol);
     const Q = "glp_call_queue";
     const st = { today: { total: 0, contacts: 0, appts: 0, callbacks: 0 }, hour: 0, curHour: null, loggedFor: null, modal: null };
-    function who() { try { const s = JSON.parse(localStorage.getItem("vpa_v2") || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} return null; }
+    function who() { for (const k of ["vpa_qs1", "vpa_v2"]) { try { const s = JSON.parse(localStorage.getItem(k) || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} } return null; }
     function chHour() { return +new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "2-digit", hourCycle: "h23" }).format(new Date()); }
     const queue = () => { try { return JSON.parse(localStorage.getItem(Q) || "[]"); } catch (e) { return []; } };
     const setQueue = q => { try { localStorage.setItem(Q, JSON.stringify(q.slice(-300))); } catch (e) {} };
@@ -2457,7 +2458,7 @@ function refEntryHTML() {
 (function () {
     const ON = /^https?:$/.test(location.protocol);
     let t = null;
-    function who() { try { const s = JSON.parse(localStorage.getItem("vpa_v2") || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} return null; }
+    function who() { for (const k of ["vpa_qs1", "vpa_v2"]) { try { const s = JSON.parse(localStorage.getItem(k) || "null"); if (s && s.uid && s.name) return { uid: s.uid, name: s.name, invite: s.invite ? s.invite.token : "" }; } catch (e) {} } return null; }
     function sync() {
         clearTimeout(t);
         t = setTimeout(async () => {
