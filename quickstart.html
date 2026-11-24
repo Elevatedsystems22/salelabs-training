@@ -876,20 +876,20 @@ if (ASSET_BASE) document.addEventListener("DOMContentLoaded", () => {
 const MODULES = [
   /* ================= GETTING STARTED ================= */
   {
-    id: "s01", section: "Start Here", title: "Telesales or Zoom", minutes: 3,
-    summary: "There are two ways we present: Telesales (phone only, no screen shared) and Zoom (on video with your screen shared). Know which one you're running before you dial.",
+    id: "s01", section: "Start Here", title: "Phone presentation or Zoom", minutes: 3,
+    summary: "There are two ways we present: Phone presentation (phone only, no screen shared) and Zoom (on video with your screen shared). Know which one you're running before you dial.",
     blocks: [
       { h: "The two presentation formats" },
-      { list: ["<b>Telesales:</b> the whole presentation happens on the phone. Nothing is shared, so your words have to paint every picture.", "<b>Zoom:</b> you get the client onto a Zoom call and share your screen, so they see each slide as you present it."] },
+      { list: ["<b>Phone presentation:</b> the whole presentation happens on the phone. Nothing is shared, so your words have to paint every picture.", "<b>Zoom:</b> you get the client onto a Zoom call and share your screen, so they see each slide as you present it."] },
       { h: "Appointment or Now" },
       { list: ["<b>Appointment:</b> a meeting scheduled ahead of time. You have more room for rapport.", "<b>Now presentation:</b> an opportunity you take on the spot. You need quicker engagement to keep their interest."] },
       { p: "Your presentation tool asks for both on its Setup screen, along with the lead type and names, then fills in the script and switches its instructions to match." },
       { tip: "Whatever the format, every call goes the same way after the opening: rapport with F.O.R.M., then the presentation." }
     ],
     quiz: [
-      { q: "What are our two presentation formats?", options: ["Telesales (phone only) and Zoom (screen shared)", "Term and Whole", "Morning and evening", "Pre-Submit and ADP Referral"], a: 0, why: "Telesales has no screen shared; Zoom shares your screen." },
-      { q: "On a Telesales presentation, what does the client see?", options: ["Your slides", "Nothing; you describe everything out loud", "The eApp", "A PDF you email first"], a: 1, why: "No screen is shared on Telesales." },
-      { q: "Which presentation type gives you the most room for rapport?", options: ["Now presentation", "Appointment", "Telesales only", "None"], a: 1, why: "Appointments allow longer rapport; Now presentations need quicker engagement." },
+      { q: "What are our two presentation formats?", options: ["Phone presentation (nothing shared) and Zoom (screen shared)", "Term and Whole", "Morning and evening", "Pre-Submit and ADP Referral"], a: 0, why: "Phone presentation has no screen shared; Zoom shares your screen." },
+      { q: "On a phone presentation presentation, what does the client see?", options: ["Your slides", "Nothing; you describe everything out loud", "The eApp", "A PDF you email first"], a: 1, why: "No screen is shared on phone presentation." },
+      { q: "Which presentation type gives you the most room for rapport?", options: ["Now presentation", "Appointment", "Phone presentation only", "None"], a: 1, why: "Appointments allow longer rapport; Now presentations need quicker engagement." },
       { q: "Where do you choose the format, type and lead type before the call?", options: ["On the Setup screen of your presentation tool", "In the eApp", "You don't", "In a text to the client"], a: 0, why: "The tool's Setup screen fills in the script for you." },
       { q: "What do both formats have in common after the opening?", options: ["Rapport with F.O.R.M., then the presentation", "They skip rapport", "They start with the close", "Nothing"], a: 0, why: "Every call builds rapport first." }
     ]
@@ -1071,7 +1071,7 @@ const MODULES = [
       { say: "Hey, (client)? This is (agent) reaching out to you for our (time) appointment to go over (lead type). I just sent over the link for our Zoom meeting. Let me know when you’ve received it." },
       { say: "Go ahead and click that link to join the call. It should allow you to join the meeting from your browser.", tag: "Once they have it" },
       { warn: "Confirm their video and sound are connected <i>before</i> you hang up the phone. Losing a client between the phone and Zoom is the most common way a virtual appointment dies." },
-      { h: "Telesales appointment" },
+      { h: "Phone presentation appointment" },
       { say: "Hey, (client)? This is (agent) calling for our (time) appointment to go over (lead type). Are you in a good place to talk for about 15 to 20 minutes?" },
       { say: "Perfect! I'll walk you through everything as we go. Stop me anytime you have a question.", tag: "Once they're ready" },
       { h: "Now presentation" },
@@ -1083,17 +1083,17 @@ const MODULES = [
       { q: "How long do you tell the client the presentation will take?", options: ["5 minutes", "About an hour", "About 15 to 20 minutes", "You don’t mention time"], a: 2, why: "Every opening asks for about 15 to 20 minutes." },
       { q: "On a Now presentation the client says they don’t have time. What’s the right move?", options: ["Push through anyway", "Offer to schedule a proper appointment", "Read the benefits quickly", "Mark the lead dead"], a: 1, why: "Respect their time and book the appointment." },
       { q: "The client says “I clicked it, I think I’m in,” but you can’t see or hear them. What do you do?", options: ["Hang up and wait", "Stay on the phone and help until video and sound work", "Reschedule", "Present by phone only"], a: 1, why: "Never hang up the phone until video and sound are confirmed." },
-      { q: "Which line belongs in a Telesales appointment opening?", options: ["“Are you in a good place to talk for about 15 to 20 minutes?”", "“I just sent over the link for our Zoom meeting.”", "“Which option works best for you?”", "“Who’s next?”"], a: 0, why: "The Telesales opening checks they’re in a good place to talk." }
+      { q: "Which line belongs in a phone presentation appointment opening?", options: ["“Are you in a good place to talk for about 15 to 20 minutes?”", "“I just sent over the link for our Zoom meeting.”", "“Which option works best for you?”", "“Who’s next?”"], a: 0, why: "The phone presentation opening checks they’re in a good place to talk." }
     ],
     drill: { prompt: "Tasha Johnson just picked up for your 6:30 PM Zoom appointment (Pre-Submit lead). Say your opening, word for word as you would on the call.", elements: ["Greets the client by name", "Says their own name", "References the scheduled appointment time", "States what the appointment is for (the lead type / life insurance info)", "Says they sent the Zoom link and asks the client to confirm they received it"] }
   },
   {
-    id: "s02t", section: "Presenting by Phone or Zoom", title: "Telesales: Presenting Without a Screen", minutes: 4,
+    id: "s02t", section: "Presenting by Phone or Zoom", title: "Phone Presentations: Presenting Without a Screen", minutes: 4,
     summary: "On the phone the client can't see a single slide. Your words, your pace and your check-ins carry the whole presentation.",
     blocks: [
       { h: "Paint the picture" },
-      { p: "Every slide becomes something you <b>say</b>. Instead of “as you can see here,” describe it: “Final expenses today can run up to $15,000, and Social Security only pays $255.” Your presentation tool switches to Telesales wording when you pick that format." },
-      { warn: "Never say “as you can see” or “on your screen” on a Telesales call. It tells the client you're reading a script built for someone else." },
+      { p: "Every slide becomes something you <b>say</b>. Instead of “as you can see here,” describe it: “Final expenses today can run up to $15,000, and Social Security only pays $255.” Your presentation tool switches to phone presentation wording when you pick that format." },
+      { warn: "Never say “as you can see” or “on your screen” on a phone presentation. It tells the client you're reading a script built for someone else." },
       { h: "Check in often" },
       { list: ["You can't see their face, so ask: “Does that make sense?” about every minute.", "Pause after important numbers. Silence on the phone feels longer than it is, so give them time to answer.", "Use their names, and the details from your F.O.R.M. notes, to keep it personal."] },
       { h: "Say the numbers slowly" },
@@ -1102,13 +1102,13 @@ const MODULES = [
       { tip: "Smile while you talk; people can hear it. Stand up for the close. Keep the room quiet and your notes in front of you." }
     ],
     quiz: [
-      { q: "On a Telesales call, which line should you never say?", options: ["“Does that make sense?”", "“As you can see on your screen…”", "“Why is this benefit important to you?”", "“Which option works best for you?”"], a: 1, why: "Nothing is shared, so describe instead of pointing at a screen." },
-      { q: "How often should you check in on a Telesales call?", options: ["Only at the close", "About every minute", "Never; it slows you down", "Once at the start"], a: 1, why: "You can't see their reactions, so ask." },
+      { q: "On a phone presentation, which line should you never say?", options: ["“Does that make sense?”", "“As you can see on your screen…”", "“Why is this benefit important to you?”", "“Which option works best for you?”"], a: 1, why: "Nothing is shared, so describe instead of pointing at a screen." },
+      { q: "How often should you check in on a phone presentation?", options: ["Only at the close", "About every minute", "Never; it slows you down", "Once at the start"], a: 1, why: "You can't see their reactions, so ask." },
       { q: "How do you present the Final Expense slide on the phone?", options: ["Tell them to look it up", "Describe it: up to $15,000 today, and Social Security only pays $255", "Skip it", "Email the slide first"], a: 1, why: "Every slide becomes words." },
       { q: "What do you do right after saying both premiums at the close?", options: ["Keep talking to fill the silence", "Stop talking and wait for their answer", "Repeat the benefits", "Offer a discount"], a: 1, why: "Let them answer." },
       { q: "Why pause after important numbers on the phone?", options: ["To give them time to take it in and respond", "To check your email", "It's required by law", "To end the call"], a: 0, why: "They can't re-read a slide, so give the number room." }
     ],
-    drill: { prompt: "Telesales call, no screen shared. Explain Income Protection to Tasha out loud, without referring to any slide.", elements: ["Does not refer to a screen or slide (no “as you can see”)", "Explains the family still has bills after the paycheck stops", "Says most families can't afford to lose even one paycheck", "Recommends at least 1 to 2 years of income protection", "Checks understanding (e.g. “Does that make sense?”)"] }
+    drill: { prompt: "Phone presentation call, no screen shared. Explain Income Protection to Tasha out loud, without referring to any slide.", elements: ["Does not refer to a screen or slide (no “as you can see”)", "Explains the family still has bills after the paycheck stops", "Says most families can't afford to lose even one paycheck", "Recommends at least 1 to 2 years of income protection", "Checks understanding (e.g. “Does that make sense?”)"] }
   },
   {
     id: "s02z", section: "Presenting by Phone or Zoom", title: "Zoom: Sharing Your Screen the Right Way", minutes: 3,
@@ -2213,11 +2213,11 @@ function zsFinish() {
    ========================================================= */
 const SCENARIOS = {
   s01: [
-    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Telesales: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on video so they see every slide." },
+    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Phone presentation: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on video so they see every slide." },
     { sit: "Earl says, “I don't fool with computers. Just talk to me on the phone.”", q: "What do you do?", o: ["Insist on Zoom, it works better", "Present by phone and describe each slide out loud", "Reschedule until his son can set up Zoom"], a: 1, why: "Phone is the backup when Zoom isn't available or convenient. Don't lose the presentation over the format." },
     { sit: "Travis answers on speaker, driving home from the shipyard.", q: "What's the right move?", o: ["Do a Now presentation while he drives", "Have him pull over and join Zoom on his phone", "Book a specific time tonight when he's home"], a: 2, why: "He can't focus while driving. Book an appointment for when he's home." },
     { sit: "Danielle is home, relaxed, and says she has about 20 minutes right now.", q: "What do you do?", o: ["Start a Now presentation right away", "Book her for next week so you have more time", "Send her information first"], a: 0, why: "Take the opportunity. A Now presentation needs quicker engagement, so get her on Zoom and go." },
-    { sit: "Ten minutes into a Zoom, the Johnsons' audio stops working and they can't fix it.", q: "What do you do?", o: ["End the call and try again next week", "Switch to Telesales: call their phone and keep going", "Keep talking and hope it comes back"], a: 1, why: "Phone is the fallback. Call them and finish over the phone instead of losing the presentation." }
+    { sit: "Ten minutes into a Zoom, the Johnsons' audio stops working and they can't fix it.", q: "What do you do?", o: ["End the call and try again next week", "Switch to a phone presentation: call their phone and keep going", "Keep talking and hope it comes back"], a: 1, why: "Phone is the fallback. Call them and finish over the phone instead of losing the presentation." }
   ],
   c01: [
     { sit: "You dial Tasha Johnson. She answers, “Hello?”", q: "What do you say first?", o: ["“Hi, is this Tasha Johnson?”", "“Hey Tasha, this is Jordan calling from Globe Life about…”", "“May I speak with Tasha, please?”"], a: 1, why: "Assume, don't ask permission. Say their name and go." },
@@ -2228,7 +2228,7 @@ const SCENARIOS = {
     { sit: "She's married, her husband isn't home until 6, they have two kids and bank locally.", q: "Now or later?", o: ["Book a time tonight when they're both home", "Present now without him", "Call back next week"], a: 0, why: "You want both spouses on the presentation. Book a specific time when they're both home." }
   ],
   s02t: [
-    { sit: "You're on a Telesales call and reach the final expense part.", q: "Which line fits?", o: ["“As you can see on this slide…”", "“Final expenses today can run up to $15,000, and Social Security only pays $255.”", "“Let me pull that up on your screen.”"], a: 1, why: "Paint the picture with words. Never say “as you can see” on the phone." },
+    { sit: "You're on a phone presentation and reach the final expense part.", q: "Which line fits?", o: ["“As you can see on this slide…”", "“Final expenses today can run up to $15,000, and Social Security only pays $255.”", "“Let me pull that up on your screen.”"], a: 1, why: "Paint the picture with words. Never say “as you can see” on the phone." },
     { sit: "You've been talking for about a minute straight.", q: "What do you do?", o: ["Keep going so you don't lose momentum", "Ask, “Can you see that?”", "Check in: “Does that make sense?”"], a: 2, why: "You can't see their face, so check in about every minute." },
     { sit: "You just said an important number, and the line goes quiet.", q: "What now?", o: ["Pause and give them time to answer", "Fill the silence with more details", "Repeat the number faster"], a: 0, why: "Silence feels longer on the phone than it is. Let them think and answer." },
     { sit: "You're at the close on the phone.", q: "How do you present the options?", o: ["Go over every benefit again, then ask", "Say both monthly premiums clearly, then stop talking", "Only mention the cheaper option"], a: 1, why: "Say both premiums one at a time, then stop talking and let them choose." },
@@ -2467,7 +2467,7 @@ const DIAL_FAM = {
     objections: ["Ray: \"Why do you need to verify anything? Is something wrong with my policy?\"", "Ray: \"We're pretty busy right now.\""],
     outcome: "Ray can't talk now. The right result is a booked time when Ray and Angie are both home (decision=booked), after the agent explains the review and the free benefits renewal. Angie does not speak on this call." }
 };
-function fmtLabel(f) { return f === "dial" ? "First call" : (f || "zoom") === "tele" ? "Telesales" : "Zoom"; }
+function fmtLabel(f) { return f === "dial" ? "First call" : (f || "zoom") === "tele" ? "Phone presentation" : "Zoom"; }
 function dialFamilyPrompt(kind) {
   const f = rp.fam, D = DIAL_FAM[f.id]; const pending = (rp.buffer + " " + rp.partial).trim();
   const task = kind === "interject" ? `The agent has been talking without a break and is STILL talking: "${pending}". If a real person on the phone would cut in now (confused, objecting, impatient, distracted), write 1 short line. Otherwise write only #NONE. Then the #STATE line.`
@@ -2598,7 +2598,7 @@ function examPassed(fmt) { return store.attempts.some(a => a.mode === "exam" && 
 function certified() { return examPassed("tele") && examPassed("zoom"); }
 /* ===== CALL LOCKS (AI calls cost money, so each call waits for its lessons) =====
    First call: Dialing Basics + that lead type's call lesson.
-   Telesales / Zoom: that lead type's call lesson + that lead type's presentation lesson.
+   Phone presentation / Zoom: that lead type's call lesson + that lead type's presentation lesson.
    These locks stay on even in preview mode. Signing in to the manager view lifts them for you. */
 const LEAD_LESSONS = {
   "ADP Referral": { call: "c02", present: "s06" },
@@ -3237,7 +3237,7 @@ function signInView() {
     <img class="hero-logo" src="globe.png" alt="">
     <div class="eyebrow">Welcome</div>
     <h1>Learn to sell virtually, then prove it live.</h1>
-    <p class="lead">Six days, ${qsReqCount()} short lessons: Zoom basics, the ADP phone call and its rebuttals, then the full presentation on Zoom or by phone. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one Telesales and one Zoom.</p>
+    <p class="lead">Six days, ${qsReqCount()} short lessons: Zoom basics, the ADP phone call and its rebuttals, then the full presentation on Zoom or by phone. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one phone presentation and one Zoom.</p>
     <div class="card">
       <label for="nameInput">Your full name (shows on your results)</label>
       <input type="text" id="nameInput" placeholder="e.g. Jordan Williams" autocomplete="name">
@@ -3342,8 +3342,8 @@ function launchView() {
   if (cert) { if (!callsData) loadCalls(); else { const t = sumDays(callsData.days, rangeDatesC("today")); today = `<div class="lp-mini"><span><b>${t.total}</b> calls</span><span><b>${t.contacts}</b> spoke to</span><span><b>${t.appts}</b> appts</span><span class="small">today</span></div>`; } }
   const live = unlocked
     ? `<a class="lp-card ${cert ? "primary" : ""}" href="${TOOL_URL}"><span class="lp-ic" aria-hidden="true">📞</span><span class="lp-tag">${cert ? "Certified · your daily tools" : "Unlocked because you’re signed in as a manager"}</span><b>Live Call Clinic &amp; Presentation</b><span>Dial your leads with the scripts and rebuttals, log every call, track your numbers, and present by phone or Zoom.</span>${today}<span class="lp-go">Open full screen →</span></a>`
-    : `<div class="lp-card locked" aria-disabled="true"><span class="lp-ic" aria-hidden="true">🔒</span><span class="lp-tag lock">Locked until you're certified</span><b>Live Call Clinic &amp; Presentation</b><span>Opens when you finish training: all ${qsReqCount()} lessons, plus one Telesales and one Zoom exam call.</span><div class="lp-mini"><span><b>${n}/${qsReqCount()}</b> lessons</span><span><b>${exams}/2</b> exams</span></div><span class="lp-go muted">Keep training to unlock</span></div>`;
-  const training = `<button class="lp-card ${cert ? "" : "primary"}" type="button" data-go="home" style="font:inherit;text-align:left"><span class="lp-ic" aria-hidden="true">🎓</span><span class="lp-tag">${cert ? "Train any time" : `${n} of ${qsReqCount()} lessons passed`}</span><b>Training Academy</b><span>${cert ? "Go back to any lesson, refresh a rebuttal, or practice a call with an AI family." : "Lessons, quizzes and practice calls with AI families, ending in your Telesales and Zoom certification exams."}</span>${!cert ? `<span class="lp-bar"><span style="width:${Math.round(n / qsReqCount() * 100)}%"></span></span>` : ""}<span class="lp-go">${cert ? "Open training →" : next ? "Continue: " + esc(next.title) + " →" : "Open training →"}</span></button>`;
+    : `<div class="lp-card locked" aria-disabled="true"><span class="lp-ic" aria-hidden="true">🔒</span><span class="lp-tag lock">Locked until you're certified</span><b>Live Call Clinic &amp; Presentation</b><span>Opens when you finish training: all ${qsReqCount()} lessons, plus one phone presentation and one Zoom exam call.</span><div class="lp-mini"><span><b>${n}/${qsReqCount()}</b> lessons</span><span><b>${exams}/2</b> exams</span></div><span class="lp-go muted">Keep training to unlock</span></div>`;
+  const training = `<button class="lp-card ${cert ? "" : "primary"}" type="button" data-go="home" style="font:inherit;text-align:left"><span class="lp-ic" aria-hidden="true">🎓</span><span class="lp-tag">${cert ? "Train any time" : `${n} of ${qsReqCount()} lessons passed`}</span><b>Training Academy</b><span>${cert ? "Go back to any lesson, refresh a rebuttal, or practice a call with an AI family." : "Lessons, quizzes and practice calls with AI families, ending in your phone presentation and Zoom certification exams."}</span>${!cert ? `<span class="lp-bar"><span style="width:${Math.round(n / qsReqCount() * 100)}%"></span></span>` : ""}<span class="lp-go">${cert ? "Open training →" : next ? "Continue: " + esc(next.title) + " →" : "Open training →"}</span></button>`;
   return `<div class="lp">
     <div class="lp-top"><div class="lp-brand"><img src="${ASSET_BASE}globe.png" alt="" width="34" height="34"><div><b>Virtual Presentation Academy</b><span>Globe Life Liberty National Division</span></div></div>
       <div class="lp-who">${esc(store.name)} · <button class="linkbtn" id="switchUser" type="button">Change</button></div></div>
@@ -3365,11 +3365,11 @@ function homeView() {
   const callsTotal = store.callCount || store.attempts.length;
   let cta;
   if (certified()) cta = `<div class="result-banner pass"><div class="big">Certified</div><p>You passed the live exam in both formats. Keep practicing with the Hard families to stay sharp.</p></div>`;
-  else if (n === qsReqCount()) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>${lastExam ? (examPassed("tele") ? "Telesales exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") : ""}Pass one Telesales call and one Zoom call to get certified.</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
+  else if (n === qsReqCount()) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>${lastExam ? (examPassed("tele") ? "Phone presentation exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") : ""}Pass one phone presentation call and one Zoom call to get certified.</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
   else cta = `<div class="card"><div class="row spread"><div><h2>${n === 0 ? "Start with lesson 1" : "Next up"}</h2><p class="small">${esc(next.section)} · about ${next.minutes} minutes to read, then practice it out loud</p></div><button class="btn" data-go="module" data-id="${next.id}" type="button">${n === 0 ? "Begin" : "Continue"}: ${esc(next.title)}</button></div></div>`;
   return `<div class="page wide">
     ${isManager() ? `<div class="mgr-banner"><span>Manager mode: every practice call and exam is unlocked for you in this tab.</span><button class="linkbtn" data-go="manager" type="button">Open manager view</button></div>` : ""}
-    ${store.invite && !store.welcomed ? `<div class="result-banner pass"><div class="big">Welcome to the team, ${esc(store.invite.first)}!</div><p>${store.manager ? esc(store.manager.name) + " set up your training. " : ""}Work through the lessons in order. Each one unlocks practice calls with an AI family, and you finish by passing one Telesales and one Zoom exam call.</p><div><button class="btn small" type="button" onclick="store.welcomed=true;save();render()">Let's go</button></div></div>` : ""}
+    ${store.invite && !store.welcomed ? `<div class="result-banner pass"><div class="big">Welcome to the team, ${esc(store.invite.first)}!</div><p>${store.manager ? esc(store.manager.name) + " set up your training. " : ""}Work through the lessons in order. Each one unlocks practice calls with an AI family, and you finish by passing one phone presentation and one Zoom exam call.</p><div><button class="btn small" type="button" onclick="store.welcomed=true;save();render()">Let's go</button></div></div>` : ""}
     <div class="dash-head"><div><h1>${greet}, ${esc(store.name.split(" ")[0])}</h1><p class="small" style="font-size:15px">Day ${day} · ${certified() ? "Certified" : `Aim to certify by ${target}`}</p></div>
       <button class="btn" data-go="practice" type="button">Start a practice call</button></div>
     ${cta}
@@ -3672,22 +3672,22 @@ function familyPickView(mode) {
   if (SITE_MODE) setTimeout(loadVoiceModel, 0);
   const exam = mode === "exam";
   const intro = exam
-    ? `<p class="lead">To get certified you pass two live calls: one <b>Telesales</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
+    ? `<p class="lead">To get certified you pass two live calls: one <b>Phone presentation</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
     : `<p class="lead">Talk out loud to an AI family. They push back, and you get a score with coaching when you hang up. Each family unlocks once you finish the lessons for their lead type.</p>`;
   let h = `<div class="page wide"><div class="eyebrow">${exam ? "Final exam" : "Practice"}</div><h1>${exam ? "Live AI family exam" : "Practice calls"}</h1>${intro}`;
   if (isManager()) h += `<div class="mgr-banner"><span>Manager mode: all calls unlocked in this tab.</span></div>`;
   if (SITE_MODE) h += `<p class="small" data-voicestatus ${voiceStatusText() ? "" : "hidden"}>${esc(voiceStatusText())}</p>`;
   if (!sampleFn) h += `<div class="warn"><b>AI family unavailable here</b>The AI family runs through Claude. Open this page on claude.ai while signed in, then allow it when asked.</div>`;
   if (exam) {
-    h += `<div class="fam-grid">${[["tele", "📞", "Telesales exam", "Phone only. No screen is shared."], ["zoom", "📹", "Zoom exam", "On video, sharing your screen."]].map(([f, ic, t, d]) => {
+    h += `<div class="fam-grid">${[["tele", "📞", "Phone presentation exam", "Phone only. No screen is shared."], ["zoom", "📹", "Zoom exam", "On video, sharing your screen."]].map(([f, ic, t, d]) => {
       const pool = FAMILIES.filter(x => callOpen(x, f));
       return `<div class="fam"><span class="pill ${examPassed(f) ? "pass" : ""}">${examPassed(f) ? "Passed" : "Not passed yet"}</span><h3>${ic} ${t}</h3><span class="small">${d}</span>${pool.length ? "" : `<span class="lockline">🔒 Finish your lead-type lessons first</span>`}<button class="btn small" data-exam="${f}" type="button" ${sampleFn && pool.length ? "" : "disabled"}>${examPassed(f) ? "Take it again" : "Start with a random family"}</button></div>`;
     }).join("")}</div>`;
   } else {
     const presLocked = !practiceUnlocked() && practiceFormat !== "dial";
-    h += `<div class="row"><span class="small"><b>Format:</b></span>${[["dial", "☎️ First call"], ["tele", "📞 Telesales"], ["zoom", "📹 Zoom"]].map(([f, l]) => `<button class="chip ${practiceFormat === f ? "on" : ""}" data-pformat="${f}" type="button" aria-pressed="${practiceFormat === f}">${l}</button>`).join("")}</div>`;
-    h += `<p class="small">${practiceFormat === "dial" ? "First call: they don't know you're calling. Use your dial script and book the appointment or start now." : practiceFormat === "tele" ? "Telesales: nothing is shared, so describe every slide out loud." : "Zoom: share your screen when rapport is done and move through the slides."}</p>`;
-    if (presLocked && !isManager()) h += `<div class="warn"><b>Presentation calls unlock later</b>Telesales and Zoom practice opens after you pass the lessons through ${esc(MODULES[qsReqCount() - 4].title)}. First-call practice opens as soon as you finish each lead type's call lesson.</div>`;
+    h += `<div class="row"><span class="small"><b>Format:</b></span>${[["dial", "☎️ First call"], ["tele", "📞 Phone presentation"], ["zoom", "📹 Zoom"]].map(([f, l]) => `<button class="chip ${practiceFormat === f ? "on" : ""}" data-pformat="${f}" type="button" aria-pressed="${practiceFormat === f}">${l}</button>`).join("")}</div>`;
+    h += `<p class="small">${practiceFormat === "dial" ? "First call: they don't know you're calling. Use your dial script and book the appointment or start now." : practiceFormat === "tele" ? "Phone presentation: nothing is shared, so describe every slide out loud." : "Zoom: share your screen when rapport is done and move through the slides."}</p>`;
+    if (presLocked && !isManager()) h += `<div class="warn"><b>Presentation calls unlock later</b>Phone presentation and Zoom practice opens after you pass the lessons through ${esc(MODULES[qsReqCount() - 4].title)}. First-call practice opens as soon as you finish each lead type's call lesson.</div>`;
     h += `<div class="fam-grid">${FAMILIES.map(f => {
       const need = isManager() ? [] : callNeeds(f, practiceFormat);
       if (need.length) return lockedCard(f, practiceFormat, need);
@@ -3696,8 +3696,8 @@ function familyPickView(mode) {
       return `<button class="fam" data-fam="${f.id}" type="button" ${sampleFn && !(presLocked && !isManager()) ? "" : "disabled"}><span class="pill ${f.difficulty === "Hard" ? "hard" : ""}">${f.difficulty}</span><h3>${esc(f.name)}</h3><span class="meta">${esc(f.leadType)} · ${fmtLabel(practiceFormat)}</span><span class="small">${esc(card)}</span><span class="best">${best == null ? "Not called yet" : `Your best: ${best}`}</span></button>`;
     }).join("")}</div>`;
     h += `<details class="card"><summary><b>How the call works</b></summary><ul style="margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-      <li><b>Just talk.</b> After a 5-second countdown the family picks up (Telesales) or joins (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble.</li>
-      <li><b>Telesales:</b> mark where you are in the Presenter panel so your quote unlocks at Medical Questions. If you say "as you can see," they'll tell you they can't see anything.</li>
+      <li><b>Just talk.</b> After a 5-second countdown the family picks up (Phone presentation) or joins (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble.</li>
+      <li><b>Phone presentation:</b> mark where you are in the Presenter panel so your quote unlocks at Medical Questions. If you say "as you can see," they'll tell you they can't see anything.</li>
       <li><b>Zoom:</b> share your screen when rapport is done, and move through the slides with Next and Prev.</li>
       <li>Press <b>Script</b> any time to open your presentation tool at your step, already filled in with this family's names.</li>
       <li>Prefer typing, or no mic? Press <b>Type</b>. The call ends when the family decides, or when you press End call.</li></ul></details>`;
@@ -4098,7 +4098,7 @@ function joinMeeting() {
 }
 function goLive() {
   rp.phase = "live"; rp.started = Date.now(); rp.lastActivity = Date.now();
-  rp.msgs.push({ who: "system", text: rp.dial ? `First call. Lead: ${DIAL_FAM[rp.fam.id].lead}. ${DIAL_FAM[rp.fam.id].card} ${rp.fam.speakers[0]} just picked up the phone.` : rp.format === "tele" ? `Telesales call. Lead type: ${rp.fam.leadType}. ${rp.fam.card} ${rp.fam.speakers[0]} just picked up the phone.` : `${rp.fam.format}. Lead type: ${rp.fam.leadType}. ${rp.fam.card} The family just joined the video call.` });
+  rp.msgs.push({ who: "system", text: rp.dial ? `First call. Lead: ${DIAL_FAM[rp.fam.id].lead}. ${DIAL_FAM[rp.fam.id].card} ${rp.fam.speakers[0]} just picked up the phone.` : rp.format === "tele" ? `Phone presentation call. Lead type: ${rp.fam.leadType}. ${rp.fam.card} ${rp.fam.speakers[0]} just picked up the phone.` : `${rp.fam.format}. Lead type: ${rp.fam.leadType}. ${rp.fam.card} The family just joined the video call.` });
   rerenderCall();
   const g = rp.format === "tele" ? (TELE_GREETINGS[rp.fam.id] || [[rp.fam.speakers[0], "Hello?"]]) : (GREETINGS[rp.fam.id] || [[rp.fam.speakers[0], "Hi, can you hear us?"]]);
   setTimeout(() => { if (rp && !rp.ended) familySays(g.map(([speaker, text]) => ({ speaker, text }))); }, 700);
@@ -4371,7 +4371,7 @@ function callView() {
   const live = rp.phase === "live";
   const presenterHTML = rp.dial ? dialPresenter(f) : presenter;
   return `<div class="meet">
-    <div class="mtop"><div><span class="live"></span><b>${esc(f.name)}</b> <span class="msmall">· ${rp.dial ? "First call" : rp.format === "tele" ? "Telesales" : "Zoom"} · ${esc(rp.dial ? DIAL_FAM[f.id].lead : f.leadType)} · ${rp.mode === "exam" ? "EXAM" : "Practice"}</span></div><span class="timer" id="timer">${live ? "00:00" : "Connecting…"}</span></div>
+    <div class="mtop"><div><span class="live"></span><b>${esc(f.name)}</b> <span class="msmall">· ${rp.dial ? "First call" : rp.format === "tele" ? "Phone presentation" : "Zoom"} · ${esc(rp.dial ? DIAL_FAM[f.id].lead : f.leadType)} · ${rp.mode === "exam" ? "EXAM" : "Practice"}</span></div><span class="timer" id="timer">${live ? "00:00" : "Connecting…"}</span></div>
     <div class="mbody ${rp.panel ? "with-panel" : ""}">
       <div class="mstage-wrap">${stage}
         <div class="captions" id="captions" aria-live="polite"></div>
@@ -4623,7 +4623,7 @@ function resultsView(a) {
     <div class="eyebrow">${a.mode === "exam" ? "Final exam result" : "Practice result"} · ${fmtLabel(a.format)} · ${esc(a.family)} · ${new Date(a.date).toLocaleDateString()}</div>
     <div class="result-banner ${a.pass ? "pass" : "fail"}">
       <div class="ring-row">${scoreRing(a.total, a.pass)}<div><div class="big">${verdict}</div><p class="small">${fmtLabel(a.format)} · ${esc(a.family)} · ${Math.max(1, Math.round((a.duration || 0) / 60))} min · pass is ${PASS_EXAM}+</p></div></div>${Array.isArray(a.referrals) ? `<p><b>Referrals you typed in: ${a.referrals.length}</b>${a.referrals.length ? " (" + a.referrals.map(esc).join(", ") + ")" : ". Next time, type each name the family gives you on the Referral Collection slide."}${a.refNotes != null && a.referrals.length ? ` · F.O.R.M. notes filled in: ${a.refNotes}%` : ""}</p>` : ""}
-      <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "Telesales" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "Telesales"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
+      <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "Phone presentation" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "Phone presentation"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
       <p>${esc(a.summary)}</p>
     </div>`;
   if (a.critical.length) h += `<div class="warn"><b>Compliance issues (automatic fail)</b>${a.critical.map(esc).join("<br>")}</div>`;
@@ -5495,15 +5495,15 @@ const QS_DAYS = 6;
 const QS_NEW = {
   q_join: {
     id: "q_join", title: "Getting the Client on the Call", minutes: 4,
-    summary: "Zoom is our main way to present, and the phone (Telesales) is the backup. Most trouble on a live call happens in the first two minutes, while the client is trying to join. Here's how to get them on fast.",
+    summary: "Zoom is our main way to present, and a phone presentation is the backup. Most trouble on a live call happens in the first two minutes, while the client is trying to join. Here's how to get them on fast.",
     blocks: [
       { h: "Pick the format before you dial" },
-      { list: ["<b>Zoom:</b> the main way we present. They see each slide while you talk.", "<b>Telesales (phone only):</b> the backup, for when video isn't available or convenient. You describe every slide out loud."] },
+      { list: ["<b>Zoom:</b> the main way we present. They see each slide while you talk.", "<b>Phone presentation (nothing shared):</b> the backup, for when video isn't available or convenient. You describe every slide out loud."] },
       { h: "Walk them in, step by step" },
       { list: ["Stay on the phone the whole time. Don't hang up until they can see and hear you.", "Text the link while you're still talking: <i>\"I just sent you a text with a link. Go ahead and tap it for me.\"</i>", "On a phone, they may need to install the Zoom app or tap <b>Join</b>, then allow the microphone and camera. Tell them what they'll see before they see it.", "Once they're in, admit them, and confirm: <i>\"Can you see and hear me okay on your end?\"</i> Then hang up the phone call."] },
       { say: "I just texted you a link. Go ahead and tap it for me and it'll pull right up. If it asks to use your microphone and camera, just tap Allow.", tag: "Say it like this" },
       { h: "Stay in control when it doesn't work" },
-      { list: ["Phone audio and Zoom audio both on? Ask them to mute the phone call or hang it up, or you'll get an echo.", "Can't find the text? Read the link out loud, or send it again and stay on the line.", "Still not in after about 3 minutes? Switch to Telesales (present by phone) and keep going. Don't lose the presentation over the format."] },
+      { list: ["Phone audio and Zoom audio both on? Ask them to mute the phone call or hang it up, or you'll get an echo.", "Can't find the text? Read the link out loud, or send it again and stay on the line.", "Still not in after about 3 minutes? Switch to a phone presentation and keep going. Don't lose the presentation over the format."] },
       { tip: "Calm and confident sells. If you sound stressed about the technology, they will be too. Talk them through it like you've done it a thousand times." }
     ],
     quiz: []
@@ -5527,7 +5527,7 @@ const QS_NEW = {
       { h: "What to expect" },
       { list: ["Opening, rapport, the reason for the call, company story, the no-cost benefit, referrals, needs survey, the benefits, and the close, all in one run.", "The lead type and format change every time you run it.", "Plan on 20 to 25 minutes. Use a headset and find a quiet spot."] },
       { h: "Then get certified" },
-      { list: ["<b>Telesales exam:</b> a full call by phone with an AI family that pushes back.", "<b>Zoom exam:</b> a full presentation on Zoom with a realistic person who interrupts and objects."] },
+      { list: ["<b>Phone presentation exam:</b> a full call by phone with an AI family that pushes back.", "<b>Zoom exam:</b> a full presentation on Zoom with a realistic person who interrupts and objects."] },
       { tip: "Don't aim for perfect. Aim for smooth. If you lose your place, keep talking and find it. That's exactly what you'll do on a live call." }
     ],
     quiz: []
@@ -5588,10 +5588,10 @@ const QS_PLAN = [
   /* exercises for the new and merged lessons */
   ZOOM_LESSON.q_meet = ZOOM_LESSON.s02z.slice();
   SCENARIOS.q_join = [
-    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Telesales: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on Zoom so they see every slide." },
+    { sit: "On the first call, Tasha says, “I'm sitting at the kitchen table with my laptop.”", q: "How do you present?", o: ["Get her on Zoom and share your screen", "Phone presentation: do it all over the phone", "Email her the slides to look at"], a: 0, why: "Zoom is our main format. If they're at a computer, get them on Zoom so they see every slide." },
     { sit: "You text Danielle the link. She says, “Okay, I got it… now what?”", q: "What do you say?", o: ["“Just figure it out and I'll wait.”", "“Tap the link for me. If it asks to use your microphone and camera, tap Allow.”", "“Let me call you back when you're on.”"], a: 1, why: "Stay on the phone and tell them exactly what to tap and what they'll see." },
     { sit: "Ray is on the Zoom call, but you hear a loud echo of your own voice.", q: "What's the fix?", o: ["Talk louder", "Ask him to hang up the phone call now that he's on Zoom", "End the Zoom call and start over"], a: 1, why: "The phone audio and Zoom audio are both on. Once they can see and hear you on Zoom, hang up the phone." },
-    { sit: "Earl has been trying to join for 3 minutes and still can't get in.", q: "What do you do?", o: ["Keep trying until it works", "Switch to Telesales and present by phone", "Reschedule for when his son can help"], a: 1, why: "Don't lose the presentation over the format. Phone is the backup." },
+    { sit: "Earl has been trying to join for 3 minutes and still can't get in.", q: "What do you do?", o: ["Keep trying until it works", "Switch to a phone presentation", "Reschedule for when his son can help"], a: 1, why: "Don't lose the presentation over the format. Phone is the backup." },
     { sit: "Linda just joined the Zoom call. You're about to hang up the phone.", q: "What do you say first?", o: ["“Can you see and hear me okay on your end?”", "“Great, let me share my screen.”", "“Hang on, let me find my notes.”"], a: 0, why: "Confirm she can see and hear you on Zoom before you hang up the phone." }
   ];
   /* ADP is the main call: one rebuttal on the first call, then every ADP phone rebuttal. */
