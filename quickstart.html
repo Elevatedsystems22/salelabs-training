@@ -2562,7 +2562,7 @@ function save() { store.lastActive = new Date().toISOString(); try { localStorag
    texts/emails the manager. Pages hosted on claude.ai can't reach outside sites, so this stays off here. */
 const NOTIFY_WEBHOOK = "";
 function notify(event, data) {
-  const payload = Object.assign({ event, agent: store.name, at: new Date().toISOString(), modulesDone: passedCount(), modulesTotal: MODULES.length }, data || {});
+  const payload = Object.assign({ event, agent: store.name, at: new Date().toISOString(), modulesDone: passedCount(), modulesTotal: qsReqCount() }, data || {});
   try { const log = JSON.parse(localStorage.getItem("vpa_qs_events") || "[]"); log.push(payload); localStorage.setItem("vpa_qs_events", JSON.stringify(log.slice(-200))); } catch (e) {}
   if (!NOTIFY_WEBHOOK) return;
   try { fetch(NOTIFY_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), keepalive: true }).catch(() => {}); } catch (e) {}
@@ -2591,9 +2591,9 @@ function passedCount() { return MODULES.filter(m => moduleDone(m.id)).length; }
 /* TEMP_UNLOCK: set to false to turn locking back on for agents. */
 const TEMP_UNLOCK = true;
 const PREVIEW = TEMP_UNLOCK || (location.hash || "") === "#manager-preview";
-function practiceUnlocked() { return PREVIEW || passedCount() >= MODULES.length - 3; }
+function practiceUnlocked() { return PREVIEW || passedCount() >= qsReqCount() - 3; }
 function moduleUnlocked(i) { return PREVIEW || i === 0 || moduleDone(MODULES[i - 1].id); }
-function examUnlocked() { return PREVIEW || isManager() || passedCount() === MODULES.length; }
+function examUnlocked() { return PREVIEW || isManager() || passedCount() === qsReqCount(); }
 function examPassed(fmt) { return store.attempts.some(a => a.mode === "exam" && a.pass && (a.format || "zoom") === fmt); }
 function certified() { return examPassed("tele") && examPassed("zoom"); }
 /* ===== CALL LOCKS (AI calls cost money, so each call waits for its lessons) =====
@@ -2633,10 +2633,10 @@ function progressSnapshot() {
   const qs = Object.values(store.quiz || {});
   const last10 = store.attempts.slice(-10);
   const last = store.attempts[store.attempts.length - 1];
-  const next = MODULES.find(m => !moduleDone(m.id));
+  const next = MODULES.find(m => !m.optional && !moduleDone(m.id));
   return {
     uid: store.uid, name: store.name, joinedAt: store.joinedAt || "", lastActive: store.lastActive || new Date().toISOString(),
-    lessons: passedCount(), lessonsTotal: MODULES.length, course: QS_COURSE,
+    lessons: passedCount(), lessonsTotal: qsReqCount(), course: QS_COURSE,
     quizAvg: qs.length ? Math.round(qs.reduce((a, b) => a + b, 0) / qs.length) : 0,
     calls: store.callCount || store.attempts.length,
     avgScore: last10.length ? Math.round(last10.reduce((a, b) => a + b.total, 0) / last10.length) : 0,
@@ -3147,17 +3147,17 @@ function wireDict() {
    ========================================================= */
 function renderRail() {
   const n = passedCount();
-  $("#progFill").style.width = (n / MODULES.length * 100) + "%";
-  $("#progLabel").textContent = PREVIEW ? `Preview mode: lessons unlocked · ${n} of ${MODULES.length} passed` : certified() ? "Certified. All lessons passed." : `${n} of ${MODULES.length} lessons passed`;
+  $("#progFill").style.width = (n / qsReqCount() * 100) + "%";
+  $("#progLabel").textContent = PREVIEW ? `Preview mode: lessons unlocked · ${n} of ${qsReqCount()} passed` : certified() ? "Certified. All lessons passed." : `${n} of ${qsReqCount()} lessons passed`;
   $("#whoName").textContent = store.name ? store.name : (isManager() ? "Manager" : "Not signed in");
-  const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
+  const next = MODULES.find(m => !m.optional && !moduleDone(m.id)) || MODULES[0];
   const inLesson = ["module", "quiz", "drill", "roleplay", "zoomsim", "scenario"].includes(view.name) || (view.name === "objdrill" && view.id !== "free");
   const callsTotal = store.callCount || store.attempts.length;
   const cert = certified();
   let h = `<button class="navbtn main" data-go="launch" type="button"><span class="badge">⌂</span><span>Home</span><span></span></button>`;
   if (cert) h += `<a class="navbtn main golive" href="${TOOL_URL}"><span class="badge">▶</span><span>Go to live presentation</span><span class="count">→</span></a>`;
   h += `<button class="navbtn main ${view.name === "home" ? "active" : ""}" data-go="home" type="button"><span class="badge">▦</span><span>Dashboard</span><span></span></button>`;
-  h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></button>`;
+  h += `<button class="navbtn main ${inLesson ? "active" : ""}" data-go="module" data-id="${next.id}" type="button"><span class="badge">▤</span><span>Lessons</span><span class="count">${n}/${qsReqCount()}</span></button>`;
   h += `<button class="navbtn main ${view.name === "practice" ? "active" : ""}" data-go="practice" type="button"><span class="badge">▶</span><span>Practice calls</span><span class="count">${callsTotal || ""}</span></button>`;
   h += `<button class="navbtn main ${view.name === "objdrill" && view.id === "free" ? "active" : ""}" data-go="objdrill" data-id="free" type="button"><span class="badge">⚡</span><span>Objection drills</span><span></span></button>`;
   h += `<button class="navbtn main ${certified() ? "done" : ""} ${view.name === "exam" ? "active" : ""}" data-go="exam" type="button" ${examUnlocked() ? "" : "disabled"}><span class="badge">${certified() ? "✓" : "★"}</span><span>Exams</span>${examUnlocked() ? "<span></span>" : `<span class="lock">Locked</span>`}</button>`;
@@ -3171,7 +3171,7 @@ function renderRail() {
   const curId = inLesson ? view.id : next.id;
   store.railOpen = store.railOpen || {};
   if (inLesson) {
-  h += `<div class="lesson-tree" role="group" aria-label="Lessons"><div class="lesson-tree-head"><span>Lessons</span><span class="count">${n}/${MODULES.length}</span></div>`;
+  h += `<div class="lesson-tree" role="group" aria-label="Lessons"><div class="lesson-tree-head"><span>Lessons</span><span class="count">${n}/${qsReqCount()}</span></div>`;
   sections.forEach((g, gi) => {
     const doneN = g.items.filter(([m]) => moduleDone(m.id)).length;
     const hasCur = g.items.some(([m]) => m.id === curId);
@@ -3237,7 +3237,7 @@ function signInView() {
     <img class="hero-logo" src="globe.png" alt="">
     <div class="eyebrow">Welcome</div>
     <h1>Learn to sell virtually, then prove it live.</h1>
-    <p class="lead">Six days, ${MODULES.length} short lessons: Zoom and Google Meet basics, the phone call, then the full presentation. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one by phone and one on video.</p>
+    <p class="lead">Six days, ${qsReqCount()} short lessons: Zoom and Google Meet basics, the phone call, then the full presentation. Every lesson is read it, say it, do it: you practice out loud with a realistic client instead of taking quizzes. To get certified, you pass two live calls with an AI family that pushes back with real objections: one by phone and one on video.</p>
     <div class="card">
       <label for="nameInput">Your full name (shows on your results)</label>
       <input type="text" id="nameInput" placeholder="e.g. Jordan Williams" autocomplete="name">
@@ -3336,14 +3336,14 @@ function standaloneTop() {
 function launchView() {
   const first = esc(store.name.split(" ")[0]), cert = certified(), unlocked = cert || isManager(), n = passedCount();
   const hr = new Date().getHours(), greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
-  const next = MODULES.find(m => !moduleDone(m.id));
+  const next = MODULES.find(m => !m.optional && !moduleDone(m.id));
   const exams = (examPassed("tele") ? 1 : 0) + (examPassed("zoom") ? 1 : 0);
   let today = "";
   if (cert) { if (!callsData) loadCalls(); else { const t = sumDays(callsData.days, rangeDatesC("today")); today = `<div class="lp-mini"><span><b>${t.total}</b> calls</span><span><b>${t.contacts}</b> spoke to</span><span><b>${t.appts}</b> appts</span><span class="small">today</span></div>`; } }
   const live = unlocked
     ? `<a class="lp-card ${cert ? "primary" : ""}" href="${TOOL_URL}"><span class="lp-ic" aria-hidden="true">📞</span><span class="lp-tag">${cert ? "Certified · your daily tools" : "Unlocked because you’re signed in as a manager"}</span><b>Live Call Clinic &amp; Presentation</b><span>Dial your leads with the scripts and rebuttals, log every call, track your numbers, and present by phone or Zoom.</span>${today}<span class="lp-go">Open full screen →</span></a>`
-    : `<div class="lp-card locked" aria-disabled="true"><span class="lp-ic" aria-hidden="true">🔒</span><span class="lp-tag lock">Locked until you're certified</span><b>Live Call Clinic &amp; Presentation</b><span>Opens when you finish training: all ${MODULES.length} lessons, plus one Telesales and one Zoom exam call.</span><div class="lp-mini"><span><b>${n}/${MODULES.length}</b> lessons</span><span><b>${exams}/2</b> exams</span></div><span class="lp-go muted">Keep training to unlock</span></div>`;
-  const training = `<button class="lp-card ${cert ? "" : "primary"}" type="button" data-go="home" style="font:inherit;text-align:left"><span class="lp-ic" aria-hidden="true">🎓</span><span class="lp-tag">${cert ? "Train any time" : `${n} of ${MODULES.length} lessons passed`}</span><b>Training Academy</b><span>${cert ? "Go back to any lesson, refresh a rebuttal, or practice a call with an AI family." : "Lessons, quizzes and practice calls with AI families, ending in your Telesales and Zoom certification exams."}</span>${!cert ? `<span class="lp-bar"><span style="width:${Math.round(n / MODULES.length * 100)}%"></span></span>` : ""}<span class="lp-go">${cert ? "Open training →" : next ? "Continue: " + esc(next.title) + " →" : "Open training →"}</span></button>`;
+    : `<div class="lp-card locked" aria-disabled="true"><span class="lp-ic" aria-hidden="true">🔒</span><span class="lp-tag lock">Locked until you're certified</span><b>Live Call Clinic &amp; Presentation</b><span>Opens when you finish training: all ${qsReqCount()} lessons, plus one Telesales and one Zoom exam call.</span><div class="lp-mini"><span><b>${n}/${qsReqCount()}</b> lessons</span><span><b>${exams}/2</b> exams</span></div><span class="lp-go muted">Keep training to unlock</span></div>`;
+  const training = `<button class="lp-card ${cert ? "" : "primary"}" type="button" data-go="home" style="font:inherit;text-align:left"><span class="lp-ic" aria-hidden="true">🎓</span><span class="lp-tag">${cert ? "Train any time" : `${n} of ${qsReqCount()} lessons passed`}</span><b>Training Academy</b><span>${cert ? "Go back to any lesson, refresh a rebuttal, or practice a call with an AI family." : "Lessons, quizzes and practice calls with AI families, ending in your Telesales and Zoom certification exams."}</span>${!cert ? `<span class="lp-bar"><span style="width:${Math.round(n / qsReqCount() * 100)}%"></span></span>` : ""}<span class="lp-go">${cert ? "Open training →" : next ? "Continue: " + esc(next.title) + " →" : "Open training →"}</span></button>`;
   return `<div class="lp">
     <div class="lp-top"><div class="lp-brand"><img src="${ASSET_BASE}globe.png" alt="" width="34" height="34"><div><b>Virtual Presentation Academy</b><span>Globe Life Liberty National Division</span></div></div>
       <div class="lp-who">${esc(store.name)} · <button class="linkbtn" id="switchUser" type="button">Change</button></div></div>
@@ -3354,7 +3354,7 @@ function launchView() {
 }
 function homeView() {
   const n = passedCount();
-  const next = MODULES.find(m => !moduleDone(m.id)) || MODULES[0];
+  const next = MODULES.find(m => !m.optional && !moduleDone(m.id)) || MODULES[0];
   const lastExam = store.attempts.filter(a => a.mode === "exam").slice(-1)[0];
   const joined = store.joinedAt ? new Date(store.joinedAt) : new Date();
   const day = Math.max(1, Math.floor((Date.now() - joined.getTime()) / 864e5) + 1);
@@ -3365,7 +3365,7 @@ function homeView() {
   const callsTotal = store.callCount || store.attempts.length;
   let cta;
   if (certified()) cta = `<div class="result-banner pass"><div class="big">Certified</div><p>You passed the live exam in both formats. Keep practicing with the Hard families to stay sharp.</p></div>`;
-  else if (n === MODULES.length) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>${lastExam ? (examPassed("tele") ? "Telesales exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") : ""}Pass one Telesales call and one Zoom call to get certified.</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
+  else if (n === qsReqCount()) cta = `<div class="card"><h2>You're ready for the final exam</h2><p>${lastExam ? (examPassed("tele") ? "Telesales exam: passed. " : "") + (examPassed("zoom") ? "Zoom exam: passed. " : "") : ""}Pass one Telesales call and one Zoom call to get certified.</p><div class="row"><button class="btn" data-go="exam" type="button">Start the live exam</button><button class="btn secondary" data-go="practice" type="button">Practice first</button></div></div>`;
   else cta = `<div class="card"><div class="row spread"><div><h2>${n === 0 ? "Start with lesson 1" : "Next up"}</h2><p class="small">${esc(next.section)} · about ${next.minutes} minutes to read, then practice it out loud</p></div><button class="btn" data-go="module" data-id="${next.id}" type="button">${n === 0 ? "Begin" : "Continue"}: ${esc(next.title)}</button></div></div>`;
   return `<div class="page wide">
     ${isManager() ? `<div class="mgr-banner"><span>Manager mode: every practice call and exam is unlocked for you in this tab.</span><button class="linkbtn" data-go="manager" type="button">Open manager view</button></div>` : ""}
@@ -3374,7 +3374,7 @@ function homeView() {
       <button class="btn" data-go="practice" type="button">Start a practice call</button></div>
     ${cta}
     <div class="stats">
-      <div class="stat"><span class="k">Lessons passed</span><span class="v">${n}<small>/${MODULES.length}</small></span></div>
+      <div class="stat"><span class="k">Lessons passed</span><span class="v">${n}<small>/${qsReqCount()}</small></span></div>
       <div class="stat"><span class="k">Quiz average</span><span class="v">${quizAvg == null ? "–" : quizAvg + "%"}</span><span class="s">Pass is ${PASS_QUIZ}%</span></div>
       <div class="stat"><span class="k">Practice calls</span><span class="v">${callsTotal}</span></div>
       <div class="stat"><span class="k">Avg call score</span><span class="v">${avg == null ? "–" : avg}</span><span class="s">Last ${last10.length || 10} calls · pass is ${PASS_EXAM}</span></div>
@@ -3535,7 +3535,7 @@ function moduleView(id) {
   const i = MODULES.findIndex(m => m.id === id); const m = MODULES[i]; const sc = store.quiz[id];
   if (store.reviewLock && store.reviewLock[id]) { delete store.reviewLock[id]; save(); }
   return `<div class="page lesson">
-    <div class="eyebrow">${esc(m.section.split(" · ")[0])} · Lesson ${i + 1} of ${MODULES.length} · ${m.minutes} min</div>
+    <div class="eyebrow">${m.optional ? "Optional lesson" : esc(m.section.split(" · ")[0]) + " · Lesson " + (i + 1) + " of " + qsReqCount()} · ${m.minutes} min</div>
     <h1>${esc(m.title)}</h1>
     <p class="lead">${m.summary}</p>
     <div class="card">${m.blocks.map(blockHTML).join("")}</div>
@@ -3687,7 +3687,7 @@ function familyPickView(mode) {
     const presLocked = !practiceUnlocked() && practiceFormat !== "dial";
     h += `<div class="row"><span class="small"><b>Format:</b></span>${[["dial", "☎️ First call"], ["tele", "📞 Telesales"], ["zoom", "📹 Zoom"]].map(([f, l]) => `<button class="chip ${practiceFormat === f ? "on" : ""}" data-pformat="${f}" type="button" aria-pressed="${practiceFormat === f}">${l}</button>`).join("")}</div>`;
     h += `<p class="small">${practiceFormat === "dial" ? "First call: they don't know you're calling. Use your dial script and book the appointment or start now." : practiceFormat === "tele" ? "Telesales: nothing is shared, so describe every slide out loud." : "Zoom: share your screen when rapport is done and move through the slides."}</p>`;
-    if (presLocked && !isManager()) h += `<div class="warn"><b>Presentation calls unlock later</b>Telesales and Zoom practice opens after you pass the lessons through ${esc(MODULES[MODULES.length - 4].title)}. First-call practice opens as soon as you finish each lead type's call lesson.</div>`;
+    if (presLocked && !isManager()) h += `<div class="warn"><b>Presentation calls unlock later</b>Telesales and Zoom practice opens after you pass the lessons through ${esc(MODULES[qsReqCount() - 4].title)}. First-call practice opens as soon as you finish each lead type's call lesson.</div>`;
     h += `<div class="fam-grid">${FAMILIES.map(f => {
       const need = isManager() ? [] : callNeeds(f, practiceFormat);
       if (need.length) return lockedCard(f, practiceFormat, need);
@@ -5520,17 +5520,6 @@ const QS_NEW = {
     ],
     quiz: []
   },
-  q_leads: {
-    id: "q_leads", title: "Every Other Lead Type: Swap the Opener", minutes: 5,
-    summary: "You already know the call. For every other lead type, the flow stays the same: open, give the reason for the call, then start now or book it. Only the opener changes. Learn the three swaps here.",
-    blocks: [
-      { h: "Same call, different opener" },
-      { list: ["<b>ADP Referral:</b> someone they know sent you, so lead with the sponsor's name.", "<b>Pre-Submit:</b> they asked for information, so you're following up on their request.", "<b>Globe Lapsed:</b> their coverage lapsed, so you're helping them get it back in place."] },
-      { p: "Open each card below for that lead type's full opener and notes. The role-play gives you a different lead type each time you run it." },
-      { tip: "Know which lead type you're dialing before the phone rings. The first ten seconds decide whether they keep listening." }
-    ],
-    quiz: []
-  },
   q_full: {
     id: "q_full", title: "The Full Run", minutes: 25,
     summary: "This is the dress rehearsal. You'll run the whole presentation, start to finish, from a random lead type, sometimes as an appointment and sometimes as a now presentation. Pass it and you're ready for the certification calls.",
@@ -5553,9 +5542,8 @@ const QS_PLAN = [
     { id: "q_join", refs: ["s01"] }
   ]],
   ["Day 2 · The Call", [
-    { id: "c05", title: "Your First Call: Policy Owner", refs: ["c01"] },
-    { id: "q_leads", refs: ["c02", "c03", "c04"] },
-    { id: "c06" },
+    { id: "c02", title: "Your First Call: ADP Referral", refs: ["c01"] },
+    { id: "c06", title: "ADP Phone Rebuttals" },
     { id: "c07" }
   ]],
   ["Day 3 · Open the Presentation", [
@@ -5575,6 +5563,11 @@ const QS_PLAN = [
   ]],
   ["Day 6 · Put It Together", [
     { id: "q_full" }
+  ]],
+  ["Optional · Other Lead Types", [
+    { id: "c05", optional: true },
+    { id: "c03", optional: true },
+    { id: "c04", optional: true }
   ]]
 ];
 
@@ -5586,6 +5579,7 @@ const QS_PLAN = [
     const base = src[it.id]; if (!base) return;
     const m = Object.assign({}, base, { section, blocks: base.blocks.slice(), quiz: (base.quiz || []).slice() });
     if (it.title) m.title = it.title;
+    if (it.optional) m.optional = true;
     (it.refs || []).forEach(r => { const rm = src[r]; if (rm) m.blocks.push({ ref: rm.title, blocks: rm.blocks.filter(b => !b.refact) }); });
     out.push(m);
   }));
@@ -5600,12 +5594,40 @@ const QS_PLAN = [
     { sit: "Earl has been trying to join for 3 minutes and still can't get in.", q: "What do you do?", o: ["Keep trying until it works", "Switch to Telesales and present by phone", "Reschedule for when his son can help"], a: 1, why: "Don't lose the presentation over the format. Phone is the backup." },
     { sit: "Linda just joined the video call. You're about to hang up the phone.", q: "What do you say first?", o: ["“Can you see and hear me okay on your end?”", "“Great, let me share my screen.”", "“Hang on, let me find my notes.”"], a: 0, why: "Confirm video and sound before you hang up the phone." }
   ];
-  RP_DIAL.q_leads = ["adp", "presubmit", "lapsed"];
-  ROLEPLAYS.q_leads = { track: "dial" };
-  OBJ_LESSON.q_leads = { track: "phone", leads: ["adp", "presubmit", "lapsed"], reps: 4 };
+  /* ADP is the main call: one rebuttal on the first call, then every ADP phone rebuttal. */
+  const adpObj = OBJ_BANK.filter(o => o.track === "phone" && o.lead === "adp");
+  OBJ_LESSON.c02 = { track: "phone", leads: ["adp"], reps: 1 };
+  OBJ_LESSON.c06 = { track: "phone", leads: ["adp"], ids: adpObj.map(o => o.id), reps: adpObj.length };
+  const first = MODULES.find(m => m.id === "c02");
+  if (first) first.blocks.splice(first.blocks.length - (first.blocks.filter(b => b.ref).length), 0,
+    { h: "Expect one rebuttal" },
+    { p: "On a real ADP call, most leads push back at least once. In this lesson's objection drill, the lead gives you one rebuttal after your opener. Acknowledge it, answer in one breath, and ask a question that gets you back to the script. You'll learn every ADP rebuttal in the next lesson." });
+  const reb = MODULES.find(m => m.id === "c06");
+  if (reb) {
+    const fill = t => String(t).replace(/\{sponsor\}/g, "(sponsor)").replace(/\{rel\}/g, "(relationship)").replace(/\{client\}/g, "(client)");
+    reb.summary = "Every ADP lead pushes back sometime. Learn all " + adpObj.length + " ADP phone rebuttals with the same three moves: acknowledge it, answer it in one breath, then ask a question that gets you back to the script.";
+    reb.blocks = [reb.blocks[0], reb.blocks[1]].concat(adpObj.flatMap(o => [{ h: "“" + o.obj.replace(/^“|”$/g, "") + "”" }, { say: fill(o.model) }].concat(o.tip ? [{ tip: o.tip }] : [])),
+      [{ tip: "The drill gives you every one of these, out loud. Your weakest ones come back first until you've got them all." }]);
+  }
   ROLEPLAYS.q_full = { track: "pres" };
   OBJ_LESSON.s19 = { track: "pres", reps: 6 };
 })();
+
+/* Optional lessons don't count toward finishing the course or unlocking the exams. */
+function qsReqCount() { return MODULES.filter(m => !m.optional).length; }
+function passedCount() { return MODULES.filter(m => !m.optional && moduleDone(m.id)).length; }
+function moduleUnlocked(i) {
+  if (PREVIEW || !MODULES[i] || MODULES[i].optional) return true;
+  for (let j = i - 1; j >= 0; j--) if (!MODULES[j].optional) return moduleDone(MODULES[j].id);
+  return true;
+}
+/* Role-plays use ADP until the trainee finishes an optional lead-type lesson; then that lead type joins the mix. */
+function rpLeadsFor(mod) {
+  if (RP_DIAL[mod]) return RP_DIAL[mod];
+  const learned = ["adp"].concat([["c05", "policy"], ["c03", "presubmit"], ["c04", "lapsed"]].filter(([id]) => moduleDone(id)).map(x => x[1]));
+  if (mod === "s16") return learned.filter(k => RP_LEADS[k].kids.length);
+  return learned;
+}
 
 /* A lesson that has something to say or do is passed by doing it; the quiz becomes an optional check. */
 function qsDoing(id) { return !!(DRILLS[id] || ROLEPLAYS[id] || OBJ_LESSON[id] || ZOOM_LESSON[id] || SCENARIOS[id]); }
