@@ -4020,14 +4020,15 @@ function pickVoice(name, taken) {
 
 /* ---------- Practice-call credits: free calls per lead type, then purchased calls (Stripe) ---------- */
 let CREDITS = null, creditsBusy = false;
-function creditsOn() { return SITE_MODE && !isManager(); }
+function creditsOn() { return SITE_MODE && !(CREDITS && CREDITS.owner); } // managers have the same limits; only the owner is exempt
+function creditAuth() { try { const t = localStorage.getItem("vpa_mgr_tok"); return t ? { authorization: "Bearer " + t } : {}; } catch (e) { return {}; } }
 function creditWho() { return { uid: store.uid || "", invite: store.invite ? store.invite.token : "", name: store.name || "" }; }
 async function loadCredits() {
   if (!creditsOn() || !store.uid) return;
-  try { const w = creditWho(), r = await fetch("/api/credits?uid=" + encodeURIComponent(w.uid) + "&invite=" + encodeURIComponent(w.invite)); if (r.ok) { CREDITS = await r.json(); if (view.name === "practice" || view.name === "exam") render(); } } catch (e) {}
+  try { const w = creditWho(), r = await fetch("/api/credits?uid=" + encodeURIComponent(w.uid) + "&invite=" + encodeURIComponent(w.invite), { headers: creditAuth() }); if (r.ok) { CREDITS = await r.json(); if (view.name === "practice" || view.name === "exam") render(); } } catch (e) {}
 }
 async function creditPost(path, body) {
-  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.assign(creditWho(), body)) });
+  const r = await fetch(path, { method: "POST", headers: Object.assign({ "content-type": "application/json" }, creditAuth()), body: JSON.stringify(Object.assign(creditWho(), body)) });
   const j = await r.json().catch(() => ({})); return { status: r.status, j };
 }
 function creditLeft(fam) { return CREDITS ? (CREDITS.free[fam.leadType] || 0) : null; }
@@ -5147,7 +5148,7 @@ function afterCostsRender() {
   const sv = $("#csSave"); if (sv) sv.onclick = async () => {
     const g = id => Number($("#" + id).value);
     try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther"), ttsDailyChars: g("csTts"), freePerLead: g("csFree"), callPriceCents: Math.round(g("csPrice") * 100), minCalls: g("csMin"),
-      budgetLearn: g("csBL"), budgetPractice: g("csBP"), budgetExam: g("csBE"), dailyRoleplay: g("csDR"), dailyDrill: g("csDD"), dailyPractice: g("csDP"), dailyExamTele: g("csDT"), dailyExamZoom: g("csDZ"),
+      allowanceVersion: 2, budgetLearn: g("csBL"), budgetPractice: g("csBP"), budgetExam: g("csBE"), dailyRoleplay: g("csDR"), dailyDrill: g("csDD"), dailyPractice: g("csDP"), dailyExamTele: g("csDT"), dailyExamZoom: g("csDZ"),
       examTeleCalls: g("csET"), examZoomCalls: g("csEZ"), learnPackReps: g("csLP") }) }); mgr.costs = null; render(); }
     catch (e) { $("#csMsg").textContent = "Couldn't save: " + e.message; } };
 }

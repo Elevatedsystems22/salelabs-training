@@ -7,7 +7,7 @@
    Every free start counts a conservative cost estimate against its bucket. Free starts also have daily limits.
    When the free allowance for something is used up (for today or for good), the agent can keep going with purchased calls:
      practice call = 1 call, phone exam = 1 call, Zoom exam = 3 calls, 10 more role-plays or drills = 1 call.
-   Managers are never charged (the course skips this for them).
+   Managers have the same limits; only the owner's login (OWNER_MANAGER_ID, default "brandon-carter") is never limited.
 
    GET  /api/credits?uid=&invite=                          -> summary
    POST /api/credits/start   { uid, invite, kind, lead, format }   kind: practice | exam_tele | exam_zoom | roleplay | drill
@@ -26,7 +26,7 @@ import { getStore } from "@netlify/blobs";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
-import { ALLOWANCE_DEFAULTS } from "../lib/allowance.mjs";
+import { ALLOWANCE_DEFAULTS, ALLOWANCE_VERSION } from "../lib/allowance.mjs";
 
 const STRIPE = process.env.STRIPE_API_BASE || "https://api.stripe.com/v1";
 const db = () => getStore({ name: "credits", consistency: "strong" });
@@ -34,11 +34,13 @@ const LEADS = ["Pre-Submit", "ADP Referral", "Globe Lapsed", "Policy Owner"];
 const KINDS = ["practice", "exam_tele", "exam_zoom", "roleplay", "drill"];
 const BUCKET = { practice: "practice", exam_tele: "exam", exam_zoom: "exam", roleplay: "learn", drill: "learn" };
 const str = (v, n) => String(v == null ? "" : v).slice(0, n);
+const isOwner = me => !!me && (me.id === "_master" || me.id === (process.env.OWNER_MANAGER_ID || "brandon-carter"));
 
 
 let C = { ...ALLOWANCE_DEFAULTS };
 async function loadCfg() {
-  const st = (await getStore({ name: "costs", consistency: "strong" }).get("settings", { type: "json" }).catch(() => null)) || {};
+  let st = (await getStore({ name: "costs", consistency: "strong" }).get("settings", { type: "json" }).catch(() => null)) || {};
+  if (st.allowanceVersion !== ALLOWANCE_VERSION) st = {}; // saved before the current plan: use the new starting values
   const env = { freePerLead: process.env.FREE_TRIES_PER_LEAD, callPriceCents: process.env.CALL_PRICE_CENTS, minCalls: process.env.MIN_CALLS_PER_PURCHASE };
   C = {};
   for (const [k, d] of Object.entries(ALLOWANCE_DEFAULTS)) {
@@ -131,7 +133,11 @@ export default async (req) => {
     return json({ received: true });
   }
 
+  // The owner is never limited (signed in to the manager view in the same browser).
+  const owner = req.headers.get("authorization") ? isOwner(await authManager(req).catch(() => null)) : false;
+
   if (path === "/api/credits" && req.method === "GET") {
+    if (owner) return json({ owner: true, payments: !!process.env.STRIPE_SECRET_KEY });
     const acct = await accountFor(url.searchParams.get("uid"), url.searchParams.get("invite"));
     if (!acct) return json({ error: "bad_request" }, 400);
     return json(summary(await load(acct)));
@@ -153,6 +159,7 @@ export default async (req) => {
     if (path === "/api/credits/use" || path === "/api/credits/start") {
       const kind = path === "/api/credits/use" ? "practice" : (KINDS.includes(b.kind) ? b.kind : null);
       if (!kind) return json({ error: "bad_kind" }, 400);
+      if (owner) return json({ ok: true, used: "owner", owner: true });
       const lead = LEADS.includes(b.lead) ? b.lead : null, format = str(b.format, 10);
       if (kind === "practice" && !lead) return json({ error: "bad_lead" }, 400);
       const a = await load(acct); a.used = a.used || {}; a.spent = a.spent || {};

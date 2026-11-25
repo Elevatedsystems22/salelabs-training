@@ -9,7 +9,7 @@ import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
 import { addUsage, costsStore, chicagoMonth } from "../lib/usage.mjs";
-import { ALLOWANCE_DEFAULTS } from "../lib/allowance.mjs";
+import { ALLOWANCE_DEFAULTS, ALLOWANCE_VERSION } from "../lib/allowance.mjs";
 
 const DEFAULTS = { elPlan: 22, elCredits: 121000, elRate: 0.30, anamPlan: 49, anamMin: 250, anamRate: 0.14, otherFixed: 0, ttsDailyChars: 400000, ...ALLOWANCE_DEFAULTS };
 const isOwner = me => !!me && (me.id === "_master" || me.id === (process.env.OWNER_MANAGER_ID || "brandon-carter"));
@@ -79,7 +79,9 @@ export default async (req) => {
   if (path === "/api/usage/owner") return json({ owner: isOwner(me) });
   if (!isOwner(me)) return json({ error: "forbidden" }, 403);
   const store = costsStore();
-  const settings = Object.assign({}, DEFAULTS, (await store.get("settings", { type: "json" }).catch(() => null)) || {});
+  const saved = (await store.get("settings", { type: "json" }).catch(() => null)) || {};
+  if (saved.allowanceVersion !== ALLOWANCE_VERSION) for (const k of Object.keys(ALLOWANCE_DEFAULTS)) delete saved[k]; // older plan: show the new starting values
+  const settings = Object.assign({}, DEFAULTS, saved);
 
   if (path === "/api/usage/settings" && req.method === "POST") {
     let b; try { b = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
@@ -91,6 +93,7 @@ export default async (req) => {
     // free allowance and purchased-call settings
     for (const k of Object.keys(ALLOWANCE_DEFAULTS)) next[k] = num(b[k], 0, k === "callPriceCents" ? 100000 : 1000, settings[k]);
     next.callPriceCents = Math.max(50, Math.round(next.callPriceCents)); next.minCalls = Math.max(1, Math.round(next.minCalls));
+    next.allowanceVersion = ALLOWANCE_VERSION;
     await store.setJSON("settings", next);
     return json({ settings: next });
   }
