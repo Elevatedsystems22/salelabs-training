@@ -100,7 +100,7 @@ export default async (req) => {
     const months = new Set([thisMonth]);
     try { const all = await store.list({ directories: true }); (all.directories || []).forEach(d => /^\d{4}-\d{2}$/.test(d) && months.add(d)); } catch (e) {}
     const [eleven, anthropic, sales] = await Promise.all([month === thisMonth ? elevenSubscription() : null, anthropicCost(month), practiceSales(month)]);
-    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven, anthropic, sales, payments: !!process.env.STRIPE_SECRET_KEY });
+    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven, anthropic, sales, payments: !!process.env.STRIPE_SECRET_KEY, stripeWebhook: !!process.env.STRIPE_WEBHOOK_SECRET });
   }
   return json({ error: "not_found" }, 404);
 };
