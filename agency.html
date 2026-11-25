@@ -13,9 +13,33 @@ a { color: var(--accent); }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
 header { background: var(--surface); border-bottom: 1px solid var(--line); }
 header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-.brand { font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
-.brand span { color: var(--accent); }
-header a.sign { font-weight: 700; text-decoration: none; }
+.logo img { display: block; height: 35px; width: auto; }
+.hnav { display: flex; align-items: center; gap: 22px; }
+.hnav a { font-weight: 700; text-decoration: none; color: var(--ink); font-size: 15px; }
+.hnav a.sign { color: var(--accent); }
+.hnav a.phone { color: var(--good); white-space: nowrap; }
+.hnav .short { display: none; }
+header { position: sticky; top: 0; z-index: 10; }
+.shot { border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(18,26,43,.14); overflow: hidden; background: #fff; }
+.shot img { display: block; width: 100%; height: auto; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+.tabs button { font: inherit; font-weight: 700; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 9px 14px; border-radius: 999px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.demo { display: grid; grid-template-columns: 1.6fr .9fr; gap: 28px; align-items: center; }
+.demo h3 { font-size: 22px; margin: 0 0 8px; }
+.demo p { color: var(--muted); margin: 0 0 12px; }
+.demo ul { margin: 0; padding-left: 18px; color: var(--ink); }
+.demo li { margin: 6px 0; }
+.band { background: #0f1a2e; color: #fff; border-radius: 18px; padding: 30px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.band h2 { color: #fff; margin: 0 0 4px; }
+.band p { margin: 0; color: #c9d3e3; }
+.band .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.band a { background: #fff; color: #0f1a2e; font-weight: 800; text-decoration: none; padding: 12px 18px; border-radius: 10px; }
+.band a.alt { background: transparent; color: #fff; border: 1px solid #5b6b86; }
+.hero-cta { display: flex; gap: 14px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+.hero-cta a { font-weight: 800; text-decoration: none; }
+.hero-cta a.btnlink { background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px; }
+.foot-logo { height: 30px; width: auto; display: block; margin-bottom: 10px; opacity: .85; }
 .hero { padding: 56px 0 28px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
 .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 800; color: var(--good); }
 h1 { font-size: 44px; line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 14px; }
@@ -48,13 +72,14 @@ th { background: var(--accent-soft); font-size: 13px; text-transform: uppercase;
 .done .big { font-size: 46px; }
 .temp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 20px; font-weight: 800; background: var(--accent-soft); padding: 8px 14px; border-radius: 10px; display: inline-block; margin: 6px 0; letter-spacing: .03em; }
 footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
-@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 32px; } h1 { font-size: 34px; } .grid3 { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 32px; } h1 { font-size: 34px; } .grid3 { grid-template-columns: 1fr; } .demo { grid-template-columns: 1fr; } .hnav a:not(.phone):not(.sign) { display: none; } .hnav .full { display: none; } .hnav .short { display: inline; } .hnav { gap: 14px; } .logo img { height: 28px; } }
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="brand">Sale<span>Labs</span> · Virtual Presentation Training</div><a class="sign" href="/#manager">Agency sign-in</a></div></header>
+<header><div class="wrap"><a class="logo" href="#top" aria-label="Elevated Systems"><img src="/img/agency/elevated-logo.png" alt="Elevated Systems" width="160" height="35"></a>
+  <nav class="hnav"><a href="#product">See the product</a><a href="#pricing">Pricing</a><a class="phone" href="tel:+12517254263">📞 <span class="full">251-725-4263</span><span class="short">Call</span></a><a class="sign" href="/#manager"><span class="full">Agency sign-in</span><span class="short">Sign in</span></a></nav></div></header>
 
-<main class="wrap" id="main">
+<main class="wrap" id="top">
   <div class="hero">
     <div>
       <div class="eyebrow">For Liberty National agency owners</div>
@@ -67,9 +92,10 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
         <li>Your own private manager view: invite agents, see progress, scores and weak spots.</li>
         <li>Practice-call and AI limits built in, so there are no surprise bills.</li>
       </ul>
+      <div class="hero-cta"><a class="btnlink" href="#product">See the product ↓</a><a href="tel:+12517254263">Questions? Call or text 251-725-4263</a></div>
     </div>
 
-    <div class="card" id="buyCard">
+    <div class="card" id="buyCard" style="scroll-margin-top:90px">
       <div class="price"><b id="seatPrice">$75</b><span>per agent, one time</span></div>
       <p class="small">Each seat is one agent's full training. Buy what you need now and add seats anytime from your manager view.</p>
       <form id="f" novalidate>
@@ -88,6 +114,25 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
     </div>
   </div>
 
+
+  <section id="product" style="scroll-margin-top:70px">
+    <h2>See what your agents get</h2>
+    <p class="lead" style="font-size:16px;margin-top:-8px">Real screens from the course. Tap through each part of the training.</p>
+    <div class="tabs" role="tablist" aria-label="Product screens">
+      <button role="tab" aria-selected="true" data-shot="0">Say the script out loud</button>
+      <button role="tab" aria-selected="false" data-shot="1">Zoom practice</button>
+      <button role="tab" aria-selected="false" data-shot="2">AI family calls</button>
+      <button role="tab" aria-selected="false" data-shot="3">Your manager view</button>
+      <button role="tab" aria-selected="false" data-shot="4">Short lessons</button>
+      <button role="tab" aria-selected="false" data-shot="5">Certification exams</button>
+    </div>
+    <div class="demo" id="demo" aria-live="polite"></div>
+  </section>
+
+  <section>
+    <div class="band"><div><h2>Want a walkthrough first?</h2><p>Call or text Brandon and he'll show you the training and the manager view live.</p></div>
+      <div class="acts"><a href="tel:+12517254263">Call 251-725-4263</a><a class="alt" href="sms:+12517254263">Text instead</a></div></div>
+  </section>
   <section>
     <h2>How it works</h2>
     <div class="grid3">
@@ -97,7 +142,7 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
     </div>
   </section>
 
-  <section>
+  <section id="pricing" style="scroll-margin-top:70px">
     <h2>What each seat includes</h2>
     <table>
       <thead><tr><th>Included</th><th>Details</th></tr></thead>
@@ -109,14 +154,31 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
         <tr><td><b>Extra practice</b></td><td>Agents who want more than the included allowance can buy extra practice calls themselves, so your cost stays fixed at the seat price.</td></tr>
       </tbody>
     </table>
+    <p style="margin-top:18px"><a href="#buyCard" style="font-weight:800">Get started: $75 per agent →</a></p>
   </section>
 </main>
 
-<footer><div class="wrap">SaleLabs is an independent training product by Elevated Systems. It is not affiliated with, sponsored by or endorsed by Globe Life or Liberty National. Questions? Contact Brandon Carter.</div></footer>
+<footer><div class="wrap"><img class="foot-logo" src="/img/agency/elevated-logo.png" alt="Elevated Systems" width="138" height="30">
+  Questions? Call or text Brandon Carter at <a href="tel:+12517254263">251-725-4263</a>.<br>
+  SaleLabs is an independent training product by Elevated Systems. It is not affiliated with, sponsored by or endorsed by Globe Life or Liberty National.</div></footer>
 
 <script>
 (function () {
   const $ = id => document.getElementById(id);
+  // Product screens
+  const SHOTS = [
+    { img: "roleplay.jpg", t: "They say the script out loud, line by line", p: "Every lesson has a role-play. The AI client answers in a realistic voice, and the agent reads their lines aloud while the course listens.", li: ["Scored on accuracy, pace (about 175 words a minute) and flow", "Cumulative: each lesson adds to the last, ending in the full presentation", "Works for appointment and start-now calls"] },
+    { img: "zoom.jpg", t: "Zoom basics before the first live call", p: "A practice Zoom meeting teaches the buttons that trip new agents up, with a client waiting to be let in.", li: ["Admit the client, mic and camera on", "Share the right window, switch to the eApp, stop sharing", "Plus a lesson on walking clients onto Zoom from their phone"] },
+    { img: "call.jpg", t: "Practice calls with AI families", p: "Agents talk to realistic families who answer, push back and object, by phone or on Zoom. Every call ends with a score and coaching notes.", li: ["Different families, lead types and moods", "Real phone and presentation objections", "Practice limits built in, so costs stay fixed"] },
+    { img: "manager.jpg", t: "You see everything in your own manager view", p: "Invite agents by text and email, then watch their progress. Only your agency can see your people.", li: ["Lessons passed, call scores and reading pace", "Who's on track, falling behind or certified", "Weak spots, so you know exactly what to coach", "Add your own managers to help"] },
+    { img: "lesson.jpg", t: "Short lessons built on the real scripts", p: "16 short lessons over 6 days: Zoom basics, the ADP Referral call and all 7 phone rebuttals, F.O.R.M., the presentation, referrals and the close.", li: ["Read it, say it, do it: practice, not quizzes", "Older material kept as tap-to-open reference cards", "Other lead types available as optional lessons"] },
+    { img: "exam.jpg", t: "Certification on live AI exams", p: "Agents certify by passing a full phone presentation exam and a Zoom exam with a realistic person on video who interrupts and objects.", li: ["Two free tries of each exam a day", "Graded presentation, objection handling and close", "Certified agents unlock the live Call Clinic tool"] }
+  ];
+  const showShot = i => { const s = SHOTS[i];
+    $("demo").innerHTML = `<div class="shot"><img src="/img/agency/${s.img}" alt="${s.t}" width="1600" height="1000"></div><div><h3>${s.t}</h3><p>${s.p}</p><ul>${s.li.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    document.querySelectorAll("[data-shot]").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.shot === i))); };
+  document.querySelectorAll("[data-shot]").forEach(b => b.onclick = () => showShot(+b.dataset.shot));
+  showShot(0);
   let price = 7500;
   const money = c => "$" + (c / 100).toFixed(2).replace(/\.00$/, "");
   const upd = () => { const n = Math.max(1, Math.min(200, parseInt($("seats").value, 10) || 1)); $("total").textContent = money(n * price); };
@@ -146,7 +208,7 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
       <p><a href="/#manager" style="display:inline-block;margin-top:8px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;text-decoration:none">Sign in to your manager view</a></p></div>`;
   };
   const go = async n => { try { const j = await (await fetch("/api/agency/confirm?session_id=" + m[1])).json(); if (j.ok) return show(j); if (n < 8) return setTimeout(() => go(n + 1), 2000); } catch (e) { if (n < 8) return setTimeout(() => go(n + 1), 2000); }
-    card.innerHTML = `<div class="done"><div class="big">📬</div><h2>Payment received</h2><p class="small">We're finishing your setup. Your sign-in details will arrive by text and email shortly. If they don't within 10 minutes, contact Brandon Carter.</p></div>`; };
+    card.innerHTML = `<div class="done"><div class="big">📬</div><h2>Payment received</h2><p class="small">We're finishing your setup. Your sign-in details will arrive by text and email shortly. If they don't arrive within 10 minutes, call or text Brandon at 251-725-4263.</p></div>`; };
   go(0);
 })();
 </script>
