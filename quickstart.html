@@ -5529,7 +5529,7 @@ function helpView() {
    ========================================================= */
 document.addEventListener("click", e => {
   const tt = e.target.closest("[data-tool]"); if (tt) { openTool(/^\d+$/.test(tt.dataset.tool) ? +tt.dataset.tool : tt.dataset.tool); return; }
-  const t = e.target.closest("[data-go],[data-q],[data-fam],[data-open],[data-exam],[data-pformat],#submitQuiz,#copyResult,#switchUser,#menuToggle,#checkDrill,#retryDrill");
+  const t = e.target.closest("[data-go],[data-q],[data-fam],[data-open],[data-exam],[data-pformat],#submitQuiz,#copyResult,#switchUser,#menuToggle,#checkDrill,#retryDrill,#buyCalls");
   if (!t) return;
   if (t.id === "menuToggle") { const r = $("#rail"); r.classList.toggle("open"); t.textContent = r.classList.contains("open") ? "✕ Close" : "☰ Menu"; t.setAttribute("aria-expanded", r.classList.contains("open")); return; }
   if (t.closest("#nav") && $("#rail").classList.contains("open")) { $("#rail").classList.remove("open"); const mt = $("#menuToggle"); if (mt) { mt.textContent = "☰ Menu"; mt.setAttribute("aria-expanded", "false"); } }
