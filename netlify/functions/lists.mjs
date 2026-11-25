@@ -11,6 +11,7 @@
 import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
+import { inviteMap, inScope } from "../lib/org.mjs";
 
 const UID = /^[A-Za-z0-9-]{8,64}$/, DATE = /^\d{4}-\d{2}-\d{2}$/;
 const str = (v, n) => String(v == null ? "" : v).slice(0, n);
@@ -75,12 +76,13 @@ export default async (req) => {
     return json({ sets: await listAll(db, `refs/${uid}/`) });
   }
   if (path.startsWith("/api/lists/team/")) {
-    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
-    if (path === "/api/lists/team/first25") return json({ lists: await listAll(db, "first25/") });
-    if (path === "/api/lists/team/refs") return json({ sets: (await listAll(db, "refs/")).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).slice(0, 300) });
+    const me = await authManager(req); if (!me) return json({ error: "signed_out" }, 401);
+    const inv = await inviteMap(), mine = rows => rows.filter(r => inScope(r, me, inv));
+    if (path === "/api/lists/team/first25") return json({ lists: mine(await listAll(db, "first25/")) });
+    if (path === "/api/lists/team/refs") return json({ sets: mine(await listAll(db, "refs/")).sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).slice(0, 300) });
     if (path === "/api/lists/team/sched") {
       const date = url.searchParams.get("date") || ""; if (!DATE.test(date)) return json({ error: "bad_request" }, 400);
-      return json({ date, sheets: await listAll(db, `sched/${date}/`) });
+      return json({ date, sheets: mine(await listAll(db, `sched/${date}/`)) });
     }
   }
   return json({ error: "not_found" }, 404);

@@ -27,6 +27,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
 import { ALLOWANCE_DEFAULTS, ALLOWANCE_VERSION } from "../lib/allowance.mjs";
+import { fulfillAgency } from "../lib/agency.mjs";
+import { inviteMap, accountOrg, orgOf } from "../lib/org.mjs";
 
 const STRIPE = process.env.STRIPE_API_BASE || "https://api.stripe.com/v1";
 const db = () => getStore({ name: "credits", consistency: "strong" });
@@ -129,7 +131,10 @@ export default async (req) => {
     const payload = await req.text();
     if (!verifyStripe(payload, req.headers.get("stripe-signature"), secret)) return json({ error: "bad_signature" }, 400);
     let ev; try { ev = JSON.parse(payload); } catch (e) { return json({ error: "bad_request" }, 400); }
-    if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") await credit(ev.data && ev.data.object);
+    if (ev.type === "checkout.session.completed" || ev.type === "checkout.session.async_payment_succeeded") {
+      const obj = ev.data && ev.data.object, type = obj && obj.metadata && obj.metadata.type;
+      if (type === "agency_new" || type === "seats") await fulfillAgency(obj, url.origin); else await credit(obj);
+    }
     return json({ received: true });
   }
 
@@ -212,14 +217,15 @@ export default async (req) => {
   const me = await authManager(req);
   if (!me) return json({ error: "unauthorized" }, 401);
   if (path === "/api/credits/team" && req.method === "GET") {
-    const { blobs } = await db().list({ prefix: "acct/" });
-    const rows = (await Promise.all(blobs.slice(0, 500).map(async x => { const a = await db().get(x.key, { type: "json" }).catch(() => null); if (!a) return null; const s = summary(a); const sp = a.spent || {}; return { account: x.key.slice(5), name: a.name || "", paid: a.paid || 0, freeSpent: Math.round(((sp.learn || 0) + (sp.practice || 0) + (sp.exam || 0)) * 100) / 100, budgetLeft: s.budgetLeft, bought: (a.purchases || []).filter(p => p.cents > 0).reduce((n, p) => n + (p.qty || 0), 0), spentCents: (a.purchases || []).reduce((n, p) => n + (p.cents || 0), 0), updatedAt: a.updatedAt || 0 }; }))).filter(Boolean);
+    const { blobs } = await db().list({ prefix: "acct/" }), inv = await inviteMap();
+    const rows = (await Promise.all(blobs.filter(x => accountOrg(x.key.slice(5), inv) === orgOf(me)).slice(0, 500).map(async x => { const a = await db().get(x.key, { type: "json" }).catch(() => null); if (!a) return null; const s = summary(a); const sp = a.spent || {}; return { account: x.key.slice(5), name: a.name || "", paid: a.paid || 0, freeSpent: Math.round(((sp.learn || 0) + (sp.practice || 0) + (sp.exam || 0)) * 100) / 100, budgetLeft: s.budgetLeft, bought: (a.purchases || []).filter(p => p.cents > 0).reduce((n, p) => n + (p.qty || 0), 0), spentCents: (a.purchases || []).reduce((n, p) => n + (p.cents || 0), 0), updatedAt: a.updatedAt || 0 }; }))).filter(Boolean);
     return json({ rows: rows.sort((a, b) => b.updatedAt - a.updatedAt), budgetTotal: C.budgetLearn + C.budgetPractice + C.budgetExam });
   }
   if (path === "/api/credits/grant" && req.method === "POST") {
     let b; try { b = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
     const acct = str(b.account, 120), qty = Math.max(-500, Math.min(500, parseInt(b.qty, 10) || 0));
     if (!/^(inv|uid)_[A-Za-z0-9_-]+$/.test(acct) || (!qty && !b.resetToday)) return json({ error: "bad_request" }, 400);
+    if (accountOrg(acct, await inviteMap()) !== orgOf(me)) return json({ error: "forbidden" }, 403);
     const a = await load(acct);
     if (qty) { a.paid = Math.max(0, (a.paid || 0) + qty); a.purchases = [{ at: Date.now(), qty, cents: 0, grantedBy: me.id || me.name || "manager" }, ...(a.purchases || [])].slice(0, 100); }
     if (b.resetToday) a.day = { date: chicagoDay(), counts: {} };

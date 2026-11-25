@@ -4109,7 +4109,7 @@ function buyCallsModal(fam, why) {
 }
 /* Back from Stripe: add the calls (the webhook usually already has) and say so. */
 (function () {
-  const m = /[?&]paid=(cs_[A-Za-z0-9_]+)/.exec(location.search); if (!m) return;
+  const m = /[?&]paid=(cs_[A-Za-z0-9_]+)/.exec(location.search); if (!m || /[?&]agency=seats/.test(location.search)) return;
   try { history.replaceState(null, "", location.pathname + "#practice"); } catch (e) {}
   const tryConfirm = async n => {
     try { const r = await fetch("/api/credits/confirm?session_id=" + m[1]), j = await r.json();
@@ -4793,7 +4793,7 @@ async function mgrLoad() {
     const j1 = await r1.json().catch(() => ({})), j2 = await r2.json().catch(() => ({}));
     if (r1.status === 401 || r2.status === 401) { setMgrTok(""); mgrReset("Your sign-in expired. Sign in again."); }
     else if (!r1.ok || !r2.ok) mgr.error = j1.message || j2.message || "The manager view isn't available yet. Make sure MANAGER_CODE is set in Netlify and the site has redeployed.";
-    else { mgr.calls = null; mgr.lists = null; mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; mgrApi("/api/usage/owner").then(j => { if (mgr.owner !== !!j.owner) { mgr.owner = !!j.owner; render(); } }).catch(() => {}); }
+    else { mgr.calls = null; mgr.lists = null; mgr.rows = j1.trainees || []; mgr.managers = j2.managers || []; mgr.invites = j2.invites || []; mgr.me = j2.me || null; mgr.agency = j2.agency || null; mgrApi("/api/usage/owner").then(j => { if (mgr.owner !== !!j.owner) { mgr.owner = !!j.owner; render(); } }).catch(() => {}); }
   } catch (e) { mgr.error = "Couldn't reach the server. The manager view works on your live site, not inside claude.ai."; }
   mgr.loading = false; render();
 }
@@ -4847,14 +4847,34 @@ const MGR_ICON = {
   notify: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/>',
   voices: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>',
   account: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
-  costs: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' };
+  costs: '<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  agencies: '<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>' };
 function mgrTabs() {
   const t = (k, l, sub) => `<button class="mtab ${sub ? "sub" : ""} ${mgr.tab === k ? "on" : ""}" role="tab" aria-selected="${mgr.tab === k}" data-mtab="${k}" ${sub ? `aria-label="${l}"` : ""} type="button">${sub ? `<svg viewBox="0 0 24 24" aria-hidden="true">${MGR_ICON[k]}</svg>` : ""}${l}</button>`;
-  return `<div class="mtabs" role="tablist" aria-label="Manager sections"><div class="mtabs-main">${t("trainees", "Trainees")}${t("calls", "Calls")}${t("lists", "Lists")}${t("managers", "Managers")}</div><div class="mtabs-sub">${mgr.owner ? t("costs", "Costs", 1) : ""}${t("notify", "Notifications", 1)}${t("voices", "Voices", 1)}${t("account", "Account", 1)}</div></div>`;
+  return `<div class="mtabs" role="tablist" aria-label="Manager sections"><div class="mtabs-main">${t("trainees", "Trainees")}${t("calls", "Calls")}${t("lists", "Lists")}${t("managers", "Managers")}</div><div class="mtabs-sub">${mgr.owner ? t("agencies", "Agencies", 1) + t("costs", "Costs", 1) : ""}${t("notify", "Notifications", 1)}${t("voices", "Voices", 1)}${t("account", "Account", 1)}</div></div>`;
 }
 const field = (id, label, type, val, req, ac) => `<div class="fld"><label for="${id}">${label}${req ? "" : ' <span class="small">(optional)</span>'}</label><input id="${id}" type="${type}" value="${esc(val || "")}" ${ac ? `autocomplete="${ac}"` : ""}></div>`;
+function seatsCard() {
+  const a = mgr.agency; if (!a) return "";
+  const left = Math.max(0, (a.seats || 0) - (a.seatsUsed || 0)), admin = mgr.me && mgr.me.admin;
+  return `<div class="card seats"><div class="row spread"><div><h2>${esc(a.name)} seats</h2><p class="small">Each agent you invite uses one seat. A seat includes the full 6-Day course, practice calls and both certification exams. Deleting an invite nobody opened gives the seat back.</p></div>
+    <div class="credits-paid"><b>${left}</b><span>of ${a.seats || 0} seat${a.seats === 1 ? "" : "s"} left</span></div></div>
+    ${admin ? `<div class="row"><button class="btn small" id="buySeats" type="button" style="width:auto">Buy more seats</button></div>` : `<p class="small">Out of seats? Ask your agency owner to buy more.</p>`}</div>`;
+}
+function buySeatsModal(why) {
+  const wrap = document.createElement("div"); wrap.className = "modal-back";
+  const price = mgr.seatPrice || 7500, money = n => "$" + (n * price / 100).toFixed(2).replace(/\.00$/, "");
+  wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="sTitle"><h2 id="sTitle">Buy agent seats</h2>${why ? `<p>${esc(why)}</p>` : ""}<p>Each seat is ${money(1)}, paid once, for one agent's full training.</p>
+    <div class="fld"><label for="sQty">How many seats?</label><input id="sQty" type="number" min="1" max="200" value="5"></div><p class="small" id="sTotal">${money(5)} total</p>
+    <div class="row"><button class="btn" id="sGo" type="button">Continue to payment</button><button class="btn secondary" id="sNo" type="button">Not now</button></div><p class="small" id="sMsg" role="status"></p></div>`;
+  document.body.appendChild(wrap);
+  const q = $("#sQty", wrap); q.oninput = () => { $("#sTotal", wrap).textContent = money(Math.max(1, Number(q.value) || 1)) + " total"; };
+  $("#sNo", wrap).onclick = () => wrap.remove();
+  $("#sGo", wrap).onclick = async () => { $("#sGo", wrap).disabled = true; $("#sMsg", wrap).textContent = "Opening checkout…";
+    try { const j = await mgrApi("/api/agency/seats", { method: "POST", body: JSON.stringify({ qty: Number(q.value) }) }); location.href = j.url; } catch (e) { $("#sMsg", wrap).textContent = e.message; $("#sGo", wrap).disabled = false; } };
+}
 function inviteTab() {
-  let h = `<div class="card"><h2>Invite a new agent</h2><p class="small">They get a personal link. When they open it, the course knows who they are and shows their manager's contact card.</p>
+  let h = seatsCard() + `<div class="card"><h2>Invite a new agent</h2><p class="small">They get a personal link. When they open it, the course knows who they are and shows their manager's contact card.</p>
     <div class="fld-grid">${field("invFirst", "First name", "text", "", true, "off")}${field("invLast", "Last name", "text", "", true, "off")}${field("invPhone", "Phone", "tel", "", true, "off")}${field("invEmail", "Email", "email", "", true, "off")}</div>
     <div class="fld"><label for="invCourse">Course</label><select id="invCourse"><option value="6day">6-Day Quick Start</option><option value="" ${typeof QS_COURSE === "undefined" ? "selected" : ""}>Full Academy (about 2 weeks)</option></select></div>
     <div class="fld"><label for="invMgr">Their manager</label><select id="invMgr">${byRank(mgr.managers).map(m => `<option value="${esc(m.id)}" ${m.id === meId() ? "selected" : ""}>${esc(m.name)}${m.position ? " · " + esc(m.position) : ""}</option>`).join("")}</select></div>
@@ -5137,7 +5157,7 @@ function costsTab() {
     <div class="grid2">${fld("csBL", "Practice budget: role-plays and drills ($)", st.budgetLearn, "1")}${fld("csBP", "Practice-call budget ($)", st.budgetPractice, "1")}${fld("csBE", "Exam budget ($)", st.budgetExam, "1")}</div>
     <div class="grid2">${fld("csDR", "Free lesson role-plays a day", st.dailyRoleplay, "1")}${fld("csDD", "Free objection drills a day", st.dailyDrill, "1")}${fld("csDP", "Free practice calls a day", st.dailyPractice, "1")}${fld("csFree", "Free practice calls per lead type, in all", st.freePerLead, "1")}${fld("csDT", "Free phone exams a day", st.dailyExamTele, "1")}${fld("csDZ", "Free Zoom exams a day", st.dailyExamZoom, "1")}</div>
     <h3 style="margin-top:16px">Purchased calls</h3>
-    <div class="grid2">${fld("csPrice", "Price per call ($)", (st.callPriceCents / 100).toFixed(2), "0.01")}${fld("csMin", "Fewest calls per purchase", st.minCalls, "1")}${fld("csET", "Calls for one phone exam", st.examTeleCalls, "1")}${fld("csEZ", "Calls for one Zoom exam", st.examZoomCalls, "1")}${fld("csLP", "Role-plays or drills per call", st.learnPackReps, "1")}</div>
+    <div class="grid2">${fld("csPrice", "Price per call ($)", (st.callPriceCents / 100).toFixed(2), "0.01")}${fld("csMin", "Fewest calls per purchase", st.minCalls, "1")}${fld("csET", "Calls for one phone exam", st.examTeleCalls, "1")}${fld("csEZ", "Calls for one Zoom exam", st.examZoomCalls, "1")}${fld("csLP", "Role-plays or drills per call", st.learnPackReps, "1")}${fld("csSeat", "Agency seat price ($)", ((st.seatPriceCents || 7500) / 100).toFixed(2), "0.01")}</div>
     <p class="small">A practice call is 1 call. Trainees choose ${st.minCalls}, ${st.minCalls * 2} or ${st.minCalls * 4} calls at checkout, and Stripe takes its card fee out of each sale.</p>
     <div class="row"><button class="btn small" id="csSave" type="button">Save plans</button><span class="small" id="csMsg" role="status"></span></div>
     <p class="small">Claude costs are exact, from the token counts Anthropic reports on every reply. ElevenLabs credits come straight from your ElevenLabs account when it can be reached. Video minutes are measured by the site, so check Anam's dashboard for the final bill.</p></details>`;
@@ -5149,8 +5169,30 @@ function afterCostsRender() {
     const g = id => Number($("#" + id).value);
     try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther"), ttsDailyChars: g("csTts"), freePerLead: g("csFree"), callPriceCents: Math.round(g("csPrice") * 100), minCalls: g("csMin"),
       allowanceVersion: 2, budgetLearn: g("csBL"), budgetPractice: g("csBP"), budgetExam: g("csBE"), dailyRoleplay: g("csDR"), dailyDrill: g("csDD"), dailyPractice: g("csDP"), dailyExamTele: g("csDT"), dailyExamZoom: g("csDZ"),
-      examTeleCalls: g("csET"), examZoomCalls: g("csEZ"), learnPackReps: g("csLP") }) }); mgr.costs = null; render(); }
+      examTeleCalls: g("csET"), examZoomCalls: g("csEZ"), learnPackReps: g("csLP"), seatPriceCents: Math.round(g("csSeat") * 100) }) }); mgr.costs = null; render(); }
     catch (e) { $("#csMsg").textContent = "Couldn't save: " + e.message; } };
+}
+/* Agencies tab (owner only): every agency that bought seats. */
+function agenciesTab() {
+  if (!mgr.ags) { if (!mgr.agsLoading) { mgr.agsLoading = true; mgrApi("/api/agency/list").then(j => { mgr.ags = j; }).catch(e => { mgr.ags = { error: e.message }; }).finally(() => { mgr.agsLoading = false; render(); }); } return `<div class="card"><p class="small">Loading agencies…</p></div>`; }
+  if (mgr.ags.error) return `<div class="warn"><b>Couldn't load agencies</b>${esc(mgr.ags.error)}</div>`;
+  const a = mgr.ags.agencies || [], money = c => "$" + (c / 100).toFixed(2).replace(/\.00$/, "");
+  const sold = a.reduce((n, x) => n + x.paidCents, 0);
+  let h = `<div class="card"><h2>Agencies</h2><p class="small">Agency owners sign up and buy seats at <b>${location.origin.replace(/^https?:\/\//, "")}/agency</b> (${money(mgr.ags.seatPrice)} a seat). Each agency gets its own private manager view; you only see your own team everywhere else.</p>
+    <div class="stats" style="margin-top:10px"><div class="stat"><div class="k">Agencies</div><div class="v">${a.length}</div></div><div class="stat"><div class="k">Seats sold</div><div class="v">${a.reduce((n, x) => n + x.seats, 0)}</div></div><div class="stat"><div class="k">Seat sales</div><div class="v">${money(sold)}</div></div><div class="stat"><div class="k">Agents started</div><div class="v">${a.reduce((n, x) => n + x.started, 0)}</div></div></div></div>`;
+  if (!a.length) return h + `<div class="card"><p class="small">No agencies yet. Share the signup page with agency owners to get started.</p></div>`;
+  return h + `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Agency</th><th scope="col">Owner</th><th scope="col">Seats used</th><th scope="col">Agents started</th><th scope="col">Paid</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${a.map(x => `<tr>
+    <td><b>${esc(x.name)}</b><div class="small">Since ${new Date(x.createdAt).toLocaleDateString()}</div></td>
+    <td>${esc(x.contact.name || "")}<div class="small">${esc([x.contact.phone, x.contact.email].filter(Boolean).join(" · "))}</div></td>
+    <td><b>${x.seatsUsed}</b> of ${x.seats}</td><td>${x.started} of ${x.invited} invited</td><td>${money(x.paidCents)}</td>
+    <td><button class="linkbtn" data-agrant="${esc(x.id)}" data-aname="${esc(x.name)}" type="button">Add seats</button></td></tr>`).join("")}</tbody></table></div>`;
+}
+function afterAgenciesRender() {
+  document.querySelectorAll("[data-agrant]").forEach(b => b.onclick = async () => {
+    const ok = await confirmAsk("Give " + b.dataset.aname + " 1 free seat?", "Use this for a comp or a make-good. To refund a purchase, refund it in Stripe and remove the seat here with a negative number later.", "Give 1 seat");
+    if (!ok) return;
+    try { await mgrApi("/api/agency/grant", { method: "POST", body: JSON.stringify({ org: b.dataset.agrant, qty: 1 }) }); mgr.ags = null; render(); } catch (e) { alert(e.message); }
+  });
 }
 function managerView() {
   if (!mgrTok()) {
@@ -5170,10 +5212,10 @@ function managerView() {
   if (mgr.me && needConfirm()) { if (!mgr.editing || mgr.editing.id !== mgr.me.id) mgr.editing = Object.assign({}, mgr.me); return confirmView(); }
   const me = mgr.me;
   const waiting = mgr.invites.filter(i => !i.acceptedAt).length;
-  let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
+  let h = `<div class="page wide"><div class="dash-head"><div><h1>Manager view</h1><p class="small" style="font-size:15px">${mgr.agency ? `${esc(mgr.agency.name)} · ` : ""}${me ? `Signed in as ${esc(me.name)}${me.admin ? " (admin)" : ""} · ` : ""}${mgr.rows.length} trainee${mgr.rows.length === 1 ? "" : "s"} · ${waiting} invite${waiting === 1 ? "" : "s"} waiting</p></div>
     <div class="row mhead-act"><button class="btn" data-mtab="invite" type="button">+ Invite an agent</button><button class="btn small secondary" id="mgrRefresh" type="button">Refresh</button>${store.name ? `<button class="linkbtn" data-go="home" type="button">My course</button>` : ""}<button class="linkbtn" id="mgrOut" type="button">Sign out</button></div></div>
     ${mgrTabs()}`;
-  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : mgr.tab === "costs" && mgr.owner ? costsTab() : traineesTab();
+  h += mgr.tab === "lists" ? listsTab() : mgr.tab === "calls" ? callsTab() : mgr.tab === "invite" ? inviteTab() : mgr.tab === "managers" ? managersTab() : mgr.tab === "account" ? accountTab() : mgr.tab === "voices" ? voicesTab() : mgr.tab === "notify" ? notifyTab() : mgr.tab === "costs" && mgr.owner ? costsTab() : mgr.tab === "agencies" && mgr.owner ? agenciesTab() : traineesTab();
   h += `<p class="small">While you're signed in here, every practice call and exam is unlocked for you in this browser so you can test them.</p></div>`;
   return h;
 }
@@ -5187,7 +5229,19 @@ function resizePhoto(file) {
     img.src = url;
   });
 }
+/* Back from buying seats: add them (the webhook usually already has) and open the manager view. */
+(function () {
+  const m = /[?&]agency=seats.*[?&]paid=(cs_[A-Za-z0-9_]+)/.exec(location.search); if (!m) return;
+  try { history.replaceState(null, "", location.pathname + "#manager"); } catch (e) {}
+  const go = async n => { try { const j = await (await fetch("/api/agency/confirm?session_id=" + m[1])).json();
+    if (j.ok) { setTimeout(() => confirmModal("Seats added", `${j.added || ""} seat${j.added === 1 ? "" : "s"} added. ${j.name} now has ${j.seats} in all.`, "OK", () => {}), 800); if (typeof mgrLoad === "function" && mgrTok()) mgrLoad(); return; }
+    if (j.pending && n < 5) setTimeout(() => go(n + 1), 2000); } catch (e) { if (n < 5) setTimeout(() => go(n + 1), 2000); } };
+  setTimeout(() => go(0), 800);
+})();
 function afterManagerRender() {
+  const bs = $("#buySeats"); if (bs) bs.onclick = () => buySeatsModal();
+  if (mgr.agency && !mgr.seatPrice) fetch("/api/agency/info").then(r => r.json()).then(j => { mgr.seatPrice = j.seatPrice; }).catch(() => {});
+  if (mgr.tab === "agencies") afterAgenciesRender();
   document.querySelectorAll("[data-givecalls]").forEach(b => b.onclick = () => {
     const wrap = document.createElement("div"); wrap.className = "modal-back";
     wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="gTitle"><h2 id="gTitle">Give ${esc(b.dataset.gname)} practice calls</h2><p>These are on you. They work for any lead type, and ${esc(b.dataset.gname.split(" ")[0])} won't be charged.</p>
@@ -5239,7 +5293,7 @@ function afterManagerRender() {
     const m = mgr.managers.find(x => x.id === b.dataset.madmin); if (!m) return;
     try { await mgrApi("/api/team/manager", { method: "POST", body: JSON.stringify(Object.assign({}, m, { admin: b.dataset.on === "1" })) }); mgrLoad(); } catch (e) { mgr.formErr = e.message; render(); }
   });
-  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; if (mgr.tab === "notify") { mgr.notes = null; mgr.noteMsg = ""; } if (mgr.tab === "costs") mgr.costs = null; render(); });
+  document.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => { mgr.tab = b.dataset.mtab; mgr.formErr = ""; if (mgr.tab === "notify") { mgr.notes = null; mgr.noteMsg = ""; } if (mgr.tab === "costs") mgr.costs = null; if (mgr.tab === "agencies") mgr.ags = null; render(); });
   document.querySelectorAll("[data-lsub]").forEach(b => b.onclick = () => { mgr.listSub = b.dataset.lsub; render(); });
   document.querySelectorAll("[data-lrefresh]").forEach(b => b.onclick = () => { mgr.lists = null; render(); });
   document.querySelectorAll("[data-lview]").forEach(b => b.onclick = () => { mgr.listOpen = mgr.listOpen === b.dataset.lview ? null : b.dataset.lview; render(); });
@@ -5278,7 +5332,8 @@ function afterManagerRender() {
     if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { mgr.formErr = "That email doesn't look right."; render(); return; }
     ic.disabled = true; ic.textContent = "Creating…";
     try { const j = await mgrApi("/api/team/invite", { method: "POST", body: JSON.stringify(body) }); mgr.last = j.invite; mgr.lastNotified = j.notified; mgr.invites.unshift(j.invite); mgr.formErr = ""; }
-    catch (e) { mgr.formErr = e.message; }
+    catch (e) { mgr.formErr = e.message; if (e.status === 402 && mgr.me && mgr.me.admin) setTimeout(() => buySeatsModal(e.message), 0); }
+    if (mgr.agency) mgrApi("/api/team").then(j => { mgr.agency = j.agency || null; render(); }).catch(() => {});
     render();
   };
   const ph = $("#mPhoto");
@@ -5352,7 +5407,7 @@ async function loadCalls(force) {
 }
 async function loadBoard(range, force) {
   if (!SYNC_ON || (boardData[range] && !force)) return;
-  try { const r = await fetch("/api/calls/board?range=" + range + "&uid=" + encodeURIComponent(store.uid || "")); if (r.ok) boardData[range] = await r.json(); } catch (e) {}
+  try { const r = await fetch("/api/calls/board?range=" + range + "&uid=" + encodeURIComponent(store.uid || "") + "&invite=" + encodeURIComponent(store.invite ? store.invite.token : "")); if (r.ok) boardData[range] = await r.json(); } catch (e) {}
   if (view.name === "standings" || view.name === "home") render();
 }
 function statCards(t, label) {

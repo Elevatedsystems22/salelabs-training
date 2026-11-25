@@ -9,6 +9,7 @@
 import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager, managersStore } from "../lib/auth.mjs";
+import { inviteMap, inScope, rowOrg } from "../lib/org.mjs";
 
 const UID = /^[A-Za-z0-9-]{8,64}$/;
 const TZ = "America/Chicago";
@@ -99,7 +100,9 @@ export default async (req) => {
       (async () => { const s = managersStore(); const { blobs } = await s.list(); return (await Promise.all(blobs.map(x => s.get(x.key, { type: "json" }).catch(() => null)))).filter(Boolean); })()
     ]);
     const inv = Object.fromEntries(invList.map(i => [i.token, i])), mg = Object.fromEntries(mgrList.map(m => [m.id, m]));
-    const agents = sums.map(s => {
+    // Standings only compare agents in the same agency as whoever is asking.
+    const asker = sums.find(s => s.uid === url.searchParams.get("uid")), myOrg = asker ? rowOrg(asker, inv) : (url.searchParams.get("invite") && inv[url.searchParams.get("invite")] ? inv[url.searchParams.get("invite")].org || "" : "");
+    const agents = sums.filter(s => rowOrg(s, inv) === myOrg).map(s => {
       const tot = { total: 0, contacts: 0, appts: 0 };
       dates.forEach(d => { const x = s.days[d]; if (x) { tot.total += x.total; tot.contacts += x.contacts; tot.appts += x.appts; } });
       const m = s.invite && inv[s.invite] ? mg[inv[s.invite].managerId] : null;
@@ -111,9 +114,9 @@ export default async (req) => {
   }
 
   if (path === "/api/calls/team" && req.method === "GET") {
-    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
-    const { date, hour } = central(Date.now());
-    return json({ date, hour, weekDates: rangeDates("week"), monthDates: rangeDates("month"), agents: (await allSummaries()).map(s => ({ uid: s.uid, name: s.name, invite: s.invite, updatedAt: s.updatedAt, days: s.days })) });
+    const me = await authManager(req); if (!me) return json({ error: "signed_out" }, 401);
+    const { date, hour } = central(Date.now()), inv = await inviteMap();
+    return json({ date, hour, weekDates: rangeDates("week"), monthDates: rangeDates("month"), agents: (await allSummaries()).filter(s => inScope(s, me, inv)).map(s => ({ uid: s.uid, name: s.name, invite: s.invite, updatedAt: s.updatedAt, days: s.days })) });
   }
 
   return json({ error: "not_found" }, 404);

@@ -14,12 +14,15 @@
    Admins only:
      POST   /api/team/password/reset      {id, temp} sets a temporary password; they pick their own at next sign-in
      DELETE /api/team/manager?id=…
-   First sign-in for an admin with no password yet: their email + MANAGER_CODE, then they set a password. */
+   First sign-in for an admin with no password yet: their email + MANAGER_CODE, then they set a password.
+   Agencies: every manager and invite belongs to one agency (org; "" is Brandon's own team). Managers only see and change their own agency,
+   and agencies other than Brandon's use up one paid seat per agent invite. */
 import { getStore } from "@netlify/blobs";
 import { randomBytes } from "node:crypto";
 import { json } from "../lib/guard.mjs";
 import { hashPw, checkPw, safeEq, makeToken, authManager, managersStore, publicMgr } from "../lib/auth.mjs";
 import { notify, agentInviteMsg, managerWelcomeMsg } from "../lib/notify.mjs";
+import { agenciesStore, orgOf } from "../lib/org.mjs";
 
 const TOKEN = /^[A-Za-z0-9_-]{8,64}$/;
 const str = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
@@ -58,12 +61,12 @@ export default async (req) => {
   const inviteUrl = (t, course) => url.origin + (course === "6day" ? "/" : "/full") + "?invite=" + encodeURIComponent(t);
   const managerUrl = url.origin + "/#manager";
   const nlog = getStore({ name: "notifylog", consistency: "strong" });
-  let byId = "";
+  let byId = "", myOrg = "";
   // Sends through GHL and keeps a record (never the message text, which can hold a temporary password).
   const logged = async (payload, ref) => {
     const res = await notify(payload);
     const at = new Date().toISOString();
-    try { await nlog.setJSON(at.replace(/[:.]/g, "-") + "-" + randomBytes(3).toString("hex"), { at, event: payload.event, role: payload.role, name: payload.full_name || "", phone: payload.phone || "", email: payload.email || "", sent: !!res.sent, reason: res.reason || "", by: byId, ...ref }); } catch (e) {}
+    try { await nlog.setJSON(at.replace(/[:.]/g, "-") + "-" + randomBytes(3).toString("hex"), { at, event: payload.event, role: payload.role, name: payload.full_name || "", phone: payload.phone || "", email: payload.email || "", sent: !!res.sent, reason: res.reason || "", by: byId, org: myOrg, ...ref }); } catch (e) {}
     return res;
   };
   const sendInvite = async inv => {
@@ -108,13 +111,15 @@ export default async (req) => {
 
   const me = await authManager(req);
   if (!me) return json({ error: "signed_out", message: "Your sign-in expired. Sign in again." }, 401);
-  const isAdmin = !!me.admin;
-  byId = me.id;
+  const isAdmin = !!me.admin, org = orgOf(me), sameOrg = r => !!r && (r.org || "") === org;
+  byId = me.id; myOrg = org;
+  const agencies = agenciesStore(), agency = org ? await agencies.get("org/" + org, { type: "json" }).catch(() => null) : null;
 
   if (path === "/api/team/notifications" && req.method === "GET") {
     const { blobs } = await nlog.list();
     const keys = blobs.map(b => b.key).sort().reverse().slice(0, 300);
     let rows = (await Promise.all(keys.map(k => nlog.get(k, { type: "json" }).catch(() => null)))).filter(Boolean);
+    rows = rows.filter(r => (r.org || "") === org);
     if (!isAdmin) rows = rows.filter(r => r.by === me.id || r.managerId === me.id);
     return json({ connected: /^https:\/\//.test(process.env.NOTIFY_WEBHOOK_URL || "") || !!(process.env.NOTIFY_ALLOW_HTTP && /^http:\/\/localhost/.test(process.env.NOTIFY_WEBHOOK_URL || "")), admin: isAdmin, log: rows.slice(0, 150) });
   }
@@ -129,7 +134,8 @@ export default async (req) => {
 
   if (path === "/api/team" && req.method === "GET") {
     const [m, i] = await Promise.all([managersList(mgrs), allJSON(invites)]);
-    return json({ me: me.id === "_master" ? null : publicMgr(me), managers: m.map(publicMgr), invites: i.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")) });
+    return json({ me: me.id === "_master" ? null : publicMgr(me), managers: m.filter(sameOrg).map(publicMgr), invites: i.filter(sameOrg).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")),
+      agency: agency ? { id: agency.id, name: agency.name, seats: agency.seats || 0, seatsUsed: agency.seatsUsed || 0, ownerId: agency.ownerId } : null });
   }
   if (path === "/api/team/me" && req.method === "GET") return json({ me: publicMgr(me) });
 
@@ -148,7 +154,7 @@ export default async (req) => {
     const b = await body(); if (!b) return json({ error: "bad_request" }, 400);
     if (!pwOk(b.temp)) return json({ error: "weak", message: "Use at least 8 characters." }, 400);
     const rec = await mgrs.get(str(b.id, 64), { type: "json" });
-    if (!rec) return json({ error: "not_found" }, 404);
+    if (!rec || !sameOrg(rec)) return json({ error: "not_found" }, 404);
     const next = { ...rec, pwHash: hashPw(b.temp), mustChange: true, v: (rec.v || 0) + 1, fails: 0, lockUntil: "" };
     await mgrs.setJSON(rec.id, next);
     const notified = b.send === false ? { sent: false, reason: "skipped" } : await sendManager(next, b.temp, !!rec.pwHash);
@@ -161,7 +167,8 @@ export default async (req) => {
     if (!name) return json({ error: "bad_request", message: "Name is required." }, 400);
     const photo = str(b.photo, 400000);
     if (photo && !PHOTO.test(photo)) return json({ error: "bad_request", message: "That photo couldn't be saved." }, 400);
-    const existing = TOKEN.test(String(b.id || "")) ? await mgrs.get(b.id, { type: "json" }) : null;
+    let existing = TOKEN.test(String(b.id || "")) ? await mgrs.get(b.id, { type: "json" }) : null;
+    if (existing && !sameOrg(existing)) return json({ error: "forbidden", message: "That manager isn't on your team." }, 403);
     if (existing && existing.id !== me.id && !isAdmin) return json({ error: "forbidden", message: "You can only edit your own card. Ask an admin to change someone else's." }, 403);
     const email = str(b.email, 120).toLowerCase();
     if (email) { const clash = (await allJSON(mgrs)).find(r => String(r.email || "").toLowerCase() === email && (!existing || r.id !== existing.id)); if (clash) return json({ error: "dup", message: "Another manager already uses that email." }, 400); }
@@ -169,7 +176,7 @@ export default async (req) => {
     const prev = existing || {};
     const rec = { ...prev, id, name, position: str(b.position, 60), phone: str(b.phone, 30), email, photo: photo || prev.photo || "",
       admin: isAdmin && typeof b.admin === "boolean" && id !== me.id ? b.admin : !!prev.admin,
-      reportsTo: b.reportsTo !== undefined ? (str(b.reportsTo, 64) === id ? "" : str(b.reportsTo, 64)) : (prev.reportsTo || ""),
+      reportsTo: b.reportsTo !== undefined ? (str(b.reportsTo, 64) === id ? "" : str(b.reportsTo, 64)) : (prev.reportsTo || ""), org: existing ? (prev.org || "") : org,
       createdAt: prev.createdAt || new Date().toISOString(), confirmedAt: b.confirm && id === me.id ? new Date().toISOString() : (prev.confirmedAt || ""), v: prev.v || 0 };
     let notified = null;
     if (!existing && isAdmin && pwOk(b.temp)) { rec.pwHash = hashPw(b.temp); rec.mustChange = true; }
@@ -182,6 +189,9 @@ export default async (req) => {
     if (!isAdmin) return json({ error: "forbidden", message: "Only an admin can remove managers." }, 403);
     const id = url.searchParams.get("id") || "";
     if (!TOKEN.test(id) || id === me.id) return json({ error: "bad_request", message: "You can't remove yourself." }, 400);
+    const target = await mgrs.get(id, { type: "json" }).catch(() => null);
+    if (!target || !sameOrg(target)) return json({ error: "not_found" }, 404);
+    if (agency && agency.ownerId === id) return json({ error: "forbidden", message: "The agency owner can't be removed." }, 403);
     await mgrs.delete(id);
     return json({ ok: true });
   }
@@ -190,8 +200,17 @@ export default async (req) => {
     const b = await body(); if (!b) return json({ error: "bad_request" }, 400);
     const first = str(b.first, 40), last = str(b.last, 40);
     if (!first || !last) return json({ error: "bad_request", message: "First and last name are required." }, 400);
+    let managerId = str(b.managerId, 64);
+    if (managerId) { const mg = await mgrs.get(managerId, { type: "json" }).catch(() => null); if (!sameOrg(mg)) managerId = me.id === "_master" ? "" : me.id; }
+    if (org) {
+      // Each agent in a paid agency uses one seat.
+      const fresh = await agencies.get("org/" + org, { type: "json" }).catch(() => null);
+      if (!fresh) return json({ error: "no_agency" }, 400);
+      if ((fresh.seatsUsed || 0) >= (fresh.seats || 0)) return json({ error: "no_seats", message: "You've used all your seats. Buy more to invite this agent.", seats: fresh.seats || 0 }, 402);
+      fresh.seatsUsed = (fresh.seatsUsed || 0) + 1; await agencies.setJSON("org/" + org, fresh);
+    }
     const token = randomBytes(12).toString("base64url");
-    const rec = { token, first, last, phone: str(b.phone, 30), email: str(b.email, 120), managerId: str(b.managerId, 64), course: b.course === "6day" ? "6day" : "", invitedBy: me.id, createdAt: new Date().toISOString(), acceptedAt: "", uid: "" };
+    const rec = { token, first, last, phone: str(b.phone, 30), email: str(b.email, 120), managerId, course: b.course === "6day" ? "6day" : "", org, invitedBy: me.id, createdAt: new Date().toISOString(), acceptedAt: "", uid: "" };
     await invites.setJSON(token, rec);
     const notified = b.send === false ? { sent: false, reason: "skipped" } : await sendInvite(rec);
     return json({ invite: rec, notified });
@@ -200,14 +219,18 @@ export default async (req) => {
     const b = await body(); const t = b && String(b.token || "");
     if (!TOKEN.test(t)) return json({ error: "bad_request" }, 400);
     const inv = await invites.get(t, { type: "json" });
-    if (!inv) return json({ error: "not_found" }, 404);
+    if (!inv || !sameOrg(inv)) return json({ error: "not_found" }, 404);
     return json({ notified: await sendInvite(inv) });
   }
   if (path === "/api/team/invite" && req.method === "DELETE") {
     const token = url.searchParams.get("token") || "";
     if (!TOKEN.test(token)) return json({ error: "bad_request" }, 400);
+    const inv = await invites.get(token, { type: "json" }).catch(() => null);
+    if (!inv || !sameOrg(inv)) return json({ error: "not_found" }, 404);
     await invites.delete(token);
-    return json({ ok: true });
+    // An invite nobody opened gives its seat back.
+    if (org && !inv.acceptedAt) { const fresh = await agencies.get("org/" + org, { type: "json" }).catch(() => null); if (fresh && fresh.seatsUsed > 0) { fresh.seatsUsed -= 1; await agencies.setJSON("org/" + org, fresh); } }
+    return json({ ok: true, seatBack: !!(org && !inv.acceptedAt) });
   }
   return json({ error: "method_not_allowed" }, 405);
 };

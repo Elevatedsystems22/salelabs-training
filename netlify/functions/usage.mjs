@@ -91,7 +91,7 @@ export default async (req) => {
       otherFixed: num(b.otherFixed, 0, 10000, settings.otherFixed), ttsDailyChars: Math.round(num(b.ttsDailyChars, 0, 1e8, settings.ttsDailyChars))
     };
     // free allowance and purchased-call settings
-    for (const k of Object.keys(ALLOWANCE_DEFAULTS)) next[k] = num(b[k], 0, k === "callPriceCents" ? 100000 : 1000, settings[k]);
+    for (const k of Object.keys(ALLOWANCE_DEFAULTS)) next[k] = num(b[k], 0, /Cents$/.test(k) ? 1000000 : 1000, settings[k]);
     next.callPriceCents = Math.max(50, Math.round(next.callPriceCents)); next.minCalls = Math.max(1, Math.round(next.minCalls));
     next.allowanceVersion = ALLOWANCE_VERSION;
     await store.setJSON("settings", next);

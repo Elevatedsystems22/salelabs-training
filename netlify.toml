@@ -27,3 +27,8 @@
   from = "/full"
   to = "/academy-full.html"
   status = 200
+
+[[redirects]]
+  from = "/agency"
+  to = "/agency.html"
+  status = 200

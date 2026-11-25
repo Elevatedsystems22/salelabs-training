@@ -5,6 +5,7 @@
    Needs the environment variable MANAGER_CODE (your manager passcode). Data is kept in Netlify Blobs. */
 import { getStore } from "@netlify/blobs";
 import { authManager } from "../lib/auth.mjs";
+import { inviteMap, inScope } from "../lib/org.mjs";
 import { allowed, json } from "../lib/guard.mjs";
 
 const UID = /^[A-Za-z0-9-]{8,64}$/;
@@ -63,16 +64,18 @@ export default async (req) => {
 
   if (req.method === "GET") {
     if (!process.env.MANAGER_CODE && !process.env.SESSION_SECRET) return json({ error: "missing_code", message: "MANAGER_CODE is not set in Netlify." }, 500);
-    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
-    const { blobs } = await db.list();
+    const me = await authManager(req); if (!me) return json({ error: "signed_out" }, 401);
+    const { blobs } = await db.list(), inv = await inviteMap();
     const rows = await Promise.all(blobs.map(b => db.get(b.key, { type: "json" }).catch(() => null)));
-    return json({ trainees: rows.filter(Boolean) });
+    return json({ trainees: rows.filter(r => r && inScope(r, me, inv)) });
   }
 
   if (req.method === "DELETE") {
-    if (!(await authManager(req))) return json({ error: "signed_out" }, 401);
+    const me = await authManager(req); if (!me) return json({ error: "signed_out" }, 401);
     const uid = new URL(req.url).searchParams.get("uid") || "";
     if (!UID.test(uid)) return json({ error: "bad_request" }, 400);
+    const rec = await db.get(uid, { type: "json" }).catch(() => null);
+    if (!rec || !inScope(rec, me, await inviteMap())) return json({ error: "not_found" }, 404);
     await db.delete(uid);
     return json({ ok: true });
   }

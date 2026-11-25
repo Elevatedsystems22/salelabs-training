@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SaleLabs for Agency Owners · Virtual Presentation Training</title>
+<meta name="description" content="Train new agents to turn phone calls into virtual presentations, with AI practice calls and certification exams. $75 per agent.">
+<style>
+:root { --ink: #121a2b; --muted: #556072; --line: #dfe5ee; --bg: #f4f7fb; --surface: #fff; --accent: #0b4fb3; --accent-soft: #eaf1fc; --good: #217a3c; --bad: #b3261e; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; }
+a { color: var(--accent); }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+header { background: var(--surface); border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.brand { font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+.brand span { color: var(--accent); }
+header a.sign { font-weight: 700; text-decoration: none; }
+.hero { padding: 56px 0 28px; display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 800; color: var(--good); }
+h1 { font-size: 44px; line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 14px; }
+.lead { font-size: 18px; color: var(--muted); margin: 0 0 22px; }
+.points { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 10px; }
+.points li { display: flex; gap: 10px; }
+.points li::before { content: "✓"; color: var(--good); font-weight: 900; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(18,26,43,.06); }
+.price { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.price b { font-size: 40px; letter-spacing: -.02em; }
+.small { font-size: 13px; color: var(--muted); }
+label { display: block; font-weight: 700; font-size: 14px; margin: 12px 0 4px; }
+input { width: 100%; font: inherit; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+button.btn { width: 100%; margin-top: 16px; background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 14px; font: inherit; font-weight: 800; font-size: 16px; cursor: pointer; }
+button.btn:disabled { opacity: .6; cursor: default; }
+.total { display: flex; justify-content: space-between; margin-top: 14px; font-weight: 700; }
+.err { color: var(--bad); font-size: 14px; margin-top: 10px; }
+section { padding: 34px 0; }
+h2 { font-size: 28px; letter-spacing: -.01em; margin: 0 0 18px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid3 .card { box-shadow: none; }
+.grid3 h3 { margin: 6px 0 6px; font-size: 18px; }
+.num { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--accent-soft); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.done { text-align: center; padding: 40px 28px; }
+.done .big { font-size: 46px; }
+.temp { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 20px; font-weight: 800; background: var(--accent-soft); padding: 8px 14px; border-radius: 10px; display: inline-block; margin: 6px 0; letter-spacing: .03em; }
+footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 32px; } h1 { font-size: 34px; } .grid3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="brand">Sale<span>Labs</span> · Virtual Presentation Training</div><a class="sign" href="/#manager">Agency sign-in</a></div></header>
+
+<main class="wrap" id="main">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">For Liberty National agency owners</div>
+      <h1>Turn new agents into virtual presenters in 6 days.</h1>
+      <p class="lead">A self-paced course that teaches new agents Zoom basics, the phone call and its rebuttals, and the full presentation by Zoom or phone. They practice out loud with realistic AI clients and certify on live AI exams. You watch every score.</p>
+      <ul class="points">
+        <li>16 short lessons: read it, say it, do it. Out loud, not quizzes.</li>
+        <li>AI families that answer, object and interrupt like real clients.</li>
+        <li>A phone presentation exam and a live Zoom exam with a realistic person on video.</li>
+        <li>Your own private manager view: invite agents, see progress, scores and weak spots.</li>
+        <li>Practice-call and AI limits built in, so there are no surprise bills.</li>
+      </ul>
+    </div>
+
+    <div class="card" id="buyCard">
+      <div class="price"><b id="seatPrice">$75</b><span>per agent, one time</span></div>
+      <p class="small">Each seat is one agent's full training. Buy what you need now and add seats anytime from your manager view.</p>
+      <form id="f" novalidate>
+        <label for="agencyName">Agency name</label><input id="agencyName" autocomplete="organization" required>
+        <div class="row2">
+          <div><label for="ownerName">Your name</label><input id="ownerName" autocomplete="name" required></div>
+          <div><label for="phone">Mobile phone</label><input id="phone" type="tel" autocomplete="tel"></div>
+        </div>
+        <label for="email">Email (your sign-in)</label><input id="email" type="email" autocomplete="email" required>
+        <label for="seats">Agent seats</label><input id="seats" type="number" min="1" max="200" value="5">
+        <div class="total"><span>Total today</span><span id="total">$375</span></div>
+        <button class="btn" id="go" type="submit">Continue to secure checkout</button>
+        <div class="err" id="err" role="alert"></div>
+        <p class="small" style="margin-top:10px">You'll pay on Stripe's secure page. Your sign-in link and temporary password arrive by text and email right after.</p>
+      </form>
+    </div>
+  </div>
+
+  <section>
+    <h2>How it works</h2>
+    <div class="grid3">
+      <div class="card"><div class="num">1</div><h3>Buy seats</h3><p class="small">One seat per agent. Your agency gets its own private space, separate from every other agency.</p></div>
+      <div class="card"><div class="num">2</div><h3>Invite your agents</h3><p class="small">From your manager view, enter an agent's name and phone. They get a personal link by text and email.</p></div>
+      <div class="card"><div class="num">3</div><h3>Coach to certification</h3><p class="small">Watch lessons passed, call scores, reading pace and weak spots. Add your own managers to help coach.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What each seat includes</h2>
+    <table>
+      <thead><tr><th>Included</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td><b>The 6-Day Quick Start</b></td><td>Zoom basics, getting the client on the call, the ADP Referral call and all 7 ADP phone rebuttals, opening and F.O.R.M., the presentation, referrals and the close. Other lead types are optional extras.</td></tr>
+        <tr><td><b>Free AI practice</b></td><td>Lesson role-plays and objection drills every day, plus free practice calls with an AI family.</td></tr>
+        <tr><td><b>Certification exams</b></td><td>Two free tries a day at the phone presentation exam and the Zoom exam, within the seat's AI allowance.</td></tr>
+        <tr><td><b>Manager view</b></td><td>Invite agents, track progress and call scores, add managers, and get texts and emails sent for you.</td></tr>
+        <tr><td><b>Extra practice</b></td><td>Agents who want more than the included allowance can buy extra practice calls themselves, so your cost stays fixed at the seat price.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer><div class="wrap">SaleLabs is an independent training product by Elevated Systems. It is not affiliated with, sponsored by or endorsed by Globe Life or Liberty National. Questions? Contact Brandon Carter.</div></footer>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  let price = 7500;
+  const money = c => "$" + (c / 100).toFixed(2).replace(/\.00$/, "");
+  const upd = () => { const n = Math.max(1, Math.min(200, parseInt($("seats").value, 10) || 1)); $("total").textContent = money(n * price); };
+  fetch("/api/agency/info").then(r => r.json()).then(j => { price = j.seatPrice || price; $("seatPrice").textContent = money(price); upd(); if (!j.payments) { $("go").disabled = true; $("err").textContent = "Signups open soon."; } }).catch(() => {});
+  $("seats").addEventListener("input", upd); upd();
+  $("f").addEventListener("submit", async e => {
+    e.preventDefault(); $("err").textContent = "";
+    const body = { agencyName: $("agencyName").value, ownerName: $("ownerName").value, email: $("email").value, phone: $("phone").value, seats: $("seats").value };
+    if (!body.agencyName.trim() || !body.ownerName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { $("err").textContent = "Fill in your agency name, your name and a valid email."; return; }
+    $("go").disabled = true; $("go").textContent = "Opening checkout…";
+    try { const r = await fetch("/api/agency/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json();
+      if (j.url) { location.href = j.url; return; } $("err").textContent = j.message || "Couldn't open checkout. Try again."; }
+    catch (x) { $("err").textContent = "Couldn't reach the server. Check your connection."; }
+    $("go").disabled = false; $("go").textContent = "Continue to secure checkout";
+  });
+
+  // Back from Stripe: set up the agency and show how to sign in.
+  const m = /[?&]paid=(cs_[A-Za-z0-9_]+)/.exec(location.search); if (!m) return;
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  const card = $("buyCard"); card.innerHTML = `<div class="done"><div class="big">⏳</div><h2>Setting up your agency…</h2><p class="small">This takes a few seconds.</p></div>`;
+  const esc = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const show = j => {
+    if (j.type === "seats") { card.innerHTML = `<div class="done"><div class="big">✅</div><h2>Seats added</h2><p>${esc(j.name)} now has ${j.seats} seats.</p><p><a href="/#manager"><b>Open your manager view →</b></a></p></div>`; return; }
+    card.innerHTML = `<div class="done"><div class="big">🎉</div><h2>Welcome, ${esc(j.name)}!</h2><p>Your agency is ready with <b>${j.seats}</b> seat${j.seats === 1 ? "" : "s"}.</p>
+      ${j.temp ? `<p class="small">Sign in with <b>${esc(j.email)}</b> and this temporary password. You'll choose your own right away.</p><div class="temp">${esc(j.temp)}</div><p class="small">Save it now: it's only shown once.${j.notified ? " We also texted and emailed it to you." : ""}</p>`
+        : `<p class="small">Your sign-in link and temporary password were sent to <b>${esc(j.email)}</b>${j.notified ? " and your phone" : ""}.</p>`}
+      <p><a href="/#manager" style="display:inline-block;margin-top:8px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;text-decoration:none">Sign in to your manager view</a></p></div>`;
+  };
+  const go = async n => { try { const j = await (await fetch("/api/agency/confirm?session_id=" + m[1])).json(); if (j.ok) return show(j); if (n < 8) return setTimeout(() => go(n + 1), 2000); } catch (e) { if (n < 8) return setTimeout(() => go(n + 1), 2000); }
+    card.innerHTML = `<div class="done"><div class="big">📬</div><h2>Payment received</h2><p class="small">We're finishing your setup. Your sign-in details will arrive by text and email shortly. If they don't within 10 minutes, contact Brandon Carter.</p></div>`; };
+  go(0);
+})();
+</script>
+</body>
+</html>
