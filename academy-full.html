@@ -501,6 +501,8 @@ html.nb-safe .tooldrawer { padding-bottom: 56px; }
 .dash-head h1 { font-size: 28px; }
 .status.ns { background: #eef1f5; color: #4a5568; }
 .conn { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; } .conn li b { margin-right: 6px; }
+.credits .credits-paid { text-align: center; min-width: 120px; } .credits .credits-paid b { display: block; font-size: 28px; color: var(--accent); } .credits .credits-paid span { font-size: 12px; color: var(--muted); }
+.credits-leads { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; } .credits-leads span { background: var(--accent-soft); border-radius: 999px; padding: 4px 10px; font-size: 13px; } .credits-leads span.out { background: #f3f4f6; color: var(--muted); }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 16px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 14px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 2px; }
@@ -3198,7 +3200,7 @@ function render() {
   else if (view.name === "objdrill") { main.innerHTML = objDrillView(view.id); bindObjDrill(); }
   else if (view.name === "zoomsim") { main.innerHTML = zoomSimView(view.id); bindZoomSim(); }
   else if (view.name === "scenario") { main.innerHTML = scenarioView(view.id); bindScenario(); }
-  else if (view.name === "practice" || view.name === "exam") main.innerHTML = familyPickView(view.name);
+  else if (view.name === "practice" || view.name === "exam") main.innerHTML = view.name === "practice" ? (h => { const i = h.indexOf("</p>"); return i < 0 ? creditsBanner() + h : h.slice(0, i + 4) + creditsBanner() + h.slice(i + 4); })(familyPickView(view.name)) : familyPickView(view.name);
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
   else if (view.name === "results") main.innerHTML = resultsView(view.attempt);
@@ -4014,6 +4016,78 @@ function pickVoice(name, taken) {
   return free[0] || us[0] || pool[0] || browserVoices.find(v => /en-US/i.test(v.lang)) || browserVoices[0] || null;
 }
 
+/* ---------- Practice-call credits: free calls per lead type, then purchased calls (Stripe) ---------- */
+let CREDITS = null, creditsBusy = false;
+function creditsOn() { return SITE_MODE && !isManager(); }
+function creditWho() { return { uid: store.uid || "", invite: store.invite ? store.invite.token : "", name: store.name || "" }; }
+async function loadCredits() {
+  if (!creditsOn() || !store.uid) return;
+  try { const w = creditWho(), r = await fetch("/api/credits?uid=" + encodeURIComponent(w.uid) + "&invite=" + encodeURIComponent(w.invite)); if (r.ok) { CREDITS = await r.json(); if (view.name === "practice") render(); } } catch (e) {}
+}
+async function creditPost(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.assign(creditWho(), body)) });
+  const j = await r.json().catch(() => ({})); return { status: r.status, j };
+}
+function creditLeft(fam) { return CREDITS ? (CREDITS.free[fam.leadType] || 0) : null; }
+async function startPracticeCall(fam) {
+  // Locked calls never cost anything: startCall just sends them back to the list.
+  if (!creditsOn() || !callOpen(fam, practiceFormat) || (practiceFormat !== "dial" && !practiceUnlocked())) return startCall(fam, "practice", practiceFormat);
+  if (creditsBusy) return; creditsBusy = true;
+  let res = null;
+  try { res = await creditPost("/api/credits/use", { lead: fam.leadType, format: practiceFormat }); } catch (e) {}
+  creditsBusy = false;
+  if (res && res.status === 402) { CREDITS = Object.assign(CREDITS || {}, res.j); return buyCallsModal(fam); }
+  if (res && res.j && res.j.ok) CREDITS = Object.assign(CREDITS || {}, res.j);
+  startCall(fam, "practice", practiceFormat);
+  if (rp && res && res.j && res.j.useId) { rp.useId = res.j.useId; rp.creditKind = res.j.used; }
+}
+/* Give the call back when it never really happened: left the lobby, or hung up in the first minute. */
+function refundCredit(r) {
+  if (!r || !r.useId || r.refunded) return; r.refunded = true;
+  creditPost("/api/credits/refund", { useId: r.useId }).then(x => { if (x.j && x.j.free) CREDITS = Object.assign(CREDITS || {}, x.j); }).catch(() => {});
+}
+function maybeRefund(r) { if (r && r.useId && (!r.started || Date.now() - r.started < 60000)) refundCredit(r); }
+function creditsBanner() {
+  if (!creditsOn() || !CREDITS) { if (creditsOn() && !CREDITS) setTimeout(loadCredits, 0); return ""; }
+  const leads = Object.entries(CREDITS.free || {});
+  return `<div class="card credits"><div class="row spread"><div><h2>Your practice calls</h2>
+    <p class="small">You get ${CREDITS.freePerLead} free practice call${CREDITS.freePerLead === 1 ? "" : "s"} for each lead type. Exams are always free. A call you leave in the first minute is given back.</p></div>
+    <div class="credits-paid"><b>${CREDITS.paid || 0}</b><span>purchased call${CREDITS.paid === 1 ? "" : "s"} left</span></div></div>
+    <div class="credits-leads">${leads.map(([l, n]) => `<span class="${n ? "" : "out"}"><b>${n}</b> free · ${esc(l)}</span>`).join("")}</div>
+    ${CREDITS.payments ? `<button class="btn small" id="buyCalls" type="button" style="width:auto">Buy more practice calls</button>` : `<p class="small">Out of free calls? Ask your manager for more.</p>`}</div>`;
+}
+function buyCallsModal(fam) {
+  const c = CREDITS || { price: 200, min: 5, payments: false };
+  const wrap = document.createElement("div"); wrap.className = "modal-back";
+  const price = n => "$" + (n * c.price / 100).toFixed(2);
+  wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="bTitle"><h2 id="bTitle">${fam ? "You've used your free " + esc(fam.leadType) + " calls" : "Buy practice calls"}</h2>
+    ${c.payments ? `<p>Keep practicing with more AI calls. Each call is ${price(1)} and works for any lead type.</p>
+    <div class="fld"><label for="bQty">How many calls?</label><select id="bQty">${[c.min, c.min * 2, c.min * 4].map(n => `<option value="${n}">${n} calls · ${price(n)}</option>`).join("")}</select></div>
+    <p class="small">You'll pay on Stripe's secure checkout page, then come right back here.</p>
+    <div class="row"><button class="btn" id="bGo" type="button">Continue to payment</button><button class="btn secondary" id="bCancel" type="button">Not now</button></div><p class="small" id="bMsg" role="status"></p>`
+    : `<p>Card payments aren't turned on yet. Ask your manager to add practice calls for you.</p><div class="row"><button class="btn" id="bCancel" type="button">OK</button></div>`}</div>`;
+  document.body.appendChild(wrap);
+  $("#bCancel", wrap).onclick = () => wrap.remove();
+  const go = $("#bGo", wrap); if (go) { go.focus(); go.onclick = async () => {
+    go.disabled = true; $("#bMsg", wrap).textContent = "Opening checkout…";
+    try { const r = await creditPost("/api/credits/checkout", { qty: Number($("#bQty", wrap).value), returnUrl: location.origin + location.pathname });
+      if (r.j && r.j.url) { location.href = r.j.url; return; } $("#bMsg", wrap).textContent = (r.j && r.j.message) || "Couldn't open checkout. Try again."; }
+    catch (e) { $("#bMsg", wrap).textContent = "Couldn't open checkout. Check your connection."; }
+    go.disabled = false; }; }
+}
+/* Back from Stripe: add the calls (the webhook usually already has) and say so. */
+(function () {
+  const m = /[?&]paid=(cs_[A-Za-z0-9_]+)/.exec(location.search); if (!m) return;
+  try { history.replaceState(null, "", location.pathname + "#practice"); } catch (e) {}
+  const tryConfirm = async n => {
+    try { const r = await fetch("/api/credits/confirm?session_id=" + m[1]), j = await r.json();
+      if (j.ok) { CREDITS = Object.assign(CREDITS || {}, j); view = { name: "practice" }; render(); setTimeout(() => confirmModal("Payment received", `Your practice calls are ready. You have ${j.paid} purchased call${j.paid === 1 ? "" : "s"}.`, "Start practicing", () => {}), 300); return; }
+      if (j.pending && n < 5) return setTimeout(() => tryConfirm(n + 1), 2000);
+    } catch (e) { if (n < 5) return setTimeout(() => tryConfirm(n + 1), 2000); }
+  };
+  setTimeout(() => tryConfirm(0), 600);
+})();
+
 function startCall(fam, mode, format) {
   if (!callOpen(fam, format) || (mode !== "exam" && format !== "dial" && !practiceUnlocked() && !isManager())) { view = { name: mode === "exam" ? "exam" : "practice" }; render(); return; }
   rp = { fam, mode, format: format || "zoom", phase: "lobby", msgs: [], shared: [], current: null, sharing: false, quoteShown: false, mood: 45, decision: "none", decisionNote: "",
@@ -4382,7 +4456,7 @@ function moodLabel(m) { return m >= 80 ? "Ready to move forward" : m >= 60 ? "Wa
 function afterCallRender() {
   if (rp.phase === "lobby") {
     $("#joinBtn").onclick = joinMeeting;
-    $("#lobbyBack").onclick = () => { const mode = rp.mode; rp = null; view = { name: mode }; render(); };
+    $("#lobbyBack").onclick = () => { const mode = rp.mode; refundCredit(rp); rp = null; view = { name: mode }; render(); };
     return;
   }
   renderMsgs(); updateCaptions(); setSpeaking(rp.speaking);
@@ -4511,6 +4585,7 @@ async function askClaude(prompt, tier) {
 async function finishCall() {
   if (!rp) return;
   stopLive(); rp.ended = true;
+  if (rp.useId && rp.msgs.filter(m => m.who === "agent").length < 2) maybeRefund(rp);
   if (rp.decision === "none") rp.decision = "no_sale";
   rp.duration = rp.started ? Math.floor((Date.now() - rp.started) / 1000) : 0;
   view = { name: "grading" }; render();
@@ -4899,7 +4974,7 @@ function traineesTab() {
     <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
   if (!rows.length && !notStarted.length) h += `<div class="card"><h2>Invite your first agent</h2><p>Trainees show up here after they open their invite link or sign in on your site.</p><div><button class="btn" data-mtab="invite" type="button">Invite an agent</button></div></div>`;
   else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Role-plays</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
-      <td><b>${esc(r.name)}</b>${courseTag(r.course)}${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}</td>
+      <td><b>${esc(r.name)}</b>${courseTag(r.course)}${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}${r.invite || r.uid ? `<button class="linkbtn small" data-givecalls="${esc(r.invite ? "inv_" + r.invite : "uid_" + r.uid)}" data-gname="${esc(r.name)}" type="button">Give practice calls</button>` : ""}</td>
       <td>${r.inv ? esc(mName(r.inv.managerId)) : "–"}</td>
       <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
       <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td>
@@ -4996,6 +5071,7 @@ function costsTab() {
     <div class="stats" style="margin-top:12px"><div class="stat"><div class="k">${k.current ? "Charged so far" : "Charged"}</div><div class="v">${usd(k.total)}</div><div class="small">Plans plus usage</div></div>
     ${k.current ? `<div class="stat"><div class="k">Estimated for the month</div><div class="v">${usd(k.est)}</div><div class="small">At this month's pace</div></div>` : ""}
     <div class="stat"><div class="k">Usage by trainees</div><div class="v">${usd(k.variable)}</div><div class="small">${k.people.length} ${k.people.length === 1 ? "person" : "people"} used the AI</div></div>
+    <div class="stat"><div class="k">Practice-call sales</div><div class="v">${c.sales ? usd(c.sales.amount) : "–"}</div><div class="small">${c.sales ? `${fmtN(c.sales.calls)} calls bought by ${c.sales.buyers} ${c.sales.buyers === 1 ? "agent" : "agents"}` : ""}${c.payments ? "" : " · Stripe not connected"}</div></div>
     <div class="stat"><div class="k">Per certified agent</div><div class="v">${certPeople.length ? usd(certPeople.reduce((a, p) => a + p.total, 0) / certPeople.length) : "–"}</div><div class="small">${certPeople.length} certified this month</div></div></div></div>`;
   h += `<div class="card table-wrap"><h2>By service</h2><table class="hist mgr-table"><thead><tr><th scope="col">Service</th><th scope="col">Used</th><th scope="col">${k.current ? "So far" : "Charged"}</th>${k.current ? `<th scope="col">Month estimate</th>` : ""}<th scope="col">How it's billed</th><th scope="col">Source</th></tr></thead><tbody>${k.svc.map(x => `<tr><td><b>${x.name}</b>${x.warn ? `<div><span class="status behind">Near the plan limit</span></div>` : ""}</td><td>${x.usage}</td><td>${usd(x.now)}</td>${k.current ? `<td>${usd(x.est)}</td>` : ""}<td class="small">${x.how}</td><td>${x.src === "verified" ? `<span class="status on">From billing</span>` : x.src === "measured" ? `<span class="status ns">Measured</span>` : ""}<div class="small">${x.srcNote || ""}</div></td></tr>`).join("")}</tbody></table></div>`;
   const an = c.anthropic, el = c.eleven;
@@ -5012,6 +5088,9 @@ function costsTab() {
     ${fld("csElPlan", "ElevenLabs monthly price ($)", st.elPlan, "0.01")}${fld("csElCredits", "ElevenLabs credits included", st.elCredits, "1")}${fld("csElRate", "ElevenLabs overage ($ per 1,000 credits)", st.elRate, "0.01")}
     ${fld("csAnPlan", "Anam monthly price ($)", st.anamPlan, "0.01")}${fld("csAnMin", "Anam minutes included", st.anamMin, "1")}${fld("csAnRate", "Anam overage ($ per minute)", st.anamRate, "0.01")}
     ${fld("csOther", "Other fixed monthly costs ($)", st.otherFixed, "0.01")}</div>
+    <h3 style="margin-top:14px">Practice calls</h3><div class="grid2">
+    ${fld("csFree", "Free practice calls per lead type", st.freePerLead, "1")}${fld("csPrice", "Price per extra call ($)", (st.callPriceCents / 100).toFixed(2), "0.01")}${fld("csMin", "Fewest calls per purchase", st.minCalls, "1")}</div>
+    <p class="small">Trainees choose ${st.minCalls}, ${st.minCalls * 2} or ${st.minCalls * 4} calls at checkout. Exams are always free. Stripe takes its card fee out of each sale.</p>
     <div class="row"><button class="btn small" id="csSave" type="button">Save plans</button><span class="small" id="csMsg" role="status"></span></div>
     <p class="small">Claude costs are exact, from the token counts Anthropic reports on every reply. ElevenLabs credits come straight from your ElevenLabs account when it can be reached. Video minutes are measured by the site, so check Anam's dashboard for the final bill.</p></details>`;
   return h;
@@ -5020,7 +5099,7 @@ function afterCostsRender() {
   const sel = $("#costMonth"); if (sel) sel.onchange = () => { mgr.costsMonth = sel.value; mgr.costs = null; render(); };
   const sv = $("#csSave"); if (sv) sv.onclick = async () => {
     const g = id => Number($("#" + id).value);
-    try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther") }) }); mgr.costs = null; render(); }
+    try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther"), freePerLead: g("csFree"), callPriceCents: Math.round(g("csPrice") * 100), minCalls: g("csMin") }) }); mgr.costs = null; render(); }
     catch (e) { $("#csMsg").textContent = "Couldn't save: " + e.message; } };
 }
 function managerView() {
@@ -5059,6 +5138,15 @@ function resizePhoto(file) {
   });
 }
 function afterManagerRender() {
+  document.querySelectorAll("[data-givecalls]").forEach(b => b.onclick = () => {
+    const wrap = document.createElement("div"); wrap.className = "modal-back";
+    wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="gTitle"><h2 id="gTitle">Give ${esc(b.dataset.gname)} practice calls</h2><p>These are on you. They work for any lead type, and ${esc(b.dataset.gname.split(" ")[0])} won't be charged.</p>
+      <div class="fld"><label for="gQty">How many calls?</label><input id="gQty" type="number" min="1" max="100" value="5"></div>
+      <div class="row"><button class="btn" id="gOk" type="button">Give calls</button><button class="btn secondary" id="gCancel" type="button">Cancel</button></div><p class="small" id="gMsg" role="status"></p></div>`;
+    document.body.appendChild(wrap); $("#gQty", wrap).focus();
+    $("#gCancel", wrap).onclick = () => wrap.remove();
+    $("#gOk", wrap).onclick = async () => { try { const j = await mgrApi("/api/credits/grant", { method: "POST", body: JSON.stringify({ account: b.dataset.givecalls, qty: Number($("#gQty", wrap).value) }) }); $("#gMsg", wrap).textContent = `Done. ${b.dataset.gname.split(" ")[0]} now has ${j.paid} extra call${j.paid === 1 ? "" : "s"}.`; setTimeout(() => wrap.remove(), 1400); } catch (e) { $("#gMsg", wrap).textContent = "Couldn't give calls: " + e.message; } };
+  });
   if (mgr.tab === "costs") afterCostsRender();
   if (mgr.tab === "notify") afterNotifyRender();
   const go = $("#mgrGo"), em = $("#mgrEmail"), pw = $("#mgrPw");
@@ -5427,7 +5515,7 @@ document.addEventListener("click", e => {
   if (t.closest("#nav") && $("#rail").classList.contains("open")) { $("#rail").classList.remove("open"); const mt = $("#menuToggle"); if (mt) { mt.textContent = "☰ Menu"; mt.setAttribute("aria-expanded", "false"); } }
   if (t.id === "switchUser") { confirmModal("Change name?", "Progress is saved in this browser under the current name. Changing the name keeps the progress but relabels it.", "Change name", () => { store.name = ""; save(); render(); }); return; }
   if (t.dataset.go) {
-    if (view.name === "call" && rp && !rp.ended) { confirmModal("Leave the call?", "Leaving now abandons this call without a grade.", "Leave call", () => { stopLive(); rp = null; view = { name: t.dataset.go, id: t.dataset.id }; render(); }); return; }
+    if (view.name === "call" && rp && !rp.ended) { confirmModal("Leave the call?", "Leaving now abandons this call without a grade.", "Leave call", () => { stopLive(); maybeRefund(rp); rp = null; view = { name: t.dataset.go, id: t.dataset.id }; render(); }); return; }
     if (t.dataset.pf) practiceFormat = t.dataset.pf;
     if (t.dataset.go === "home" && t.dataset.academy) { view = { name: "home", academy: true }; render(); return; }
     if (t.dataset.go === "quiz") quizState = null;
@@ -5454,7 +5542,8 @@ document.addEventListener("click", e => {
   }
   if (t.id === "checkDrill") { checkDrill(); return; }
   if (t.id === "retryDrill") { drillState.result = null; drillState.text = ""; render(); const di = $("#drillInput"); if (di) di.focus(); return; }
-  if (t.dataset.fam) { startCall(FAMILIES.find(f => f.id === t.dataset.fam), "practice", practiceFormat); return; }
+  if (t.dataset.fam) { startPracticeCall(FAMILIES.find(f => f.id === t.dataset.fam)); return; }
+  if (t.id === "buyCalls") { buyCallsModal(null); return; }
   if (t.dataset.exam) { const pool = FAMILIES.filter(f => callOpen(f, t.dataset.exam)); if (!pool.length) { render(); return; } startCall(pool[Math.floor(Math.random() * pool.length)], "exam", t.dataset.exam); return; }
   if (t.dataset.pformat) { practiceFormat = t.dataset.pformat; render(); return; }
   if (t.dataset.open) { const a = store.attempts.find(x => String(x.id) === t.dataset.open); if (a) { view = { name: "results", attempt: a }; render(); } return; }

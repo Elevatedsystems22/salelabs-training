@@ -5,11 +5,12 @@
    POST /api/usage/settings                        owner only: plan prices {elPlan, elCredits, elRate, anamPlan, anamMin, anamRate, otherFixed}
    ANTHROPIC_ADMIN_KEY (optional) reads actual Claude charges from Anthropic billing; ANTHROPIC_WORKSPACE_ID limits it to one workspace.
    OWNER_MANAGER_ID (optional) changes whose login is the owner; default "brandon-carter". */
+import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
 import { addUsage, costsStore, chicagoMonth } from "../lib/usage.mjs";
 
-const DEFAULTS = { elPlan: 22, elCredits: 121000, elRate: 0.30, anamPlan: 49, anamMin: 250, anamRate: 0.14, otherFixed: 0 };
+const DEFAULTS = { elPlan: 22, elCredits: 121000, elRate: 0.30, anamPlan: 49, anamMin: 250, anamRate: 0.14, otherFixed: 0, freePerLead: 3, callPriceCents: 200, minCalls: 5 };
 const isOwner = me => !!me && (me.id === "_master" || me.id === (process.env.OWNER_MANAGER_ID || "brandon-carter"));
 const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 
@@ -46,6 +47,22 @@ async function anthropicCost(month) {
   return { amount: total / 100, workspace: ws || "all", daysWithCost: days, refreshedAt: refreshed };
 }
 
+/* Practice calls trainees bought through Stripe this month (manager gifts don't count as sales). */
+async function practiceSales(month) {
+  try {
+    const db = getStore({ name: "credits", consistency: "strong" }), { blobs } = await db.list({ prefix: "acct/" });
+    const accts = (await Promise.all(blobs.slice(0, 1000).map(b => db.get(b.key, { type: "json" }).catch(() => null)))).filter(Boolean);
+    let cents = 0, calls = 0, buyers = 0, freeUsed = 0, paidUsed = 0;
+    accts.forEach(a => {
+      const bought = (a.purchases || []).filter(p => p.cents > 0 && chicagoMonth(new Date(p.at)) === month);
+      if (bought.length) buyers++;
+      bought.forEach(p => { cents += p.cents; calls += p.qty; });
+      (a.uses || []).filter(u => !u.refunded && chicagoMonth(new Date(u.at)) === month).forEach(u => u.kind === "free" ? freeUsed++ : paidUsed++);
+    });
+    return { amount: cents / 100, calls, buyers, freeUsed, paidUsed };
+  } catch (e) { return null; }
+}
+
 export default async (req) => {
   const url = new URL(req.url), path = url.pathname;
 
@@ -68,7 +85,8 @@ export default async (req) => {
     const next = {
       elPlan: num(b.elPlan, 0, 10000, settings.elPlan), elCredits: num(b.elCredits, 0, 1e9, settings.elCredits), elRate: num(b.elRate, 0, 10, settings.elRate),
       anamPlan: num(b.anamPlan, 0, 10000, settings.anamPlan), anamMin: num(b.anamMin, 0, 1e6, settings.anamMin), anamRate: num(b.anamRate, 0, 10, settings.anamRate),
-      otherFixed: num(b.otherFixed, 0, 10000, settings.otherFixed)
+      otherFixed: num(b.otherFixed, 0, 10000, settings.otherFixed),
+      freePerLead: Math.round(num(b.freePerLead, 0, 100, settings.freePerLead)), callPriceCents: Math.round(num(b.callPriceCents, 50, 100000, settings.callPriceCents)), minCalls: Math.round(num(b.minCalls, 1, 200, settings.minCalls))
     };
     await store.setJSON("settings", next);
     return json({ settings: next });
@@ -81,8 +99,8 @@ export default async (req) => {
     const rows = (await Promise.all(blobs.map(b => store.get(b.key, { type: "json" }).catch(() => null)))).filter(Boolean);
     const months = new Set([thisMonth]);
     try { const all = await store.list({ directories: true }); (all.directories || []).forEach(d => /^\d{4}-\d{2}$/.test(d) && months.add(d)); } catch (e) {}
-    const [eleven, anthropic] = await Promise.all([month === thisMonth ? elevenSubscription() : null, anthropicCost(month)]);
-    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven, anthropic });
+    const [eleven, anthropic, sales] = await Promise.all([month === thisMonth ? elevenSubscription() : null, anthropicCost(month), practiceSales(month)]);
+    return json({ month, thisMonth, months: [...months].sort().reverse(), rows, settings, eleven, anthropic, sales, payments: !!process.env.STRIPE_SECRET_KEY });
   }
   return json({ error: "not_found" }, 404);
 };
