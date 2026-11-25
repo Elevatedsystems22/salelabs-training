@@ -48,6 +48,15 @@ function autoCast(list, speakers, saved) {
 
 const parseSpeakers = req => String(new URL(req.url).searchParams.get("speakers") || "").split(",").slice(0, 20).map(s => { const [name, t = ""] = s.split(":"); return { name: String(name || "").slice(0, 30), g: t[0] === "f" ? "f" : "m", old: t.includes("o") }; }).filter(s => s.name);
 
+/* The team-wide daily voice cap: the owner's Costs-tab setting wins, then TTS_DAILY_CHAR_LIMIT. Cached for a minute. */
+let capCache = { at: 0, v: 0 };
+async function voiceCap() {
+  if (Date.now() - capCache.at < 60000 && capCache.v) return capCache.v;
+  let v = Number(process.env.TTS_DAILY_CHAR_LIMIT || 400000);
+  try { const st = await getStore({ name: "costs", consistency: "strong" }).get("settings", { type: "json" }); if (st && Number(st.ttsDailyChars) > 0) v = Number(st.ttsDailyChars); } catch (e) {}
+  capCache = { at: Date.now(), v }; return v;
+}
+
 export default async (req) => {
   const path = new URL(req.url).pathname;
   if (path === "/api/tts/status") {
@@ -69,7 +78,7 @@ export default async (req) => {
     const text = String(b.text || "").replace(/\[[^\]]*\]/g, "").trim().slice(0, 600);
     if (!text || !VID.test(String(b.voiceId || ""))) return json({ error: "bad_request" }, 400);
     // Daily spending cap for the whole team.
-    const limit = Number(process.env.TTS_DAILY_CHAR_LIMIT || 400000), uk = "usage/" + chicagoDay(), store = db();
+    const limit = await voiceCap(), uk = "usage/" + chicagoDay(), store = db();
     const used = Number((await store.get(uk).catch(() => null)) || 0);
     if (used + text.length > limit) return json({ error: "daily_limit" }, 429);
     await store.set(uk, String(used + text.length)).catch(() => {});
@@ -93,7 +102,7 @@ export default async (req) => {
       const saved = (await db().get("cast", { type: "json" }).catch(() => null)) || {};
       const used = Number((await db().get("usage/" + chicagoDay()).catch(() => null)) || 0);
       const list = await voices();
-      return json({ voices: list, saved, cast: autoCast(list, parseSpeakers(req), saved), usedToday: used, limit: Number(process.env.TTS_DAILY_CHAR_LIMIT || 400000) });
+      return json({ voices: list, saved, cast: autoCast(list, parseSpeakers(req), saved), usedToday: used, limit: await voiceCap() });
     } catch (e) { return json({ error: "elevenlabs_error", message: String(e.message || e) }, 502); }
   }
   if (path === "/api/tts/cast" && req.method === "POST") {

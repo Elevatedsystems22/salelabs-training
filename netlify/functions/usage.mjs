@@ -9,8 +9,9 @@ import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
 import { addUsage, costsStore, chicagoMonth } from "../lib/usage.mjs";
+import { ALLOWANCE_DEFAULTS } from "../lib/allowance.mjs";
 
-const DEFAULTS = { elPlan: 22, elCredits: 121000, elRate: 0.30, anamPlan: 49, anamMin: 250, anamRate: 0.14, otherFixed: 0, freePerLead: 3, callPriceCents: 200, minCalls: 5 };
+const DEFAULTS = { elPlan: 22, elCredits: 121000, elRate: 0.30, anamPlan: 49, anamMin: 250, anamRate: 0.14, otherFixed: 0, ttsDailyChars: 400000, ...ALLOWANCE_DEFAULTS };
 const isOwner = me => !!me && (me.id === "_master" || me.id === (process.env.OWNER_MANAGER_ID || "brandon-carter"));
 const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 
@@ -85,9 +86,11 @@ export default async (req) => {
     const next = {
       elPlan: num(b.elPlan, 0, 10000, settings.elPlan), elCredits: num(b.elCredits, 0, 1e9, settings.elCredits), elRate: num(b.elRate, 0, 10, settings.elRate),
       anamPlan: num(b.anamPlan, 0, 10000, settings.anamPlan), anamMin: num(b.anamMin, 0, 1e6, settings.anamMin), anamRate: num(b.anamRate, 0, 10, settings.anamRate),
-      otherFixed: num(b.otherFixed, 0, 10000, settings.otherFixed),
-      freePerLead: Math.round(num(b.freePerLead, 0, 100, settings.freePerLead)), callPriceCents: Math.round(num(b.callPriceCents, 50, 100000, settings.callPriceCents)), minCalls: Math.round(num(b.minCalls, 1, 200, settings.minCalls))
+      otherFixed: num(b.otherFixed, 0, 10000, settings.otherFixed), ttsDailyChars: Math.round(num(b.ttsDailyChars, 0, 1e8, settings.ttsDailyChars))
     };
+    // free allowance and purchased-call settings
+    for (const k of Object.keys(ALLOWANCE_DEFAULTS)) next[k] = num(b[k], 0, k === "callPriceCents" ? 100000 : 1000, settings[k]);
+    next.callPriceCents = Math.max(50, Math.round(next.callPriceCents)); next.minCalls = Math.max(1, Math.round(next.minCalls));
     await store.setJSON("settings", next);
     return json({ settings: next });
   }

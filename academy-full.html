@@ -1777,9 +1777,10 @@ function bindRoleplay() {
 }
 document.addEventListener("keydown", e => { if (e.code === "Space" && view.name === "roleplay" && rpl && rpl.phase === "run" && !/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || "")) { e.preventDefault(); rplAdvance(true); } });
 async function rplStart() {
+  const gate = await allowStart("roleplay"); if (!gate) return;
   const r = rpl, plan = rpBuild(r.mod, r.lead, r.type);
   Object.assign(r, { phase: "run", steps: plan.steps, i: -1, lines: [], cur: null, leadEnd: 0, ended: false });
-  try { await dictApi.start(); r.listening = true; } catch (e) { r.phase = "setup"; render(); alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
+  try { await dictApi.start(); r.listening = true; } catch (e) { refundCredit(gate); r.phase = "setup"; render(); alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
   rplAudioStart();
   if (EL.ok === false && EL.status === "idle") initEleven();
   if (r.tick) clearInterval(r.tick);
@@ -1951,7 +1952,8 @@ async function objStart() {
   const r = od, cfg = Object.assign({}, r.cfg); if (!OBJ_LESSON[r.id] && r.lead !== "all" && cfg.track === "phone") cfg.leads = [r.lead];
   r.reps = objPlan(cfg); r.k = 0;
   if (!r.reps.length) return;
-  try { await dictApi.start(); dictApi.stop().catch(() => {}); } catch (e) { alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
+  const gate = await allowStart("drill"); if (!gate) return;
+  try { await dictApi.start(); dictApi.stop().catch(() => {}); } catch (e) { refundCredit(gate); alert("The microphone didn't start. Allow the mic for this site and try again."); return; }
   if (EL.status === "idle") initEleven();
   objRep();
 }
@@ -3200,7 +3202,7 @@ function render() {
   else if (view.name === "objdrill") { main.innerHTML = objDrillView(view.id); bindObjDrill(); }
   else if (view.name === "zoomsim") { main.innerHTML = zoomSimView(view.id); bindZoomSim(); }
   else if (view.name === "scenario") { main.innerHTML = scenarioView(view.id); bindScenario(); }
-  else if (view.name === "practice" || view.name === "exam") main.innerHTML = view.name === "practice" ? (h => { const i = h.indexOf("</p>"); return i < 0 ? creditsBanner() + h : h.slice(0, i + 4) + creditsBanner() + h.slice(i + 4); })(familyPickView(view.name)) : familyPickView(view.name);
+  else if (view.name === "practice" || view.name === "exam") main.innerHTML = (h => { const i = h.indexOf("</p>"), bn = creditsBanner(view.name); return i < 0 ? bn + h : h.slice(0, i + 4) + bn + h.slice(i + 4); })(familyPickView(view.name));
   else if (view.name === "call") { main.innerHTML = callView(); afterCallRender(); return; }
   else if (view.name === "grading") main.innerHTML = gradingView();
   else if (view.name === "results") main.innerHTML = resultsView(view.attempt);
@@ -4022,24 +4024,50 @@ function creditsOn() { return SITE_MODE && !isManager(); }
 function creditWho() { return { uid: store.uid || "", invite: store.invite ? store.invite.token : "", name: store.name || "" }; }
 async function loadCredits() {
   if (!creditsOn() || !store.uid) return;
-  try { const w = creditWho(), r = await fetch("/api/credits?uid=" + encodeURIComponent(w.uid) + "&invite=" + encodeURIComponent(w.invite)); if (r.ok) { CREDITS = await r.json(); if (view.name === "practice") render(); } } catch (e) {}
+  try { const w = creditWho(), r = await fetch("/api/credits?uid=" + encodeURIComponent(w.uid) + "&invite=" + encodeURIComponent(w.invite)); if (r.ok) { CREDITS = await r.json(); if (view.name === "practice" || view.name === "exam") render(); } } catch (e) {}
 }
 async function creditPost(path, body) {
   const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.assign(creditWho(), body)) });
   const j = await r.json().catch(() => ({})); return { status: r.status, j };
 }
 function creditLeft(fam) { return CREDITS ? (CREDITS.free[fam.leadType] || 0) : null; }
+const KIND_LABEL = { practice: "practice call", exam_tele: "phone presentation exam", exam_zoom: "Zoom exam", roleplay: "lesson role-play", drill: "objection drill" };
+/* Ask the server whether this can start. Free when there's allowance left; otherwise it offers purchased calls (with a yes first) or a purchase.
+   Resolves to { useId, used } to go ahead, or null to stop. A network problem never blocks training. */
+async function allowStart(kind, extra) {
+  if (!creditsOn()) return { useId: null, used: "manager" };
+  if (creditsBusy) return null; creditsBusy = true;
+  const go = async allowPaid => { try { return await creditPost("/api/credits/start", Object.assign({ kind, allowPaid }, extra || {})); } catch (e) { return null; } };
+  let res = await go(false); creditsBusy = false;
+  if (!res || res.status >= 500 || (res.status !== 402 && !(res.j && res.j.ok))) return { useId: null, used: "offline" };
+  if (res.j) CREDITS = Object.assign(CREDITS || {}, res.j);
+  if (res.status !== 402) return { useId: res.j.useId, used: res.j.used };
+  const j = res.j, label = KIND_LABEL[kind] || "session";
+  const why = j.reason === "daily" ? `You've used today's free ${label}s. They reset at midnight.` : j.reason === "lead" ? `You've used your free ${esc(extra && extra.lead || "")} practice calls.` : `You've used the free ${label}s included with your training.`;
+  if (j.error === "confirm_paid") {
+    const learn = kind === "roleplay" || kind === "drill";
+    const ok = await confirmAsk(why, learn ? `Use 1 of your ${j.paid} purchased calls for ${j.learnPackReps} more role-plays and drills?` : `Use ${j.need} of your ${j.paid} purchased call${j.paid === 1 ? "" : "s"} for this ${label}?`, "Yes, use " + (j.need === 1 ? "1 call" : j.need + " calls"));
+    if (!ok) return null;
+    creditsBusy = true; res = await go(true); creditsBusy = false;
+    if (res && res.j && res.j.ok) { CREDITS = Object.assign(CREDITS || {}, res.j); return { useId: res.j.useId, used: res.j.used }; }
+    if (!res || res.status >= 500) return { useId: null, used: "offline" };
+  }
+  buyCallsModal(null, why + (res.j && res.j.need ? ` This ${label} takes ${res.j.need} purchased call${res.j.need === 1 ? "" : "s"}.` : ""));
+  return null;
+}
 async function startPracticeCall(fam) {
   // Locked calls never cost anything: startCall just sends them back to the list.
   if (!creditsOn() || !callOpen(fam, practiceFormat) || (practiceFormat !== "dial" && !practiceUnlocked())) return startCall(fam, "practice", practiceFormat);
-  if (creditsBusy) return; creditsBusy = true;
-  let res = null;
-  try { res = await creditPost("/api/credits/use", { lead: fam.leadType, format: practiceFormat }); } catch (e) {}
-  creditsBusy = false;
-  if (res && res.status === 402) { CREDITS = Object.assign(CREDITS || {}, res.j); return buyCallsModal(fam); }
-  if (res && res.j && res.j.ok) CREDITS = Object.assign(CREDITS || {}, res.j);
+  const u = await allowStart("practice", { lead: fam.leadType, format: practiceFormat }); if (!u) return;
   startCall(fam, "practice", practiceFormat);
-  if (rp && res && res.j && res.j.useId) { rp.useId = res.j.useId; rp.creditKind = res.j.used; }
+  if (rp && u.useId) { rp.useId = u.useId; rp.creditKind = u.used; }
+}
+async function startExamCall(format) {
+  const pool = FAMILIES.filter(f => callOpen(f, format)); if (!pool.length) { render(); return; }
+  const fam = pool[Math.floor(Math.random() * pool.length)];
+  const u = await allowStart(format === "zoom" ? "exam_zoom" : "exam_tele", { lead: fam.leadType, format }); if (!u) return;
+  startCall(fam, "exam", format);
+  if (rp && u.useId) { rp.useId = u.useId; rp.creditKind = u.used; }
 }
 /* Give the call back when it never really happened: left the lobby, or hung up in the first minute. */
 function refundCredit(r) {
@@ -4047,21 +4075,24 @@ function refundCredit(r) {
   creditPost("/api/credits/refund", { useId: r.useId }).then(x => { if (x.j && x.j.free) CREDITS = Object.assign(CREDITS || {}, x.j); }).catch(() => {});
 }
 function maybeRefund(r) { if (r && r.useId && (!r.started || Date.now() - r.started < 60000)) refundCredit(r); }
-function creditsBanner() {
+function creditsBanner(page) {
   if (!creditsOn() || !CREDITS) { if (creditsOn() && !CREDITS) setTimeout(loadCredits, 0); return ""; }
-  const leads = Object.entries(CREDITS.free || {});
-  return `<div class="card credits"><div class="row spread"><div><h2>Your practice calls</h2>
-    <p class="small">You get ${CREDITS.freePerLead} free practice call${CREDITS.freePerLead === 1 ? "" : "s"} for each lead type. Exams are always free. A call you leave in the first minute is given back.</p></div>
-    <div class="credits-paid"><b>${CREDITS.paid || 0}</b><span>purchased call${CREDITS.paid === 1 ? "" : "s"} left</span></div></div>
-    <div class="credits-leads">${leads.map(([l, n]) => `<span class="${n ? "" : "out"}"><b>${n}</b> free · ${esc(l)}</span>`).join("")}</div>
-    ${CREDITS.payments ? `<button class="btn small" id="buyCalls" type="button" style="width:auto">Buy more practice calls</button>` : `<p class="small">Out of free calls? Ask your manager for more.</p>`}</div>`;
+  const c = CREDITS, t = c.todayLeft || {}, b = c.budgetLeft || {};
+  const chip = (n, label, out) => `<span class="${n ? "" : "out"}"><b>${n}</b> ${label}</span>`;
+  const leads = Object.entries(c.free || {});
+  return `<div class="card credits"><div class="row spread"><div><h2>${page === "exam" ? "Your exam tries" : "Your free practice"}</h2>
+    <p class="small">${page === "exam" ? `You get ${c.daily ? c.daily.exam_tele : 2} free phone and ${c.daily ? c.daily.exam_zoom : 2} free Zoom exam tries a day while your free exam time lasts. After that, a phone exam is ${c.calls.exam_tele} purchased call and a Zoom exam is ${c.calls.exam_zoom}.` : `Free practice calls reset every day, up to ${c.freePerLead} per lead type in all. Lesson role-plays, drills and exams have their own daily free tries. A call you leave in the first minute is given back.`}</p></div>
+    <div class="credits-paid"><b>${c.paid || 0}</b><span>purchased call${c.paid === 1 ? "" : "s"}</span></div></div>
+    <div class="credits-leads">${page === "exam" ? chip(t.exam_tele, "free phone exams today") + chip(t.exam_zoom, "free Zoom exams today") + (b.exam ? "" : `<span class="out">Free exam time used up</span>`)
+      : chip(t.practice, "free calls today") + leads.map(([l, n]) => chip(n, "left · " + esc(l))).join("") + chip(t.roleplay, "role-plays today") + chip(t.drill, "drills today")}</div>
+    ${c.payments ? `<button class="btn small" id="buyCalls" type="button" style="width:auto">Buy practice calls</button>` : `<p class="small">Out of free tries? Ask your manager for more.</p>`}</div>`;
 }
-function buyCallsModal(fam) {
+function buyCallsModal(fam, why) {
   const c = CREDITS || { price: 200, min: 5, payments: false };
   const wrap = document.createElement("div"); wrap.className = "modal-back";
   const price = n => "$" + (n * c.price / 100).toFixed(2);
-  wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="bTitle"><h2 id="bTitle">${fam ? "You've used your free " + esc(fam.leadType) + " calls" : "Buy practice calls"}</h2>
-    ${c.payments ? `<p>Keep practicing with more AI calls. Each call is ${price(1)} and works for any lead type.</p>
+  wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="bTitle"><h2 id="bTitle">${why ? "Keep going with purchased calls" : fam ? "You've used your free " + esc(fam.leadType) + " calls" : "Buy practice calls"}</h2>${why ? `<p>${why}</p>` : ""}
+    ${c.payments ? `<p>Each call is ${price(1)}. Use them for practice calls (1 call), exam retakes (phone 1, Zoom ${c.calls ? c.calls.exam_zoom : 3}) or ${c.learnPackReps || 10} more role-plays and drills (1 call).</p>
     <div class="fld"><label for="bQty">How many calls?</label><select id="bQty">${[c.min, c.min * 2, c.min * 4].map(n => `<option value="${n}">${n} calls · ${price(n)}</option>`).join("")}</select></div>
     <p class="small">You'll pay on Stripe's secure checkout page, then come right back here.</p>
     <div class="row"><button class="btn" id="bGo" type="button">Continue to payment</button><button class="btn secondary" id="bCancel" type="button">Not now</button></div><p class="small" id="bMsg" role="status"></p>`
@@ -4559,6 +4590,16 @@ function stopLive() {
   if (dictApi && rp.micOn) { rp.micMuted = true; try { dictApi.stop().catch(() => {}); } catch (e) {} }
 }
 
+function confirmAsk(title, body, okText) {
+  return new Promise(done => {
+    const wrap = document.createElement("div"); wrap.className = "modal-back";
+    wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="aTitle"><h2 id="aTitle">${esc(title)}</h2><p>${esc(body)}</p><div class="row"><button class="btn" id="aOk" type="button">${esc(okText)}</button><button class="btn secondary" id="aNo" type="button">Not now</button></div></div>`;
+    document.body.appendChild(wrap);
+    $("#aOk", wrap).onclick = () => { wrap.remove(); done(true); };
+    $("#aNo", wrap).onclick = () => { wrap.remove(); done(false); };
+    $("#aOk", wrap).focus();
+  });
+}
 function confirmModal(title, body, okText, onOk) {
   const wrap = document.createElement("div"); wrap.className = "modal-back";
   wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle">${esc(title)}</h2><p>${esc(body)}</p><div class="row"><button class="btn" id="mOk" type="button">${esc(okText)}</button><button class="btn secondary" id="mCancel" type="button">Keep going</button></div></div>`;
@@ -4974,7 +5015,7 @@ function traineesTab() {
     <div class="row"><span class="small"><b>Show:</b></span>${[["all", "Everyone"], ["help", "Needs help"], ["on", "On track"], ["cert", "Certified"]].map(([k, l]) => `<button class="chip ${mgr.filter === k ? "on" : ""}" data-mfilter="${k}" type="button" aria-pressed="${mgr.filter === k}">${l}</button>`).join("")}</div>`;
   if (!rows.length && !notStarted.length) h += `<div class="card"><h2>Invite your first agent</h2><p>Trainees show up here after they open their invite link or sign in on your site.</p><div><button class="btn" data-mtab="invite" type="button">Invite an agent</button></div></div>`;
   else h += `<div class="card table-wrap"><table class="hist mgr-table"><thead><tr><th scope="col">Trainee</th><th scope="col">Manager</th><th scope="col">Lessons</th><th scope="col">Calls</th><th scope="col">Avg score</th><th scope="col">Role-plays</th><th scope="col">Weak spot</th><th scope="col">Last call</th><th scope="col">Active</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${shown.map(r => `<tr>
-      <td><b>${esc(r.name)}</b>${courseTag(r.course)}${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}${r.invite || r.uid ? `<button class="linkbtn small" data-givecalls="${esc(r.invite ? "inv_" + r.invite : "uid_" + r.uid)}" data-gname="${esc(r.name)}" type="button">Give practice calls</button>` : ""}</td>
+      <td><b>${esc(r.name)}</b>${courseTag(r.course)}${r.inv && r.inv.phone ? `<div class="small"><a href="${telHref(r.inv.phone)}">${esc(r.inv.phone)}</a></div>` : ""}${r.next && !r.certified ? `<div class="small">Next: ${esc(r.next)}</div>` : ""}${r.invite || r.uid ? `<button class="linkbtn small" data-givecalls="${esc(r.invite ? "inv_" + r.invite : "uid_" + r.uid)}" data-gname="${esc(r.name)}" type="button">Calls and limits</button>` : ""}</td>
       <td>${r.inv ? esc(mName(r.inv.managerId)) : "–"}</td>
       <td><span class="minibar"><span style="width:${Math.round(r.lessons / r.lessonsTotal * 100)}%"></span></span>${r.lessons}/${r.lessonsTotal}</td>
       <td>${r.calls}</td><td><b>${r.calls ? r.avgScore : "–"}</b></td>
@@ -5089,9 +5130,14 @@ function costsTab() {
     ${fld("csElPlan", "ElevenLabs monthly price ($)", st.elPlan, "0.01")}${fld("csElCredits", "ElevenLabs credits included", st.elCredits, "1")}${fld("csElRate", "ElevenLabs overage ($ per 1,000 credits)", st.elRate, "0.01")}
     ${fld("csAnPlan", "Anam monthly price ($)", st.anamPlan, "0.01")}${fld("csAnMin", "Anam minutes included", st.anamMin, "1")}${fld("csAnRate", "Anam overage ($ per minute)", st.anamRate, "0.01")}
     ${fld("csOther", "Other fixed monthly costs ($)", st.otherFixed, "0.01")}</div>
-    <h3 style="margin-top:14px">Practice calls</h3><div class="grid2">
-    ${fld("csFree", "Free practice calls per lead type", st.freePerLead, "1")}${fld("csPrice", "Price per extra call ($)", (st.callPriceCents / 100).toFixed(2), "0.01")}${fld("csMin", "Fewest calls per purchase", st.minCalls, "1")}</div>
-    <p class="small">Trainees choose ${st.minCalls}, ${st.minCalls * 2} or ${st.minCalls * 4} calls at checkout. Exams are always free. Stripe takes its card fee out of each sale.</p>
+    ${fld("csTts", "Team voice cap (characters a day)", st.ttsDailyChars, "1000")}
+    <h3 style="margin-top:16px">Free AI allowance per agent</h3>
+    <p class="small">Each agent's free AI use stops at <b>${usd(st.budgetLearn + st.budgetPractice + st.budgetExam)}</b>, split so no one activity can use it all. Each free start counts an estimate on the high side, so the real cost stays under it. Past the daily or total limit, agents can keep going with purchased calls.</p>
+    <div class="grid2">${fld("csBL", "Practice budget: role-plays and drills ($)", st.budgetLearn, "1")}${fld("csBP", "Practice-call budget ($)", st.budgetPractice, "1")}${fld("csBE", "Exam budget ($)", st.budgetExam, "1")}</div>
+    <div class="grid2">${fld("csDR", "Free lesson role-plays a day", st.dailyRoleplay, "1")}${fld("csDD", "Free objection drills a day", st.dailyDrill, "1")}${fld("csDP", "Free practice calls a day", st.dailyPractice, "1")}${fld("csFree", "Free practice calls per lead type, in all", st.freePerLead, "1")}${fld("csDT", "Free phone exams a day", st.dailyExamTele, "1")}${fld("csDZ", "Free Zoom exams a day", st.dailyExamZoom, "1")}</div>
+    <h3 style="margin-top:16px">Purchased calls</h3>
+    <div class="grid2">${fld("csPrice", "Price per call ($)", (st.callPriceCents / 100).toFixed(2), "0.01")}${fld("csMin", "Fewest calls per purchase", st.minCalls, "1")}${fld("csET", "Calls for one phone exam", st.examTeleCalls, "1")}${fld("csEZ", "Calls for one Zoom exam", st.examZoomCalls, "1")}${fld("csLP", "Role-plays or drills per call", st.learnPackReps, "1")}</div>
+    <p class="small">A practice call is 1 call. Trainees choose ${st.minCalls}, ${st.minCalls * 2} or ${st.minCalls * 4} calls at checkout, and Stripe takes its card fee out of each sale.</p>
     <div class="row"><button class="btn small" id="csSave" type="button">Save plans</button><span class="small" id="csMsg" role="status"></span></div>
     <p class="small">Claude costs are exact, from the token counts Anthropic reports on every reply. ElevenLabs credits come straight from your ElevenLabs account when it can be reached. Video minutes are measured by the site, so check Anam's dashboard for the final bill.</p></details>`;
   return h;
@@ -5100,7 +5146,9 @@ function afterCostsRender() {
   const sel = $("#costMonth"); if (sel) sel.onchange = () => { mgr.costsMonth = sel.value; mgr.costs = null; render(); };
   const sv = $("#csSave"); if (sv) sv.onclick = async () => {
     const g = id => Number($("#" + id).value);
-    try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther"), freePerLead: g("csFree"), callPriceCents: Math.round(g("csPrice") * 100), minCalls: g("csMin") }) }); mgr.costs = null; render(); }
+    try { await mgrApi("/api/usage/settings", { method: "POST", body: JSON.stringify({ elPlan: g("csElPlan"), elCredits: g("csElCredits"), elRate: g("csElRate"), anamPlan: g("csAnPlan"), anamMin: g("csAnMin"), anamRate: g("csAnRate"), otherFixed: g("csOther"), ttsDailyChars: g("csTts"), freePerLead: g("csFree"), callPriceCents: Math.round(g("csPrice") * 100), minCalls: g("csMin"),
+      budgetLearn: g("csBL"), budgetPractice: g("csBP"), budgetExam: g("csBE"), dailyRoleplay: g("csDR"), dailyDrill: g("csDD"), dailyPractice: g("csDP"), dailyExamTele: g("csDT"), dailyExamZoom: g("csDZ"),
+      examTeleCalls: g("csET"), examZoomCalls: g("csEZ"), learnPackReps: g("csLP") }) }); mgr.costs = null; render(); }
     catch (e) { $("#csMsg").textContent = "Couldn't save: " + e.message; } };
 }
 function managerView() {
@@ -5143,9 +5191,10 @@ function afterManagerRender() {
     const wrap = document.createElement("div"); wrap.className = "modal-back";
     wrap.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="gTitle"><h2 id="gTitle">Give ${esc(b.dataset.gname)} practice calls</h2><p>These are on you. They work for any lead type, and ${esc(b.dataset.gname.split(" ")[0])} won't be charged.</p>
       <div class="fld"><label for="gQty">How many calls?</label><input id="gQty" type="number" min="1" max="100" value="5"></div>
-      <div class="row"><button class="btn" id="gOk" type="button">Give calls</button><button class="btn secondary" id="gCancel" type="button">Cancel</button></div><p class="small" id="gMsg" role="status"></p></div>`;
+      <div class="row"><button class="btn" id="gOk" type="button">Give calls</button><button class="btn secondary" id="gReset" type="button">Reset today's free tries</button><button class="linkbtn" id="gCancel" type="button">Cancel</button></div><p class="small" id="gMsg" role="status"></p></div>`;
     document.body.appendChild(wrap); $("#gQty", wrap).focus();
     $("#gCancel", wrap).onclick = () => wrap.remove();
+    $("#gReset", wrap).onclick = async () => { try { await mgrApi("/api/credits/grant", { method: "POST", body: JSON.stringify({ account: b.dataset.givecalls, resetToday: true }) }); $("#gMsg", wrap).textContent = `Done. ${b.dataset.gname.split(" ")[0]}'s free tries for today are back.`; setTimeout(() => wrap.remove(), 1400); } catch (e) { $("#gMsg", wrap).textContent = "Couldn't reset: " + e.message; } };
     $("#gOk", wrap).onclick = async () => { try { const j = await mgrApi("/api/credits/grant", { method: "POST", body: JSON.stringify({ account: b.dataset.givecalls, qty: Number($("#gQty", wrap).value) }) }); $("#gMsg", wrap).textContent = `Done. ${b.dataset.gname.split(" ")[0]} now has ${j.paid} extra call${j.paid === 1 ? "" : "s"}.`; setTimeout(() => wrap.remove(), 1400); } catch (e) { $("#gMsg", wrap).textContent = "Couldn't give calls: " + e.message; } };
   });
   if (mgr.tab === "costs") afterCostsRender();
@@ -5545,7 +5594,7 @@ document.addEventListener("click", e => {
   if (t.id === "retryDrill") { drillState.result = null; drillState.text = ""; render(); const di = $("#drillInput"); if (di) di.focus(); return; }
   if (t.dataset.fam) { startPracticeCall(FAMILIES.find(f => f.id === t.dataset.fam)); return; }
   if (t.id === "buyCalls") { buyCallsModal(null); return; }
-  if (t.dataset.exam) { const pool = FAMILIES.filter(f => callOpen(f, t.dataset.exam)); if (!pool.length) { render(); return; } startCall(pool[Math.floor(Math.random() * pool.length)], "exam", t.dataset.exam); return; }
+  if (t.dataset.exam) { startExamCall(t.dataset.exam); return; }
   if (t.dataset.pformat) { practiceFormat = t.dataset.pformat; render(); return; }
   if (t.dataset.open) { const a = store.attempts.find(x => String(x.id) === t.dataset.open); if (a) { view = { name: "results", attempt: a }; render(); } return; }
   if (t.id === "copyResult") {
