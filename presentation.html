@@ -1182,7 +1182,7 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
         </section>
         <section class="glp-lock" id="glpLock" hidden>
             <div class="glp-lock-card"><span class="ic" aria-hidden="true">🔒</span><div class="eyebrow">Locked until you're certified</div><h1>Finish training to unlock the live Call Clinic</h1>
-            <p class="lead" id="glpLockText">Pass all lessons, then one Telesales and one Zoom exam call.</p>
+            <p class="lead" id="glpLockText">Pass all lessons, then one phone presentation and one Zoom exam call.</p>
             <div class="glp-lock-actions"><a class="toggle-btn" href="/#academy">🎓 Go to training</a><a class="glp-home" href="/#home">← Home</a></div></div>
         </section>
 
@@ -1243,7 +1243,7 @@ html.glp-locked .globe-life-presentation .glp-topbar .toggle-btn, html.glp-locke
     <script>
 /* =====================================================================
    Globe Life Presentation Tool, v2
-   Two formats: Telesales (no screen shared) and Zoom (screen shared).
+   Two formats: phone presentation (no screen shared) and Zoom (screen shared).
    ===================================================================== */
 const IMG_MODE = "local"; // "local" inside the academy, "imgur" on the agency site
 /* Updated 2026 slides are not on Imgur: keep them in a "slides" folder next to this file. */
@@ -1315,7 +1315,7 @@ const slides = [
         <div class="glp-callout dial-callout"><b>Haven't reached them yet?</b> Start with <button type="button" class="glp-small" data-act="dial">📞 Make the call</button>. It walks you through the first call for your lead type, the rebuttals, and booking the appointment or starting right now.</div>
         <h2>Step 1: Presentation format</h2>
         <div class="selection-grid">
-            <div class="selection-card ${S.format === "tele" ? "selected" : ""}" data-set="format" data-val="tele" role="button" tabindex="0"><div class="selection-icon">📞</div><h3>Telesales</h3><p>Phone only. No screen is shared, so you describe everything out loud.</p></div>
+            <div class="selection-card ${S.format === "tele" ? "selected" : ""}" data-set="format" data-val="tele" role="button" tabindex="0"><div class="selection-icon">📞</div><h3>Phone presentation</h3><p>Phone only. No screen is shared, so you describe everything out loud.</p></div>
             <div class="selection-card ${S.format === "zoom" ? "selected" : ""}" data-set="format" data-val="zoom" role="button" tabindex="0"><div class="selection-icon">📹</div><h3>Zoom</h3><p>Get the client on Zoom and share your screen.</p></div>
         </div>
         <h2>Step 2: Presentation type</h2>
@@ -1334,16 +1334,16 @@ const slides = [
             ${S.leadType === "referral" ? `<div class="form-section"><label class="form-label" for="f_ref">Referred by</label><input id="f_ref" class="form-input" data-field="referrer" value="${esc(S.referrer)}" placeholder="e.g. Keisha Moore"></div>
             <div class="form-section"><label class="form-label" for="f_refrel">Referrer is their…</label><input id="f_refrel" class="form-input" data-field="referrerRel" value="${esc(S.referrerRel)}" placeholder="e.g. coworker"></div>` : ""}
         </div>
-        <div id="selectionConfirmation" class="option-confirmation" ${S.format && S.type && S.leadType ? "" : 'style="display:none"'}><strong>✅ Ready.</strong> ${S.format && S.type && S.leadType ? `${S.format === "tele" ? "Telesales" : "Zoom"} · ${S.type === "appointment" ? "Appointment" : "Now Presentation"} · ${LEAD_TYPES[S.leadType]}` : ""}</div>
+        <div id="selectionConfirmation" class="option-confirmation" ${S.format && S.type && S.leadType ? "" : 'style="display:none"'}><strong>✅ Ready.</strong> ${S.format && S.type && S.leadType ? `${S.format === "tele" ? "Phone presentation" : "Zoom"} · ${S.type === "appointment" ? "Appointment" : "Now Presentation"} · ${LEAD_TYPES[S.leadType]}` : ""}</div>
         ${S.format === "zoom" ? `<div class="glp-callout"><b>Before you share:</b> open the <a href="presentation.html#client${MODE === "practice" ? ":practice" : ""}" target="_blank" rel="noopener">client screen</a> in its own window and share <i>that</i> window on Zoom. It shows only the slide, so the client never sees your script, notes or rebuttals.</div>` : ""}` },
     { id: 1, title: "General Introduction", section: "Foundation", content: () => {
         const lt = S.leadType ? LEAD_TYPES[S.leadType] : null; const ltName = lt ? `<span class="ph filled">${esc(lt)}</span>` : nm("leadType");
         let body;
         if (S.type === "now") body = tele()
-            ? `<h3>📞 Now Presentation (Telesales)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")}. I have a few minutes available right now and wanted to reach out about ${ltName}. Do you have about 15 to 20 minutes to go over this information with me right now over the phone?"</p><p><strong>If they say yes:</strong></p><p>"Perfect! I'll walk you through everything as we go. Are you in a quiet place where you can focus for a few minutes?"</p>${cue("", "*Build rapport with the F.O.R.M. method*")}<p><strong>If they say no:</strong></p><p>"No problem at all. When would be a better time for you? I can schedule a proper appointment that works with your schedule."</p>`
+            ? `<h3>📞 Now Presentation (Phone)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")}. I have a few minutes available right now and wanted to reach out about ${ltName}. Do you have about 15 to 20 minutes to go over this information with me right now over the phone?"</p><p><strong>If they say yes:</strong></p><p>"Perfect! I'll walk you through everything as we go. Are you in a quiet place where you can focus for a few minutes?"</p>${cue("", "*Build rapport with the F.O.R.M. method*")}<p><strong>If they say no:</strong></p><p>"No problem at all. When would be a better time for you? I can schedule a proper appointment that works with your schedule."</p>`
             : `<h3>🎯 Now Presentation (Zoom)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")}. I have a few minutes available right now and wanted to reach out about ${ltName}. Do you have about 15 to 20 minutes to go over this information with me right now on a quick video call?"</p><p><strong>If they say yes:</strong></p><p>"Great! I'm sending you a Zoom link so I can show you the information as we go. It'll just take a second."</p><p class="instruction">*Send the Zoom link, confirm their video and sound are connected, then hang up the phone*</p><p class="instruction">*Build rapport with the F.O.R.M. method before you share your screen*</p><p><strong>If they say no:</strong></p><p>"No problem at all. When would be a better time for you? I can schedule a proper appointment that works with your schedule."</p>`;
         else if (S.type === "appointment") body = tele()
-            ? `<h3>📞 Appointment (Telesales)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")} calling for our ${nm("time")} appointment to go over ${ltName}. Are you in a good place to talk for about 15 to 20 minutes?"</p><p><strong>Once they confirm they're ready:</strong></p><p>"Perfect! I'll walk you through everything as we go. Stop me anytime you have a question."</p><p class="instruction">*Build rapport with the F.O.R.M. method*</p>`
+            ? `<h3>📞 Appointment (Phone)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")} calling for our ${nm("time")} appointment to go over ${ltName}. Are you in a good place to talk for about 15 to 20 minutes?"</p><p><strong>Once they confirm they're ready:</strong></p><p>"Perfect! I'll walk you through everything as we go. Stop me anytime you have a question."</p><p class="instruction">*Build rapport with the F.O.R.M. method*</p>`
             : `<h3>📹 Appointment (Zoom)</h3><p>"Hey, ${nm("client")}? This is ${nm("agent")} reaching out to you for our ${nm("time")} appointment to go over ${ltName}. I just sent over the link for our Zoom meeting. Let me know when you've received it."</p><p><strong>Once they confirm they've received it:</strong></p><p>"Go ahead and click that link to join the call. It should allow you to join the meeting from your browser."</p><p class="instruction">*Confirm their video and sound are connected, then hang up the phone*</p><p class="instruction">*Build rapport with the F.O.R.M. method before you share your screen*</p>`;
         else body = `<p><em>Complete the Presentation Setup first to see your script.</em></p>`;
         return `<h1>📞 Step 1: General Introduction</h1><div class="script-block">${body}</div>`;
@@ -1538,10 +1538,10 @@ function renderObjections() { document.getElementById("objectionsBody").innerHTM
 
 /* ---------- tips ---------- */
 const sectionTips = {
-    Setup: [["🎯 Preparation is key", "Pick the format, type and lead type, and add the names. The script fills them in for you."], ["📞 Telesales vs. Zoom", "On the phone, your words carry everything: describe, pause, check in. On Zoom, share only the client screen."]],
+    Setup: [["🎯 Preparation is key", "Pick the format, type and lead type, and add the names. The script fills them in for you."], ["📞 Phone presentation vs. Zoom", "On the phone, your words carry everything: describe, pause, check in. On Zoom, share only the client screen."]],
     Foundation: [["🎯 First impressions matter", "40% of your success depends on the client buying YOU first, then the company, then the products."], ["📝 F.O.R.M.", "Family, Occupation, Recreation, Me. Every name you hear is a future referral."], ["⏰ Timing", "Spend 8 to 10 minutes on rapport. The timer turns green when you're there."]],
     "Lead Types": [["🎯 Know your lead", "Policy owners need service, inquiries need information, lapsed leads need a solution that fits now."], ["📋 Verify information", "Always verify their information and set the correct lead type."]],
-    Presentation: [["🏢 Credibility", "120+ years, more policyholders than anyone, 129,000+ claims a year."], ["📞 Engagement check", "Zoom: “Can you see that on your screen?” Telesales: “Does that make sense?” every minute or so."]],
+    Presentation: [["🏢 Credibility", "120+ years, more policyholders than anyone, 129,000+ claims a year."], ["📞 Engagement check", "Zoom: “Can you see that on your screen?” Phone presentation: “Does that make sense?” every minute or so."]],
     Assessment: [["📊 Thorough analysis", "The needs survey sets the coverage amounts and builds buy-in."], ["🏥 Health questions", "Ask sensitively but thoroughly. Never promise approval."]],
     Benefits: [["💰 Make it real", "Use real costs and their real numbers."], ["🎯 Tie-downs", "After each benefit, get the yes, then ask why it matters. Type their answer in the box; it shows up at the close."]],
     Closing: [["🎯 Assumptive close", "Two options, not yes or no: “Which option works best for you?”"], ["🛡️ Objections", "Press Objections on any step. Their own words are your best rebuttal."]]
@@ -1622,10 +1622,10 @@ function renderFormatBar() {
     const fb = document.getElementById("formatBar");
     if (!S.format) { fb.innerHTML = ""; fb.style.display = "none"; return; }
     fb.style.display = "flex";
-    fb.innerHTML = `<span class="glp-pill ${S.format}">${S.format === "tele" ? "📞 Telesales: describe it, the client can't see your screen" : "📹 Zoom: share the client screen only"}</span>${S.format === "zoom" ? `<a class="glp-small link" href="presentation.html#client${MODE === "practice" ? ":practice" : ""}" target="_blank" rel="noopener">Open client screen ↗</a>` : ""}${currentSlideIndex > 0 ? `<button type="button" class="glp-small cm-switch" data-act="callmode">📞 Switch to Call mode</button>` : ""}`;
+    fb.innerHTML = `<span class="glp-pill ${S.format}">${S.format === "tele" ? "📞 Phone presentation: describe it, the client can't see your screen" : "📹 Zoom: share the client screen only"}</span>${S.format === "zoom" ? `<a class="glp-small link" href="presentation.html#client${MODE === "practice" ? ":practice" : ""}" target="_blank" rel="noopener">Open client screen ↗</a>` : ""}${currentSlideIndex > 0 ? `<button type="button" class="glp-small cm-switch" data-act="callmode">📞 Switch to Call mode</button>` : ""}`;
 }
 function updateTipsForSection(sec) { if (!tipsContent || !sectionTips[sec]) return; tipsContent.innerHTML = sectionTips[sec].map(([t, c]) => `<div class="tip-card"><h4>${t}</h4><p>${c}</p></div>`).join(""); }
-function updateSessionLine() { const el = document.getElementById("sessionLine"); if (el) el.textContent = (MODE === "practice" ? "Practice · " : "") + (S.client ? S.client + (S.spouse ? " & " + S.spouse : "") : "New client") + (S.format ? " · " + (S.format === "tele" ? "Telesales" : "Zoom") : ""); }
+function updateSessionLine() { const el = document.getElementById("sessionLine"); if (el) el.textContent = (MODE === "practice" ? "Practice · " : "") + (S.client ? S.client + (S.spouse ? " & " + S.spouse : "") : "New client") + (S.format ? " · " + (S.format === "tele" ? "Phone presentation" : "Zoom") : ""); }
 
 function handleNextClick() {
     const i = currentSlideIndex;

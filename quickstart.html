@@ -893,7 +893,7 @@ if (ASSET_BASE) document.addEventListener("DOMContentLoaded", () => {
 const MODULES = [
   /* ================= GETTING STARTED ================= */
   {
-    id: "s01", section: "Start Here", title: "Phone presentation or Zoom", minutes: 3,
+    id: "s01", section: "Start Here", title: "Phone Presentation or Zoom", minutes: 3,
     summary: "There are two ways we present: Phone presentation (phone only, no screen shared) and Zoom (on video with your screen shared). Know which one you're running before you dial.",
     blocks: [
       { h: "The two presentation formats" },
@@ -905,7 +905,7 @@ const MODULES = [
     ],
     quiz: [
       { q: "What are our two presentation formats?", options: ["Phone presentation (nothing shared) and Zoom (screen shared)", "Term and Whole", "Morning and evening", "Pre-Submit and ADP Referral"], a: 0, why: "Phone presentation has no screen shared; Zoom shares your screen." },
-      { q: "On a phone presentation presentation, what does the client see?", options: ["Your slides", "Nothing; you describe everything out loud", "The eApp", "A PDF you email first"], a: 1, why: "No screen is shared on phone presentation." },
+      { q: "On a phone presentation, what does the client see?", options: ["Your slides", "Nothing; you describe everything out loud", "The eApp", "A PDF you email first"], a: 1, why: "No screen is shared on phone presentation." },
       { q: "Which presentation type gives you the most room for rapport?", options: ["Now presentation", "Appointment", "Phone presentation only", "None"], a: 1, why: "Appointments allow longer rapport; Now presentations need quicker engagement." },
       { q: "Where do you choose the format, type and lead type before the call?", options: ["On the Setup screen of your presentation tool", "In the eApp", "You don't", "In a text to the client"], a: 0, why: "The tool's Setup screen fills in the script for you." },
       { q: "What do both formats have in common after the opening?", options: ["Rapport with F.O.R.M., then the presentation", "They skip rapport", "They start with the close", "Nothing"], a: 0, why: "Every call builds rapport first." }
@@ -3691,7 +3691,7 @@ function familyPickView(mode) {
   if (SITE_MODE) setTimeout(loadVoiceModel, 0);
   const exam = mode === "exam";
   const intro = exam
-    ? `<p class="lead">To get certified you pass two live calls: one <b>Phone presentation</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
+    ? `<p class="lead">To get certified you pass two live calls: one <b>phone presentation</b> call (phone only, nothing shared) and one <b>Zoom</b> call (on video, sharing your screen). Each exam picks a family at random, with no temperature meter and no rebuttal cheat sheet.</p>`
     : `<p class="lead">Talk out loud to an AI family. They push back, and you get a score with coaching when you hang up. Each family unlocks once you finish the lessons for their lead type.</p>`;
   let h = `<div class="page wide"><div class="eyebrow">${exam ? "Final exam" : "Practice"}</div><h1>${exam ? "Live AI family exam" : "Practice calls"}</h1>${intro}`;
   if (isManager()) h += `<div class="mgr-banner"><span>Manager mode: all calls unlocked in this tab.</span></div>`;
@@ -3715,7 +3715,7 @@ function familyPickView(mode) {
       return `<button class="fam" data-fam="${f.id}" type="button" ${sampleFn && !(presLocked && !isManager()) ? "" : "disabled"}><span class="pill ${f.difficulty === "Hard" ? "hard" : ""}">${f.difficulty}</span><h3>${esc(f.name)}</h3><span class="meta">${esc(f.leadType)} · ${fmtLabel(practiceFormat)}</span><span class="small">${esc(card)}</span><span class="best">${best == null ? "Not called yet" : `Your best: ${best}`}</span></button>`;
     }).join("")}</div>`;
     h += `<details class="card"><summary><b>How the call works</b></summary><ul style="margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-      <li><b>Just talk.</b> After a 5-second countdown the family picks up (Phone presentation) or joins (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble.</li>
+      <li><b>Just talk.</b> After a 5-second countdown the family picks up (phone presentation) or joins (Zoom), and your mic stays live. When you pause, they answer out loud. They can cut in if you ramble.</li>
       <li><b>Phone presentation:</b> mark where you are in the Presenter panel so your quote unlocks at Medical Questions. If you say "as you can see," they'll tell you they can't see anything.</li>
       <li><b>Zoom:</b> share your screen when rapport is done, and move through the slides with Next and Prev.</li>
       <li>Press <b>Script</b> any time to open your presentation tool at your step, already filled in with this family's names.</li>
@@ -4172,7 +4172,7 @@ function startCall(fam, mode, format) {
 function lobbyView() {
   const f = rp.fam; const r = RECAP[f.id];
   return `<div class="meet lobby"><div class="lobby-card">
-    <div class="msmall">${rp.mode === "exam" ? "FINAL EXAM" : "PRACTICE"} · ${rp.dial ? "FIRST CALL (DIALING THE LEAD)" : rp.format === "tele" ? "TELESALES CALL (PHONE ONLY)" : "ZOOM APPOINTMENT"}</div>
+    <div class="msmall">${rp.mode === "exam" ? "FINAL EXAM" : "PRACTICE"} · ${rp.dial ? "FIRST CALL (DIALING THE LEAD)" : rp.format === "tele" ? "PHONE PRESENTATION (NOTHING SHARED)" : "ZOOM APPOINTMENT"}</div>
     <h2>${esc(f.name)}</h2>
     <div class="lobby-grid">
       <div><span>When</span><b>${rp.dial ? "Right now. They aren't expecting your call." : esc(f.format.replace("Zoom appointment", rp.format === "tele" ? "Phone appointment" : "Zoom appointment"))}</b></div>
@@ -4755,7 +4755,7 @@ function resultsView(a) {
     <div class="eyebrow">${a.mode === "exam" ? "Final exam result" : "Practice result"} · ${fmtLabel(a.format)} · ${esc(a.family)} · ${new Date(a.date).toLocaleDateString()}</div>
     <div class="result-banner ${a.pass ? "pass" : "fail"}">
       <div class="ring-row">${scoreRing(a.total, a.pass)}<div><div class="big">${verdict}</div><p class="small">${fmtLabel(a.format)} · ${esc(a.family)} · ${Math.max(1, Math.round((a.duration || 0) / 60))} min · pass is ${PASS_EXAM}+</p></div></div>${Array.isArray(a.referrals) ? `<p><b>Referrals you typed in: ${a.referrals.length}</b>${a.referrals.length ? " (" + a.referrals.map(esc).join(", ") + ")" : ". Next time, type each name the family gives you on the Referral Collection slide."}${a.refNotes != null && a.referrals.length ? ` · F.O.R.M. notes filled in: ${a.refNotes}%` : ""}</p>` : ""}
-      <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "Phone presentation" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "Phone presentation"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
+      <p><b>Outcome:</b> ${esc(decisionTxt)}${a.decisionNote ? ". " + esc(a.decisionNote) : ""}. ${a.pass ? (a.mode === "exam" ? (certified() ? "You passed both formats. You're certified for virtual presentations." : `You passed the ${(a.format || "zoom") === "tele" ? "phone presentation" : "Zoom"} exam. Pass the ${(a.format || "zoom") === "tele" ? "Zoom" : "phone presentation"} exam to get certified.`) : a.format === "dial" ? "That's how a first call should go." : "You'd pass the exam with this call.") : "Not passed: " + reasons.join(", ") + "."}</p>
       <p>${esc(a.summary)}</p>
     </div>`;
   if (a.critical.length) h += `<div class="warn"><b>Compliance issues (automatic fail)</b>${a.critical.map(esc).join("<br>")}</div>`;
