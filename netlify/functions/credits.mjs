@@ -209,7 +209,7 @@ export default async (req) => {
       try {
         const s = await stripe("/checkout/sessions", {
           mode: "payment", "line_items[0][quantity]": String(qty), "line_items[0][price_data][currency]": "usd", "line_items[0][price_data][unit_amount]": String(C.callPriceCents),
-          "line_items[0][price_data][product_data][name]": "AI practice calls", "line_items[0][price_data][product_data][description]": "Practice calls, exam retakes and extra practice with AI clients in the Virtual Presentation Academy",
+          "line_items[0][price_data][product_data][name]": "AI practice calls", "line_items[0][price_data][product_data][description]": "Practice calls, exam retakes and extra practice with AI clients in SaleLabs - Virtual Training Academy",
           "metadata[account]": acct, "metadata[qty]": String(qty), client_reference_id: acct.slice(0, 200),
           success_url: ret + "?paid={CHECKOUT_SESSION_ID}#practice", cancel_url: ret + "#practice"
         });

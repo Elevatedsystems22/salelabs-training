@@ -33,7 +33,7 @@ async function stripe(path, form) {
 }
 const checkout = async (origin, { qty, price, meta, email, back }) => stripe("/checkout/sessions", {
   mode: "payment", "line_items[0][quantity]": String(qty), "line_items[0][price_data][currency]": "usd", "line_items[0][price_data][unit_amount]": String(price),
-  "line_items[0][price_data][product_data][name]": "Virtual Presentation Academy: Agent Seat",
+  "line_items[0][price_data][product_data][name]": "SaleLabs - Virtual Training Academy: Agent Seat",
   "line_items[0][price_data][product_data][description]": "One agent's training: the 6-Day Quick Start, AI practice calls and the phone and Zoom certification exams",
   ...Object.fromEntries(Object.entries(meta).map(([k, v]) => ["metadata[" + k + "]", String(v)])), ...(email ? { customer_email: email } : {}),
   success_url: origin + back + (back.includes("?") ? "&" : "?") + "paid={CHECKOUT_SESSION_ID}", cancel_url: origin + back
