@@ -12,7 +12,7 @@ import { randomBytes } from "node:crypto";
 import { getStore } from "@netlify/blobs";
 import { allowed, json } from "../lib/guard.mjs";
 import { authManager, managersStore } from "../lib/auth.mjs";
-import { agenciesStore, orgOf, isOwner, inviteMap } from "../lib/org.mjs";
+import { agenciesStore, orgOf, isOwner, inviteMap, orgIsTest, TEST_SEAT_CENTS } from "../lib/org.mjs";
 import { fulfillAgency, pendingStore } from "../lib/agency.mjs";
 import { ALLOWANCE_DEFAULTS, ALLOWANCE_VERSION } from "../lib/allowance.mjs";
 
@@ -42,13 +42,15 @@ const checkout = async (origin, { qty, price, meta, email, back }) => stripe("/c
 export default async (req) => {
   const url = new URL(req.url), path = url.pathname, origin = url.origin;
 
-  if (path === "/api/agency/info" && req.method === "GET") return json({ seatPrice: await seatPrice(), payments: !!process.env.STRIPE_SECRET_KEY });
+  if (path === "/api/agency/info" && req.method === "GET") return json({ seatPrice: url.searchParams.get("test") ? TEST_SEAT_CENTS : await seatPrice(), payments: !!process.env.STRIPE_SECRET_KEY });
 
   if (path === "/api/agency/checkout" && req.method === "POST") {
     if (!allowed(req)) return json({ error: "forbidden" }, 403);
     if (!process.env.STRIPE_SECRET_KEY) return json({ error: "payments_off", message: "Card payments aren't set up yet." }, 503);
     let b; try { b = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
     const p = { agencyName: str(b.agencyName, 80), ownerName: str(b.ownerName, 80), email: str(b.email, 120).toLowerCase(), phone: str(b.phone, 30), seats: Math.min(200, Math.max(1, parseInt(b.seats, 10) || 1)), createdAt: new Date().toISOString() };
+    // Test mode ($1 seats) only works for the owner's own login.
+    if (b.test) { if (!isOwner(await authManager(req).catch(() => null))) return json({ error: "owner_only", message: "Test mode only works when you're signed in as the owner in this browser." }, 403); p.test = true; }
     if (!p.agencyName || !p.ownerName || !EMAIL.test(p.email)) return json({ error: "bad_request", message: "Agency name, your name and a valid email are required." }, 400);
     // Someone on Brandon's own team can't open a separate agency under the same email.
     const mgrs = managersStore(), { blobs } = await mgrs.list();
@@ -57,7 +59,7 @@ export default async (req) => {
     if (clash && !clash.org) return json({ error: "email_taken", message: "That email is already used by a manager on another team. Use a different email." }, 400);
     const pending = randomBytes(12).toString("base64url");
     await pendingStore().setJSON(pending, p);
-    try { const s = await checkout(origin, { qty: p.seats, price: await seatPrice(), meta: { type: "agency_new", pending, qty: p.seats }, email: p.email, back: "/agency" }); return json({ url: s.url }); }
+    try { const s = await checkout(origin, { qty: p.seats, price: p.test ? TEST_SEAT_CENTS : await seatPrice(), meta: { type: "agency_new", pending, qty: p.seats, ...(p.test ? { test: 1 } : {}) }, email: p.email, back: p.test ? "/test" : "/agency" }); return json({ url: s.url }); }
     catch (e) { return json({ error: "stripe_error", message: e.message }, 502); }
   }
 
@@ -86,7 +88,7 @@ export default async (req) => {
     if (!process.env.STRIPE_SECRET_KEY) return json({ error: "payments_off", message: "Card payments aren't set up yet." }, 503);
     let b; try { b = await req.json(); } catch (e) { b = {}; }
     const qty = Math.min(200, Math.max(1, parseInt(b.qty, 10) || 1));
-    try { const s = await checkout(origin, { qty, price: await seatPrice(), meta: { type: "seats", org, qty }, email: me.email, back: "/?agency=seats" }); return json({ url: s.url }); }
+    try { const s = await checkout(origin, { qty, price: (await orgIsTest(org)) ? TEST_SEAT_CENTS : await seatPrice(), meta: { type: "seats", org, qty }, email: me.email, back: "/?agency=seats" }); return json({ url: s.url }); }
     catch (e) { return json({ error: "stripe_error", message: e.message }, 502); }
   }
 
@@ -96,7 +98,7 @@ export default async (req) => {
     const orgs = (await Promise.all(blobs.map(x => ag.get(x.key, { type: "json" }).catch(() => null)))).filter(Boolean);
     const inv = await inviteMap(), byOrg = {};
     Object.values(inv).forEach(i => { if (i.org) { const o = byOrg[i.org] = byOrg[i.org] || { invited: 0, started: 0 }; o.invited++; if (i.acceptedAt) o.started++; } });
-    return json({ seatPrice: await seatPrice(), agencies: orgs.map(o => ({ id: o.id, name: o.name, contact: o.contact || {}, seats: o.seats || 0, seatsUsed: o.seatsUsed || 0, createdAt: o.createdAt,
+    return json({ seatPrice: await seatPrice(), agencies: orgs.map(o => ({ id: o.id, name: o.name, contact: o.contact || {}, seats: o.seats || 0, seatsUsed: o.seatsUsed || 0, createdAt: o.createdAt, test: !!o.test,
       paidCents: (o.purchases || []).reduce((n, p) => n + (p.cents || 0), 0), ...(byOrg[o.id] || { invited: 0, started: 0 }) })).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")) });
   }
   if (path === "/api/agency/grant" && req.method === "POST") {

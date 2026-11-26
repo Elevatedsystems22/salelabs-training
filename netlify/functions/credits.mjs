@@ -28,7 +28,7 @@ import { allowed, json } from "../lib/guard.mjs";
 import { authManager } from "../lib/auth.mjs";
 import { ALLOWANCE_DEFAULTS, ALLOWANCE_VERSION } from "../lib/allowance.mjs";
 import { fulfillAgency } from "../lib/agency.mjs";
-import { inviteMap, accountOrg, orgOf } from "../lib/org.mjs";
+import { inviteMap, accountOrg, orgOf, orgIsTest, TEST_CALL_CENTS } from "../lib/org.mjs";
 
 const STRIPE = process.env.STRIPE_API_BASE || "https://api.stripe.com/v1";
 const db = () => getStore({ name: "credits", consistency: "strong" });
@@ -65,6 +65,8 @@ async function accountFor(uid, invite) {
   if (/^[A-Za-z0-9_-]{6,80}$/.test(uid)) return "uid_" + uid;
   return null;
 }
+// Agents in a test agency pay test prices for extra calls (5 calls = $1), so purchases can be tried for real.
+async function testPrice(acct) { const org = accountOrg(acct, await inviteMap()); if (org && await orgIsTest(org)) { C.callPriceCents = TEST_CALL_CENTS; C.minCalls = 5; } }
 async function load(acct) { return (await db().get("acct/" + acct, { type: "json" }).catch(() => null)) || { used: {}, paid: 0, uses: [], purchases: [] }; }
 async function save(acct, a, extra) { a.updatedAt = Date.now(); Object.assign(a, extra || {}); await db().setJSON("acct/" + acct, a); }
 function today(a) { const d = chicagoDay(); if (!a.day || a.day.date !== d) a.day = { date: d, counts: {} }; return a.day.counts; }
@@ -145,6 +147,7 @@ export default async (req) => {
     if (owner) return json({ owner: true, payments: !!process.env.STRIPE_SECRET_KEY });
     const acct = await accountFor(url.searchParams.get("uid"), url.searchParams.get("invite"));
     if (!acct) return json({ error: "bad_request" }, 400);
+    await testPrice(acct);
     return json(summary(await load(acct)));
   }
 
@@ -160,6 +163,7 @@ export default async (req) => {
     if (!allowed(req)) return json({ error: "forbidden" }, 403);
     let b; try { b = await req.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
     const acct = await accountFor(b.uid, b.invite); if (!acct) return json({ error: "bad_request" }, 400);
+    await testPrice(acct);
 
     if (path === "/api/credits/use" || path === "/api/credits/start") {
       const kind = path === "/api/credits/use" ? "practice" : (KINDS.includes(b.kind) ? b.kind : null);

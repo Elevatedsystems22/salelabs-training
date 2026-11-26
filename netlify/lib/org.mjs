@@ -4,6 +4,9 @@ import { getStore } from "@netlify/blobs";
 
 export const agenciesStore = () => getStore({ name: "agencies", consistency: "strong" });
 export const orgOf = me => (me && me.org) || "";
+// Test agencies are made from the owner-only test page (/test): $1 seats and cheap extra calls, for trying payments and texts end to end.
+export const TEST_SEAT_CENTS = 100, TEST_CALL_CENTS = 20;
+export async function orgIsTest(id) { if (!id) return false; const o = await agenciesStore().get("org/" + id, { type: "json" }).catch(() => null); return !!(o && o.test); }
 export const isOwner = me => !!me && (me.id === "_master" || me.id === (process.env.OWNER_MANAGER_ID || "brandon-carter"));
 
 export async function inviteMap() {

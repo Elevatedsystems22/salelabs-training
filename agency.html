@@ -193,17 +193,25 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
     document.querySelectorAll("[data-shot]").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.shot === i))); };
   document.querySelectorAll("[data-shot]").forEach(b => b.onclick = () => showShot(+b.dataset.shot));
   showShot(0);
+  // Test mode (/test): owner only, $1 seats, so payments, texts and invites can be tried for real.
+  const TEST = /^\/test\/?$/.test(location.pathname);
+  const tok = (() => { try { return localStorage.getItem("vpa_mgr_tok") || ""; } catch (e) { return ""; } })();
+  if (TEST) {
+    document.title = "TEST · SaleLabs - Virtual Training Academy"; $("seats").value = 1;
+    document.body.insertAdjacentHTML("afterbegin", `<div style="background:#ffd54a;color:#3a2a00;text-align:center;font-weight:800;padding:10px 14px;position:sticky;top:0;z-index:20">TEST MODE: $1 per seat. Real card charge, real texts and emails. Only you can use this page.</div>`);
+    if (!tok) setTimeout(() => { $("err").innerHTML = 'Sign in to your manager view first (in this browser), then come back to this page. <a href="/#manager">Sign in →</a>'; $("go").disabled = true; }, 0);
+  }
   let price = 7500;
   const money = c => "$" + (c / 100).toFixed(2).replace(/\.00$/, "");
   const upd = () => { const n = Math.max(1, Math.min(200, parseInt($("seats").value, 10) || 1)); $("total").textContent = money(n * price); };
-  fetch("/api/agency/info").then(r => r.json()).then(j => { price = j.seatPrice || price; $("seatPrice").textContent = money(price); upd(); if (!j.payments) { $("go").disabled = true; $("err").textContent = "Signups open soon."; } }).catch(() => {});
+  fetch("/api/agency/info" + (TEST ? "?test=1" : "")).then(r => r.json()).then(j => { price = j.seatPrice || price; $("seatPrice").textContent = money(price); upd(); if (!j.payments) { $("go").disabled = true; $("err").textContent = "Signups open soon."; } }).catch(() => {});
   $("seats").addEventListener("input", upd); upd();
   $("f").addEventListener("submit", async e => {
     e.preventDefault(); $("err").textContent = "";
-    const body = { agencyName: $("agencyName").value, ownerName: $("ownerName").value, email: $("email").value, phone: $("phone").value, seats: $("seats").value };
+    const body = { agencyName: $("agencyName").value, ownerName: $("ownerName").value, email: $("email").value, phone: $("phone").value, seats: $("seats").value, ...(TEST ? { test: true } : {}) };
     if (!body.agencyName.trim() || !body.ownerName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) { $("err").textContent = "Fill in your agency name, your name and a valid email."; return; }
     $("go").disabled = true; $("go").textContent = "Opening checkout…";
-    try { const r = await fetch("/api/agency/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json();
+    try { const r = await fetch("/api/agency/checkout", { method: "POST", headers: { "content-type": "application/json", ...(TEST && tok ? { authorization: "Bearer " + tok } : {}) }, body: JSON.stringify(body) }); const j = await r.json();
       if (j.url) { location.href = j.url; return; } $("err").textContent = j.message || "Couldn't open checkout. Try again."; }
     catch (x) { $("err").textContent = "Couldn't reach the server. Check your connection."; }
     $("go").disabled = false; $("go").textContent = "Continue to secure checkout";
@@ -219,6 +227,7 @@ footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
     card.innerHTML = `<div class="done"><div class="big">🎉</div><h2>Welcome, ${esc(j.name)}!</h2><p>Your agency is ready with <b>${j.seats}</b> seat${j.seats === 1 ? "" : "s"}.</p>
       ${j.temp ? `<p class="small">Sign in with <b>${esc(j.email)}</b> and this temporary password. You'll choose your own right away.</p><div class="temp">${esc(j.temp)}</div><p class="small">Save it now: it's only shown once.${j.notified ? " We also texted and emailed it to you." : ""}</p>`
         : `<p class="small">Your sign-in link and temporary password were sent to <b>${esc(j.email)}</b>${j.notified ? " and your phone" : ""}.</p>`}
+      ${TEST ? `<p class="small" style="background:#fff4d6;padding:10px;border-radius:8px">Test tip: open the sign-in link in a <b>private / incognito window</b> or on another device. Signing in here would sign you out of your owner account in this browser.</p>` : ""}
       <p><a href="/#manager" style="display:inline-block;margin-top:8px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:10px;font-weight:800;text-decoration:none">Sign in to your manager view</a></p></div>`;
   };
   const go = async n => { try { const j = await (await fetch("/api/agency/confirm?session_id=" + m[1])).json(); if (j.ok) return show(j); if (n < 8) return setTimeout(() => go(n + 1), 2000); } catch (e) { if (n < 8) return setTimeout(() => go(n + 1), 2000); }

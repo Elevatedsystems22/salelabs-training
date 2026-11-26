@@ -49,7 +49,7 @@ export async function fulfillAgency(session, origin) {
   }
   const id = slug(p.agencyName) + "-" + randomBytes(3).toString("hex"), temp = tempPassword();
   const ownerId = slug(p.ownerName) + "-" + randomBytes(3).toString("hex");
-  const org = { id, name: p.agencyName, ownerId, seats: qty, seatsUsed: 0, createdAt: new Date().toISOString(), purchases: [paid], contact: { name: p.ownerName, email: p.email, phone: p.phone } };
+  const org = { id, name: p.agencyName, ownerId, seats: qty, seatsUsed: 0, createdAt: new Date().toISOString(), purchases: [paid], ...(p.test ? { test: true } : {}), contact: { name: p.ownerName, email: p.email, phone: p.phone } };
   const owner = { id: ownerId, name: p.ownerName, position: "AO (Agency Owner)", phone: p.phone, email: clash ? "" : p.email, photo: "", admin: true, reportsTo: "", org: id,
     pwHash: hashPw(temp), mustChange: true, createdAt: new Date().toISOString(), confirmedAt: "", v: 0 };
   await ag.setJSON("org/" + id, org);
