@@ -182,6 +182,11 @@ export default async (req) => {
     if (!existing && isAdmin && pwOk(b.temp)) { rec.pwHash = hashPw(b.temp); rec.mustChange = true; }
     await mgrs.setJSON(id, rec);
     if (!existing && rec.pwHash && b.send !== false) notified = await sendManager(rec, b.temp, false);
+    // Promoting an agent: mark their trainee record so the board shows they're now a manager. Their training progress stays.
+    if (!existing && TOKEN.test(String(b.fromInvite || ""))) {
+      const inv = await invites.get(b.fromInvite, { type: "json" }).catch(() => null);
+      if (inv && sameOrg(inv)) { inv.promotedTo = id; inv.promotedAt = new Date().toISOString(); await invites.setJSON(inv.token, inv); }
+    }
     return json({ manager: publicMgr(rec), notified });
   }
 
